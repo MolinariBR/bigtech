@@ -10,6 +10,7 @@ __tests__/.cache
 # Next.js
 /.next/
 /out/
+frontend-app/.next/
 
 # Production
 /build
