@@ -1,0 +1,24 @@
+{
+  "name": "projeto-bigtech",
+  "version": "1.0.0",
+  "description": "Plataforma SaaS multi-tenant para consultas de dados",
+  "private": true,
+  "workspaces": [
+    "frontend-user",
+    "frontend-admin",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

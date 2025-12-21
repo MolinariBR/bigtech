@@ -1,0 +1,44 @@
+# Baseado em: 3.Structure.md v1.1
+# Precedência: 1.Project → 2.Architecture → 3.Structure
+# Decisão: Imagem base otimizada para containers multi-tenant
+
+FROM node:18-alpine AS base
+
+# Instalar dependências do sistema
+RUN apk add --no-cache \
+    libc6-compat \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Criar usuário não-root
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar dependências
+RUN npm ci --only=production && npm cache clean --force
+
+# Copiar código da aplicação
+COPY . .
+
+# Build da aplicação (se necessário)
+RUN npm run build || true
+
+# Ajustar permissões
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Expor porta (será sobrescrita nos Dockerfiles específicos)
+EXPOSE 3000
+
+# Health check padrão
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
+
+# Comando padrão (será sobrescrito)
+CMD ["npm", "start"]

@@ -1,0 +1,484 @@
+{
+    "projectId": "bigtech",
+    "projectName": "BigTech SaaS Platform",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "sites": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": 0,
+                "sessionsLimit": 10,
+                "passwordHistory": 0,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
+    },
+    "databases": [
+        {
+            "$id": "bigtechdb",
+            "name": "BigTech Database",
+            "enabled": true
+        }
+    ],
+    "collections": [
+        {
+            "$id": "tenants",
+            "databaseId": "bigtechdb",
+            "name": "Tenants",
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "domain",
+                    "type": "string",
+                    "size": 255,
+                    "required": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "active"
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true
+                },
+                {
+                    "key": "plugins",
+                    "type": "string",
+                    "size": 255,
+                    "required": false,
+                    "array": true
+                },
+                {
+                    "key": "settings",
+                    "type": "string",
+                    "size": 8192,
+                    "required": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "status_idx",
+                    "type": "key",
+                    "attributes": ["status"]
+                }
+            ],
+            "enabled": true
+        },
+        {
+            "$id": "users",
+            "databaseId": "bigtechdb",
+            "name": "Users",
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "tenantId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "user"
+                },
+                {
+                    "key": "identifier",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "size": 255,
+                    "required": false
+                },
+                {
+                    "key": "role",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "viewer"
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "active"
+                },
+                {
+                    "key": "credits",
+                    "type": "integer",
+                    "required": false,
+                    "default": 0
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "tenant_identifier_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "identifier"]
+                },
+                {
+                    "key": "tenant_status_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "status"]
+                }
+            ],
+            "enabled": true
+        },
+        {
+            "$id": "plugins",
+            "databaseId": "bigtechdb",
+            "name": "Plugins",
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "tenantId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "size": 50,
+                    "required": true
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "version",
+                    "type": "string",
+                    "size": 50,
+                    "required": true
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "installed"
+                },
+                {
+                    "key": "config",
+                    "type": "string",
+                    "size": 8192,
+                    "required": false
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "tenant_type_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "type"]
+                },
+                {
+                    "key": "tenant_name_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "name"]
+                }
+            ],
+            "enabled": true
+        },
+        {
+            "$id": "consultas",
+            "databaseId": "bigtechdb",
+            "name": "Consultas",
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "tenantId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "pluginId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "size": 50,
+                    "required": true
+                },
+                {
+                    "key": "input",
+                    "type": "string",
+                    "size": 4096,
+                    "required": true
+                },
+                {
+                    "key": "output",
+                    "type": "string",
+                    "size": 16384,
+                    "required": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "pending"
+                },
+                {
+                    "key": "cost",
+                    "type": "integer",
+                    "required": false,
+                    "default": 0
+                },
+                {
+                    "key": "executedAt",
+                    "type": "datetime",
+                    "required": false
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "tenant_user_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "userId"]
+                },
+                {
+                    "key": "tenant_status_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "status"]
+                },
+                {
+                    "key": "executed_at_idx",
+                    "type": "key",
+                    "attributes": ["executedAt"]
+                }
+            ],
+            "enabled": true
+        },
+        {
+            "$id": "billings",
+            "databaseId": "bigtechdb",
+            "name": "Billings",
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "tenantId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "size": 50,
+                    "required": true
+                },
+                {
+                    "key": "amount",
+                    "type": "integer",
+                    "required": true
+                },
+                {
+                    "key": "currency",
+                    "type": "string",
+                    "size": 10,
+                    "required": false,
+                    "default": "BRL"
+                },
+                {
+                    "key": "pluginId",
+                    "type": "string",
+                    "size": 255,
+                    "required": false
+                },
+                {
+                    "key": "consultaId",
+                    "type": "string",
+                    "size": 255,
+                    "required": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "size": 50,
+                    "required": false,
+                    "default": "pending"
+                },
+                {
+                    "key": "processedAt",
+                    "type": "datetime",
+                    "required": false
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "tenant_user_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "userId"]
+                },
+                {
+                    "key": "tenant_status_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "status"]
+                },
+                {
+                    "key": "consulta_id_idx",
+                    "type": "key",
+                    "attributes": ["consultaId"]
+                }
+            ],
+            "enabled": true
+        },
+        {
+            "$id": "audits",
+            "databaseId": "bigtechdb",
+            "name": "Audits",
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "tenantId",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "size": 255,
+                    "required": false
+                },
+                {
+                    "key": "action",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "resource",
+                    "type": "string",
+                    "size": 255,
+                    "required": true
+                },
+                {
+                    "key": "details",
+                    "type": "string",
+                    "size": 8192,
+                    "required": false
+                },
+                {
+                    "key": "ipAddress",
+                    "type": "string",
+                    "size": 45,
+                    "required": true
+                },
+                {
+                    "key": "timestamp",
+                    "type": "datetime",
+                    "required": true
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "tenant_timestamp_idx",
+                    "type": "key",
+                    "attributes": ["tenantId", "timestamp"]
+                },
+                {
+                    "key": "action_idx",
+                    "type": "key",
+                    "attributes": ["action"]
+                }
+            ],
+            "enabled": true
+        }
+    ]
+}

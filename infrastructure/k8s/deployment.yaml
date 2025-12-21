@@ -1,0 +1,292 @@
+# Baseado em: 3.Structure.md v1.1, 2.Architecture.md v1.0.1
+# Precedência: 1.Project → 2.Architecture → 3.Structure
+# Decisão: Kubernetes para orquestração multi-tenant (conforme 2.Architecture.md seção 3.5)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bigtech-frontend-user
+  namespace: bigtech
+  labels:
+    app: bigtech-frontend-user
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bigtech-frontend-user
+  template:
+    metadata:
+      labels:
+        app: bigtech-frontend-user
+        component: frontend
+    spec:
+      containers:
+      - name: frontend-user
+        image: bigtech/frontend-user:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_APPWRITE_ENDPOINT
+          value: "http://appwrite:80"
+        - name: NEXT_PUBLIC_APPWRITE_PROJECT
+          valueFrom:
+            secretKeyRef:
+              name: appwrite-secrets
+              key: project-id
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bigtech-frontend-admin
+  namespace: bigtech
+  labels:
+    app: bigtech-frontend-admin
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bigtech-frontend-admin
+  template:
+    metadata:
+      labels:
+        app: bigtech-frontend-admin
+        component: frontend
+    spec:
+      containers:
+      - name: frontend-admin
+        image: bigtech/frontend-admin:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: NEXT_PUBLIC_APPWRITE_ENDPOINT
+          value: "http://appwrite:80"
+        - name: NEXT_PUBLIC_APPWRITE_PROJECT
+          valueFrom:
+            secretKeyRef:
+              name: appwrite-secrets
+              key: project-id
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bigtech-backend-core
+  namespace: bigtech
+  labels:
+    app: bigtech-backend-core
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: bigtech-backend-core
+  template:
+    metadata:
+      labels:
+        app: bigtech-backend-core
+        component: backend
+    spec:
+      containers:
+      - name: backend-core
+        image: bigtech/backend-core:latest
+        ports:
+        - containerPort: 4000
+        env:
+        - name: APPWRITE_ENDPOINT
+          value: "http://appwrite:80"
+        - name: APPWRITE_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: appwrite-secrets
+              key: project-id
+        - name: APPWRITE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: appwrite-secrets
+              key: api-key
+        - name: NODE_ENV
+          value: "production"
+        - name: TENANT_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tenant-id']
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: plugins-volume
+          mountPath: /app/plugins
+      volumes:
+      - name: plugins-volume
+        configMap:
+          name: plugins-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bigtech-frontend-user
+  namespace: bigtech
+spec:
+  selector:
+    app: bigtech-frontend-user
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bigtech-frontend-admin
+  namespace: bigtech
+spec:
+  selector:
+    app: bigtech-frontend-admin
+  ports:
+  - port: 80
+    targetPort: 3001
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bigtech-backend-core
+  namespace: bigtech
+spec:
+  selector:
+    app: bigtech-backend-core
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bigtech-ingress
+  namespace: bigtech
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: app.bigtech.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bigtech-frontend-user
+            port:
+              number: 80
+  - host: admin.bigtech.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bigtech-frontend-admin
+            port:
+              number: 80
+  - host: api.bigtech.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bigtech-backend-core
+            port:
+              number: 80
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugins-config
+  namespace: bigtech
+data:
+  # Configurações de plugins ativos por tenant
+  active-plugins.json: |
+    {
+      "default": ["consulta-infosimples", "pagamento-asaas"],
+      "tenant-1": ["consulta-infosimples", "consulta-brasilapi", "pagamento-asaas"],
+      "tenant-2": ["consulta-serasa", "pagamento-pagarme"]
+    }
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: appwrite-secrets
+  namespace: bigtech
+type: Opaque
+data:
+  # Valores devem ser base64 encoded
+  project-id: YmlndGVjaA==  # bigtech
+  api-key: <BASE64_ENCODED_API_KEY>

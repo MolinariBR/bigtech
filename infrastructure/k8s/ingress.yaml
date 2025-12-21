@@ -1,0 +1,51 @@
+# Baseado em: 3.Structure.md v1.1
+# Precedência: 1.Project → 2.Architecture → 3.Structure
+# Decisão: Ingress para roteamento de domínios (conforme 2.Architecture.md seção 5.1)
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bigtech-main-ingress
+  namespace: bigtech
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - app.bigtech.com.br
+    - admin.bigtech.com.br
+    - api.bigtech.com.br
+    secretName: bigtech-tls
+  rules:
+  - host: app.bigtech.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bigtech-frontend-user
+            port:
+              number: 80
+  - host: admin.bigtech.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bigtech-frontend-admin
+            port:
+              number: 80
+  - host: api.bigtech.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bigtech-backend-core
+            port:
+              number: 80
