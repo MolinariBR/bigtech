@@ -16,8 +16,10 @@ export declare const consultaCodes: {
     serpro_radar_veiculo: string;
     detran_rj_veiculo: string;
     detran_rs_veiculo: string;
-    detran_sp_veiculo: null;
-    detran_mg_veiculo: null;
+    detran_sp_veiculo: string;
+    detran_mg_veic_nao_licenciado: string;
+    detran_mg_multas_extrato: string;
+    detran_mg_trlav: string;
     dataprev_fap: string;
     correios_cep: string;
 };

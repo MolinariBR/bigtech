@@ -30,8 +30,10 @@ exports.consultaCodes = {
     serpro_radar_veiculo: '/consultas/serpro/radar-veiculo',
     detran_rj_veiculo: '/consultas/detran/rj/veiculo',
     detran_rs_veiculo: '/consultas/detran/rs/veiculo',
-    detran_sp_veiculo: null, // Não encontrado endpoint específico
-    detran_mg_veiculo: null, // Não encontrado endpoint específico
+    detran_sp_veiculo: '/consultas/ecrvsp/veiculos/base-sp', // Via ECRVSP
+    detran_mg_veic_nao_licenciado: '/consultas/detran/mg/veic-nao-licenciado',
+    detran_mg_multas_extrato: '/consultas/detran/mg/multas-extrato',
+    detran_mg_trlav: '/consultas/detran/mg/trlav',
     // Previdenciário
     dataprev_fap: '/consultas/dataprev/fap',
     // Endereço

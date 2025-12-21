@@ -39,8 +39,8 @@ router.post('/:pluginId/execute', validateExecutionContext, async (req: Request,
 
     // Criar contexto de execução isolado por tenant
     const context: PluginContext = {
-      tenantId,
-      userId,
+      tenantId: tenantId!,
+      userId: userId!,
       input,
       config
     };
@@ -83,7 +83,7 @@ router.get('/active', validateExecutionContext, async (req: Request, res: Respon
     const { tenantId } = req;
 
     // Obter plugins ativos para o tenant
-    const activePlugins = pluginLoader.getActivePluginsForTenant(tenantId);
+    const activePlugins = pluginLoader.getActivePluginsForTenant(tenantId!);
 
     res.json({
       tenantId,
@@ -114,7 +114,7 @@ router.get('/:pluginId/status', validateExecutionContext, async (req: Request, r
     }
 
     // Verificar se plugin está ativo para o tenant
-    const isActive = pluginLoader.isPluginActiveForTenant(pluginId, tenantId);
+    const isActive = pluginLoader.isPluginActiveForTenant(pluginId, tenantId!);
 
     res.json({
       pluginId,

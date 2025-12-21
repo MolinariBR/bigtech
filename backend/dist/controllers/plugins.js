@@ -34,8 +34,8 @@ router.post('/:pluginId/execute', validateExecutionContext, async (req, res) => 
         }
         // Criar contexto de execução isolado por tenant
         const context = {
-            tenantId,
-            userId,
+            tenantId: tenantId,
+            userId: userId,
             input,
             config
         };

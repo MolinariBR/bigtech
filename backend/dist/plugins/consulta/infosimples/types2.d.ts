@@ -33,8 +33,14 @@ export type ConsultaInputType = {
     nis?: string;
     placa?: string;
     renavam?: string;
+    chassi?: string;
+    ano?: string;
     cnpj_estabelecimento?: string;
     ano_vigencia?: string;
     cep?: string;
+    a3?: string;
+    a3_pin?: string;
+    login_cpf?: string;
+    login_senha?: string;
 };
 //# sourceMappingURL=types2.d.ts.map

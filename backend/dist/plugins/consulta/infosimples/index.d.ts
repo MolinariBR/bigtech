@@ -18,6 +18,9 @@ export declare class InfosimplesPlugin implements Plugin {
     private normalizeData;
     private calculateCost;
     private executeFallback;
+    private executeBrasilApiFallback;
+    private executeViaCepFallback;
+    private validateCpf;
 }
 export default InfosimplesPlugin;
 //# sourceMappingURL=index.d.ts.map
