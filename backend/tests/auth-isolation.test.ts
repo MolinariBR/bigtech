@@ -2,22 +2,31 @@
 // Precedência: 1.Project → 2.Architecture → 7.Tasks
 // Decisão: Testes property-based para validar autenticação com isolamento multi-tenant
 
-import { test, expect, describe, beforeEach } from '@jest/globals';
-import { AuthService, AuthValidators } from '../src/core/auth';
+// Mock do Appwrite - deve ser definido ANTES dos imports
+const mockDatabases = {
+  listDocuments: jest.fn(),
+  createDocument: jest.fn(),
+  getDocument: jest.fn(),
+  updateDocument: jest.fn()
+};
 
-// Mock do Appwrite
 jest.mock('../src/lib/appwrite', () => ({
   AppwriteService: {
     getInstance: jest.fn(() => ({
-      databases: {
-        listDocuments: jest.fn(),
-        createDocument: jest.fn(),
-        getDocument: jest.fn(),
-        updateDocument: jest.fn()
-      }
+      databases: mockDatabases
     }))
   }
 }));
+
+// Mock do audit logger
+jest.mock('../src/core/audit', () => ({
+  auditLogger: {
+    log: jest.fn()
+  }
+}));
+
+import { test, expect, describe, beforeEach } from '@jest/globals';
+import { AuthService, AuthValidators } from '../src/core/auth';
 
 // Mock do audit logger
 jest.mock('../src/core/audit', () => ({
@@ -34,21 +43,40 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
     jest.clearAllMocks();
 
     // Setup mocks
-    mockAppwrite = require('../src/lib/appwrite').AppwriteService.getInstance();
+    const appwriteMock = require('../src/lib/appwrite');
+    mockAppwrite = appwriteMock.AppwriteService.getInstance();
     mockAuditLogger = require('../src/core/audit').auditLogger;
 
-    // Mock successful responses
-    mockAppwrite.databases.createDocument.mockResolvedValue({
-      $id: 'user-123',
-      tenantId: 'tenant1',
-      identifier: '12345678901',
-      type: 'user',
-      role: 'viewer',
-      credits: 0
+    // Mock successful responses - usar mockImplementation para IDs únicos e tenant correto
+    let userIdCounter = 123;
+    mockAppwrite.databases.createDocument.mockImplementation((db: string, collection: string, docId: string, data: any) => {
+      const userId = `user-${userIdCounter++}`;
+      return Promise.resolve({
+        $id: userId,
+        tenantId: data.tenantId, // Usar o tenantId passado nos dados
+        identifier: data.identifier,
+        type: 'user',
+        role: 'viewer',
+        credits: 0
+      });
     });
 
     mockAppwrite.databases.listDocuments.mockResolvedValue({
       documents: []
+    });
+
+    mockAppwrite.databases.getDocument.mockImplementation((db: string, collection: string, id: string) => {
+      // Mock para verificar tokens - retorna usuário ativo com tenant correto
+      const tenantId = id === 'user-123' ? 'tenant1' : 'tenant2';
+      return Promise.resolve({
+        $id: id,
+        tenantId: tenantId,
+        identifier: '52998224725',
+        status: 'active',
+        type: 'user',
+        role: 'viewer',
+        credits: 100
+      });
     });
 
     mockAuditLogger.log.mockResolvedValue(undefined);
@@ -59,7 +87,7 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
     // Given: Dois tenants diferentes
     const tenant1 = 'tenant1';
     const tenant2 = 'tenant2';
-    const cpf = '123.456.789-01';
+    const cpf = '529.982.247-25'; // CPF válido
 
     // When: Criar usuários em tenants diferentes
     const result1 = await AuthService.login(cpf, tenant1);
@@ -83,9 +111,9 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
   // Propriedade 2: Validação de CPF/CNPJ
   test('Deve validar corretamente CPF e CNPJ', () => {
     // Given: CPFs e CNPJs válidos e inválidos
-    const validCPF = '123.456.789-01'; // CPF válido para teste
+    const validCPF = '529.982.247-25'; // CPF válido
     const invalidCPF = '123.456.789-00'; // CPF inválido
-    const validCNPJ = '12.345.678/0001-00'; // CNPJ válido para teste
+    const validCNPJ = '11.222.333/0001-81'; // CNPJ válido
     const invalidCNPJ = '12.345.678/0001-01'; // CNPJ inválido
 
     // When & Then: Validar CPFs
@@ -100,7 +128,7 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
   // Propriedade 3: Isolamento de dados por tenant
   test('Dados de usuários devem ser isolados por tenant', async () => {
     // Given: Mesmo CPF em tenants diferentes
-    const cpf = '123.456.789-01';
+    const cpf = '529.982.247-25';
     const tenant1 = 'tenant1';
     const tenant2 = 'tenant2';
 
@@ -126,7 +154,7 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
     // Given: Usuário de tenant1 tentando acessar dados de tenant2
     const tenant1 = 'tenant1';
     const tenant2 = 'tenant2';
-    const cpf = '123.456.789-01';
+    const cpf = '529.982.247-25';
 
     // Mock usuário existente no tenant1
     mockAppwrite.databases.listDocuments.mockResolvedValue({
@@ -173,7 +201,7 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
   test('Deve registrar auditoria para ações de autenticação', async () => {
     // Given: Novo usuário fazendo login
     const tenantId = 'tenant1';
-    const cpf = '123.456.789-01';
+    const cpf = '529.982.247-25';
 
     // When: Fazer login (criará novo usuário)
     await AuthService.login(cpf, tenantId);
@@ -212,16 +240,16 @@ describe('TASK-004: Autenticação de Usuário - Isolamento Multi-Tenant', () =>
   // Propriedade 7: Formatação consistente de identificadores
   test('Deve formatar consistentemente CPF e CNPJ', () => {
     // Given: Identificadores sem formatação
-    const cpfRaw = '12345678901';
-    const cnpjRaw = '12345678000100';
+    const cpfRaw = '52998224725';
+    const cnpjRaw = '11222333000181';
 
     // When: Formatar
     const cpfFormatted = AuthValidators.formatIdentifier(cpfRaw);
     const cnpjFormatted = AuthValidators.formatIdentifier(cnpjRaw);
 
     // Then: Deve estar no formato correto
-    expect(cpfFormatted).toBe('123.456.789-01');
-    expect(cnpjFormatted).toBe('12.345.678/0001-00');
+    expect(cpfFormatted).toBe('529.982.247-25');
+    expect(cnpjFormatted).toBe('11.222.333/0001-81');
   });
 
   // Propriedade 8: Logout registra auditoria

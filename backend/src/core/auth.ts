@@ -11,6 +11,18 @@ import { auditLogger } from './audit';
 const router = Router();
 const appwrite = AppwriteService.getInstance();
 
+// Extensões da interface Request
+declare global {
+  namespace Express {
+    interface Request {
+      tenantId?: string;
+      userId?: string;
+      user?: any;
+      isAdmin?: boolean;
+    }
+  }
+}
+
 // Interfaces
 interface LoginRequest {
   identifier: string; // CPF ou CNPJ
@@ -108,9 +120,9 @@ export class AuthValidators {
 
 // Classe principal de autenticação
 export class AuthService {
-  private static readonly JWT_SECRET = process.env.JWT_SECRET || 'bigtech-secret-key';
-  private static readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
-  private static readonly BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
+  private static readonly JWT_SECRET: string = process.env.JWT_SECRET || 'bigtech-secret-key';
+  private static readonly JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '24h';
+  private static readonly BCRYPT_ROUNDS: number = parseInt(process.env.BCRYPT_ROUNDS || '12');
 
   // Login de usuário
   static async login(identifier: string, tenantId: string): Promise<AuthResponse> {
@@ -241,9 +253,12 @@ export class AuthService {
       iat: Math.floor(Date.now() / 1000)
     };
 
-    return jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRES_IN
-    });
+    const secret = this.JWT_SECRET as string;
+    const options: jwt.SignOptions = {
+      expiresIn: this.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn']
+    };
+
+    return jwt.sign(payload, secret, options);
   }
 
   // Verificar token JWT
@@ -278,6 +293,99 @@ export class AuthService {
       details: {},
       ipAddress: 'system'
     });
+  }
+
+  // Login de administrador - valida role admin
+  static async adminLogin(identifier: string): Promise<AuthResponse> {
+    try {
+      // Validar formato do identificador
+      if (!AuthValidators.isValidIdentifier(identifier)) {
+        return {
+          success: false,
+          message: 'CPF/CNPJ inválido'
+        };
+      }
+
+      // Para administradores, buscar em todos os tenants (isolamento global)
+      const users = await appwrite.databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'users',
+        [
+          `identifier=${identifier}`,
+          'status=active', // Garantir que está ativo
+          'role=admin'
+        ]
+      );
+
+      if (users.documents.length === 0) {
+        return {
+          success: false,
+          message: 'Administrador não encontrado ou permissões insuficientes'
+        };
+      }
+
+      const admin = users.documents[0];
+
+      // Verificar se é realmente admin
+      if (admin.role !== 'admin') {
+        return {
+          success: false,
+          message: 'Acesso negado: permissões insuficientes'
+        };
+      }
+
+      // Gerar token JWT para admin (tenantId especial para isolamento global)
+      const token = this.generateAdminToken(admin);
+
+      // Log de auditoria
+      await auditLogger.log({
+        tenantId: 'admin', // Tenant especial para admins
+        userId: admin.$id,
+        action: 'admin_login',
+        resource: `user:${admin.$id}`,
+        details: { identifier: AuthValidators.formatIdentifier(identifier) },
+        ipAddress: 'system'
+      });
+
+      return {
+        success: true,
+        token,
+        user: {
+          id: admin.$id,
+          identifier: AuthValidators.formatIdentifier(admin.identifier),
+          type: admin.type,
+          role: admin.role,
+          credits: admin.credits
+        }
+      };
+
+    } catch (error) {
+      console.error('Admin auth login error:', error);
+      return {
+        success: false,
+        message: 'Erro interno do servidor'
+      };
+    }
+  }
+
+  // Gerar token JWT para administrador (isolamento global)
+  private static generateAdminToken(admin: any): string {
+    const payload = {
+      userId: admin.$id,
+      tenantId: 'admin', // Tenant especial para admins
+      identifier: admin.identifier,
+      type: admin.type,
+      role: admin.role,
+      isAdmin: true, // Flag especial para admins
+      iat: Math.floor(Date.now() / 1000)
+    };
+
+    const secret = this.JWT_SECRET as string;
+    const options: jwt.SignOptions = {
+      expiresIn: this.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn']
+    };
+
+    return jwt.sign(payload, secret, options);
   }
 }
 
@@ -318,6 +426,52 @@ export const authenticateMiddleware = async (
   }
 };
 
+// Middleware de autenticação para administradores
+export const authenticateAdminMiddleware = async (
+  req: Request,
+  res: Response,
+  next: any
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de autenticação necessário'
+      });
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = await AuthService.verifyToken(token);
+
+    if (!decoded) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      });
+    }
+
+    // Verificar se é administrador
+    if (!decoded.isAdmin || decoded.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado: permissões de administrador necessárias'
+      });
+    }
+
+    req.userId = decoded.userId;
+    req.user = decoded;
+    req.isAdmin = true; // Flag para indicar que é admin
+    next();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
 // Rotas de autenticação
 router.post('/login', async (req: Request, res: Response) => {
   const { identifier }: LoginRequest = req.body;
@@ -331,6 +485,21 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 
   const result = await AuthService.login(identifier, tenantId);
+  res.json(result);
+});
+
+// Rota de login para administradores
+router.post('/admin/login', async (req: Request, res: Response) => {
+  const { identifier }: LoginRequest = req.body;
+
+  if (!identifier) {
+    return res.status(400).json({
+      success: false,
+      message: 'CPF/CNPJ é obrigatório'
+    });
+  }
+
+  const result = await AuthService.adminLogin(identifier);
   res.json(result);
 });
 
@@ -362,6 +531,35 @@ router.get('/me', authenticateMiddleware, async (req: Request, res: Response) =>
     res.status(500).json({
       success: false,
       message: 'Erro ao buscar dados do usuário'
+    });
+  }
+});
+
+// Rota para dados do admin (acesso global)
+router.get('/admin/me', authenticateAdminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const admin = await appwrite.databases.getDocument(
+      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+      'users',
+      req.userId!
+    );
+
+    res.json({
+      success: true,
+      user: {
+        id: admin.$id,
+        identifier: AuthValidators.formatIdentifier(admin.identifier),
+        type: admin.type,
+        role: admin.role,
+        credits: admin.credits,
+        status: admin.status,
+        isAdmin: true
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar dados do administrador'
     });
   }
 });
