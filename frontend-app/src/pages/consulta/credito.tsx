@@ -28,32 +28,233 @@ export default function ConsultaCredito() {
   const [inputError, setInputError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
   // TODO: Buscar dados reais dos plugins ativos
   const creditQueries: CreditQuery[] = [
     {
       id: '1',
       name: 'POSITIVO ACERTA ESSENCIAL PF',
-      description: 'Consulta básica de crédito pessoa física com score e restrições',
-      price: 2.50,
+      description: 'Voltado para análise de crédito baseada em dados positivos, ou seja, informações de comportamento financeiro saudável, e não somente dívidas.',
+      price: 4.25,
       plugin: 'infosimples',
       active: true
     },
     {
       id: '2',
-      name: 'PROTESTO SINTÉTICO NACIONAL',
-      description: 'Consulta de protestos e ações judiciais em todo território nacional',
-      price: 3.75,
+      name: '39-TeleConfirma',
+      description: 'Serviço de confirmação telefônica para validação de informações pessoais e cadastrais, garantindo precisão nos dados fornecidos.',
+      price: 1.80,
       plugin: 'infosimples',
       active: true
     },
     {
       id: '3',
-      name: 'SCORE DE CRÉDITO COMPLETO',
-      description: 'Análise completa de score de crédito com histórico detalhado',
-      price: 5.00,
-      plugin: 'serasa',
-      active: false // Plugin não ativo
+      name: 'PROTESTO SINTÉTICO NACIONAL',
+      description: 'Retorna informações sobre protestos em cartórios em nível nacional, identificando títulos protestados e valores associados.',
+      price: 2.30,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '4',
+      name: '36-Busca por Nome+UF',
+      description: 'Busca de informações por nome e unidade federativa, facilitando a localização de dados cadastrais em todo o território brasileiro.',
+      price: 2.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '5',
+      name: 'POSITIVO DEFINE RISCO CNPJ',
+      description: 'Produto de análise de crédito empresarial baseado exclusivamente em dados positivos, semelhante ao Cadastro Positivo das pessoas físicas.',
+      price: 4.25,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '6',
+      name: 'QUOD RESTRITIVO + AÇÕES PF',
+      description: 'Consulta negativa voltada para identificar todas as ocorrências restritivas de um CPF, somada a processos judiciais que possam indicar risco.',
+      price: 1.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '7',
+      name: 'QUOD RESTRITIVO + AÇÕES PJ',
+      description: 'Consulta negativa voltada para identificar todas as ocorrências restritivas de um CNPJ, somada a processos judiciais que possam indicar risco.',
+      price: 1.30,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '8',
+      name: 'RATING AVANÇADO PJ',
+      description: 'Análise que avalia diversos dados financeiros e comportamentais de uma pessoa jurídica para gerar uma avaliação de crédito mais precisa.',
+      price: 4.90,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '9',
+      name: 'PROCESSOS JUDICIAIS PF/PJ',
+      description: 'Verifica processos judiciais em todas as esferas, incluindo dados como número do processo, tribunal, status, partes envolvidas e valores.',
+      price: 2.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '10',
+      name: 'BOA VISTA DEFINE + SCORE PJ',
+      description: 'Produto da Boa Vista voltado para pessoa jurídica, usado para análise rápida e econômica de risco de crédito empresarial.',
+      price: 2.30,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '11',
+      name: 'RATING AVANÇADO PF',
+      description: 'Análise que avalia diversos dados financeiros e comportamentais de uma pessoa física para gerar uma avaliação de crédito mais precisa.',
+      price: 4.90,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '12',
+      name: 'CCF Bacen PJ/PF',
+      description: 'Verifica se uma pessoa possui registros no Cadastro de Cheques sem Fundos (CCF) do Banco Central, reunindo informações de cheques devolvidos.',
+      price: 0.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '13',
+      name: 'MAX BRASIL AVANÇADO PF',
+      description: 'SPC Plus + Score PF combina informações completas de pendências no SPC Brasil com a pontuação de score de crédito do consumidor.',
+      price: 5.90,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '14',
+      name: 'MAX BRASIL AVANÇADO CNPJ',
+      description: 'SPC Plus + Score PJ reúne informações completas de pendências e restrições no SPC Brasil para empresas, junto com o score de crédito PJ.',
+      price: 5.90,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '15',
+      name: '1003 - SCR Premium + Integrações',
+      description: 'Consulta que retorna a pontuação de crédito e análise de risco, combinando o score de mercado com o relatório do Banco Central (SCR).',
+      price: 4.00,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '16',
+      name: 'BVS BASICA PJ',
+      description: 'Versão empresarial da consulta restritiva da Boa Vista para pessoa jurídica, fornecendo dados básicos de restrições e pendências.',
+      price: 1.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '17',
+      name: 'REALTIME PREMIUM + SCORE PF',
+      description: 'Reúne em um único relatório informações de dívidas vencidas registradas no Serasa (Pefin) e protestos em cartórios vinculados ao CPF.',
+      price: 5.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '18',
+      name: '1002-Protesto Nacional',
+      description: 'Verifica se existem títulos protestados em nome de uma pessoa ou empresa em qualquer cartório do Brasil, identificando dívidas não pagas.',
+      price: 0.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '19',
+      name: '194-Ações Trabalhistas',
+      description: 'Consulta sobre ações trabalhistas e processos relacionados ao direito do trabalho, incluindo reclamações e disputas laborais.',
+      price: 4.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '20',
+      name: 'BVS BASICA PF',
+      description: 'Versão da consulta restritiva da Boa Vista para pessoa física, oferecendo dados essenciais sobre restrições e histórico financeiro.',
+      price: 0.60,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '21',
+      name: '1001-Ano Ultimo Licenciamento Disponível + Bin Nacional',
+      description: 'Retorna o ano do último licenciamento disponível do veículo e apresenta informações complementares da BIN nacional, incluindo dados técnicos.',
+      price: 2.90,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '22',
+      name: 'SCR PREMIUM + INTEGRAÇÕES',
+      description: 'Consulta que retorna a pontuação de crédito e análise de risco, combinando o score de mercado com o relatório do Banco Central (SCR).',
+      price: 4.25,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '23',
+      name: 'BOA VISTA ACERTA CPF',
+      description: 'Consulta para pessoa física que traz, em tempo real, dívidas da Boa Vista + Score, facilitando decisões rápidas de crédito.',
+      price: 2.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '24',
+      name: '303-SCPC PF Basic',
+      description: 'Consulta básica no SCPC para pessoa física, fornecendo informações essenciais sobre restrições e pendências no cadastro positivo.',
+      price: 0.60,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '25',
+      name: 'CADIN',
+      description: 'Retorna informações sobre registros no CADIN, identificando dívidas e pendências financeiras com órgãos públicos e entidades federais.',
+      price: 2.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '26',
+      name: 'REALTIME PREMIUM + SCORE PJ',
+      description: 'Reúne em um único relatório informações de dívidas vencidas registradas no Serasa (Pefin) e protestos em cartórios vinculados ao CNPJ.',
+      price: 5.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '27',
+      name: '134-Serasa Crednet Pefin+Protesto+SPC PF',
+      description: 'Consulta integrada que combina informações do Serasa, protestos e SPC para pessoa física, oferecendo visão completa de restrições.',
+      price: 5.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '28',
+      name: '186-Localização Simples',
+      description: 'Serviço de localização simples para endereços e dados cadastrais, auxiliando na validação de informações de contato e residência.',
+      price: 2.20,
+      plugin: 'infosimples',
+      active: true
     }
   ]
 
@@ -181,10 +382,29 @@ export default function ConsultaCredito() {
     }
   }
 
+  const truncateDescription = (text: string, maxLength: number = 180): string => {
+    if (text.length <= maxLength) return text
+    const truncated = text.substring(0, maxLength)
+    const lastSpace = truncated.lastIndexOf(' ')
+    return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
+  }
+
   const handleInputChange = (value: string) => {
     const formatted = formatDocument(value)
     setInputValue(formatted)
     setInputError('')
+  }
+
+  const toggleCardExpansion = (id: string) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
   }
 
   return (
@@ -197,13 +417,13 @@ export default function ConsultaCredito() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
+        <main className="flex-1 lg:ml-64 pb-20">
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Page Header */}
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-gray-900">Consulta de Crédito</h1>
-                <p className="text-gray-600 mt-2">
+                <h1 className="text-3xl font-bold text-foreground">Consulta de Crédito</h1>
+                <p className="text-muted-foreground mt-2">
                   Verifique informações de crédito de pessoas físicas e jurídicas
                 </p>
               </div>
@@ -213,8 +433,21 @@ export default function ConsultaCredito() {
                 {creditQueries.map((query) => (
                   <Card key={query.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
-                      <CardTitle className="text-lg">{query.name}</CardTitle>
-                      <CardDescription>{query.description}</CardDescription>
+                      <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Crédito</p>
+                        <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
+                          {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
+                        </CardDescription>
+                        {query.description.length > 180 && (
+                          <button
+                            onClick={() => toggleCardExpansion(query.id)}
+                            className="text-xs text-primary hover:underline mt-1"
+                          >
+                            {expandedCards.has(query.id) ? 'Ver menos' : 'Mais...'}
+                          </button>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between mb-4">

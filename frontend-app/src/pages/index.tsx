@@ -37,7 +37,7 @@ export default function Dashboard() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
+        <main className="flex-1 lg:ml-64 pb-20">
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Page Header */}

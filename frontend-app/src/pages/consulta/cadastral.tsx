@@ -28,32 +28,57 @@ export default function ConsultaCadastral() {
   const [inputError, setInputError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
   // TODO: Buscar dados reais dos plugins ativos
   const cadastralQueries: CadastralQuery[] = [
     {
       id: '1',
       name: 'QUOD CADASTRAL PF',
-      description: 'Consulta cadastral completa para pessoa física com dados de identidade e processos',
-      price: 1.50,
+      description: 'Reúne dados completos de identificação de pessoa física, incluindo endereço e situação do CPF.',
+      price: 1.00,
       plugin: 'infosimples',
       active: true
     },
     {
       id: '2',
-      name: 'RELATÓRIO JURIDICO PF',
-      description: 'Relatório jurídico detalhado com histórico de processos e pendências',
-      price: 4.00,
+      name: '424-ValidaID - Localizacao',
+      description: 'Valida identidade e localização com dados cadastrais e endereço.',
+      price: 2.20,
       plugin: 'infosimples',
       active: true
     },
     {
       id: '3',
-      name: 'CONSULTA CADASTRAL COMPLETA',
-      description: 'Análise completa de dados cadastrais com validação cruzada de fontes',
-      price: 3.50,
-      plugin: 'serasa',
-      active: false // Plugin não ativo
+      name: '431-Dados de CNH',
+      description: 'Apresenta dados de CNH em nível nacional a partir do CPF.',
+      price: 3.45,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '4',
+      name: '320-Contatos Por CEP',
+      description: 'Consulta contatos e informações cadastrais por CEP, facilitando localização de endereços.',
+      price: 2.20,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '5',
+      name: 'RELATÓRIO JURIDICO PF',
+      description: 'Apresenta processos judiciais relacionados a pessoa física.',
+      price: 4.00,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '6',
+      name: 'RELATÓRIO JURIDICO PJ',
+      description: 'Reúne informações jurídicas sobre empresa, incluindo processos e restrições.',
+      price: 4.00,
+      plugin: 'infosimples',
+      active: true
     }
   ]
 
@@ -181,10 +206,29 @@ export default function ConsultaCadastral() {
     }
   }
 
+  const truncateDescription = (text: string, maxLength: number = 180): string => {
+    if (text.length <= maxLength) return text
+    const truncated = text.substring(0, maxLength)
+    const lastSpace = truncated.lastIndexOf(' ')
+    return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
+  }
+
   const handleInputChange = (value: string) => {
     const formatted = formatDocument(value)
     setInputValue(formatted)
     setInputError('')
+  }
+
+  const toggleCardExpansion = (id: string) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
   }
 
   return (
@@ -197,13 +241,13 @@ export default function ConsultaCadastral() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
+        <main className="flex-1 lg:ml-64 pb-20">
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Page Header */}
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-gray-900">Consulta Cadastral</h1>
-                <p className="text-gray-600 mt-2">
+                <h1 className="text-3xl font-bold text-foreground">Consulta Cadastral</h1>
+                <p className="text-muted-foreground mt-2">
                   Verifique informações cadastrais de pessoas físicas e jurídicas
                 </p>
               </div>
@@ -213,8 +257,21 @@ export default function ConsultaCadastral() {
                 {cadastralQueries.map((query) => (
                   <Card key={query.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
-                      <CardTitle className="text-lg">{query.name}</CardTitle>
-                      <CardDescription>{query.description}</CardDescription>
+                      <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Cadastral</p>
+                        <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
+                          {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
+                        </CardDescription>
+                        {query.description.length > 180 && (
+                          <button
+                            onClick={() => toggleCardExpansion(query.id)}
+                            className="text-xs text-primary hover:underline mt-1"
+                          >
+                            {expandedCards.has(query.id) ? 'Ver menos' : 'Mais...'}
+                          </button>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between mb-4">

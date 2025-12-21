@@ -28,32 +28,257 @@ export default function ConsultaVeicular() {
   const [inputError, setInputError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
   // TODO: Buscar dados reais dos plugins ativos
   const veicularQueries: VeicularQuery[] = [
     {
       id: '1',
-      name: 'BIN NACIONAL COMPLETA',
-      description: 'Consulta completa de dados veiculares nacionais com histórico detalhado',
-      price: 4.50,
+      name: '412-Crlv/RR',
+      description: 'Emite o CRLV-e digital para veículos registrados em Roraima, conforme dados oficiais do Detran/RR.',
+      price: 6.50,
       plugin: 'infosimples',
       active: true
     },
     {
       id: '2',
-      name: 'CRLV por Estado',
-      description: 'Consulta de CRLV específica por estado brasileiro',
-      price: 3.00,
+      name: '415-Crlv/SE',
+      description: 'Emite o CRLV-e digital para veículos registrados em Sergipe, conforme dados oficiais do Detran/SE.',
+      price: 11.00,
       plugin: 'infosimples',
       active: true
     },
     {
       id: '3',
-      name: 'CONSULTA VEICULAR BÁSICA',
-      description: 'Dados básicos do veículo com validação de propriedade',
+      name: '416-Crlv/SP',
+      description: 'Emite o CRLV-e digital para veículos registrados em São Paulo, conforme dados oficiais do Detran/SP.',
+      price: 9.90,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '4',
+      name: '411-Crlv/RO',
+      description: 'Emite o CRLV-e digital para veículos registrados em Rondônia, conforme dados oficiais do Detran/RO.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '5',
+      name: '404-Crlv/PA',
+      description: 'Emite o CRLV-e digital para veículos registrados no Pará, conforme dados oficiais do Detran/PA.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '6',
+      name: '407-Crlv/PI',
+      description: 'Emite o CRLV-e digital para veículos registrados no Piauí, conforme dados oficiais do Detran/PI.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '7',
+      name: '408-Crlv/PR',
+      description: 'Emite o CRLV-e digital para veículos registrados no Paraná, conforme dados oficiais do Detran/PR.',
+      price: 7.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '8',
+      name: '417-Crlv/TO',
+      description: 'Emite o CRLV-e digital para veículos registrados no Tocantins, conforme dados oficiais do Detran/TO.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '9',
+      name: '646-Comunicado de Venda',
+      description: 'Mostra informações sobre comunicação de venda registrada no DETRAN.',
+      price: 3.85,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '10',
+      name: '87-Bin Nacional Completa',
+      description: 'Retorna proprietário atual, cadastro completo e último licenciamento com restrições.',
+      price: 3.00,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '11',
+      name: '94-Bin Estadual (Prov. único)',
+      description: 'Apresenta dados cadastrais completos do veículo no estado de registro.',
+      price: 3.00,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '12',
+      name: '60-Recall',
+      description: 'Consulta de campanhas de recall ativas ou concluídas para o veículo.',
       price: 2.50,
-      plugin: 'serasa',
-      active: false // Plugin não ativo
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '13',
+      name: '462-Documento CRV',
+      description: 'Informa código de segurança do CRV para emissão de ATPV-e e procedimentos no Detran.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '14',
+      name: '51-Histórico Roubo e Furto',
+      description: 'Verifica registros ativos de roubo ou furto nas bases policiais.',
+      price: 3.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '15',
+      name: '57-Gravame Indicativo',
+      description: 'Informa existência de gravame sobre o veículo, como alienação fiduciária.',
+      price: 3.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '16',
+      name: '403-Crlv/MT',
+      description: 'Emite o CRLV-e digital para veículos registrados no Mato Grosso, conforme dados oficiais do Detran/MT.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '17',
+      name: '182-Renainf',
+      description: 'Retorna infrações de trânsito registradas no RENAINF com detalhes.',
+      price: 3.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '18',
+      name: '188-Indicio Conjugado - Base I',
+      description: 'Identifica registros de sinistro vinculados ao veículo.',
+      price: 4.25,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '19',
+      name: '295-CheckList Veicula',
+      description: 'Verifica se veículo atuou como táxi ou possui registro de batida.',
+      price: 3.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '20',
+      name: '179-Leilão Conjugado - Base I',
+      description: 'Informa se o veículo possui registro em base de leilão, conforme dados repassados pelos leiloeiros.',
+      price: 5.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '21',
+      name: '106-RENAJUD',
+      description: 'Identifica restrições judiciais aplicadas ao veículo pelo RENAJUD.',
+      price: 3.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '22',
+      name: '125-Leilão Score + Indicio + PT',
+      description: 'Verifica registros de leilão e sinistro com pontuação de risco.',
+      price: 8.25,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '23',
+      name: '139-Proprietario Atual',
+      description: 'Retorna os dados do veículo juntamente com as informações do proprietário atual.',
+      price: 2.40,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '24',
+      name: '364-Bin Nacional+Renainf+CSV',
+      description: 'Consulta integrada de CSV, RENAINF, RENAJUD, Recall, BIN e proprietário.',
+      price: 4.00,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '25',
+      name: '400-Crlv/MA',
+      description: 'Emite o CRLV-e digital para veículos registrados no Maranhão, conforme dados oficiais do Detran/MA.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '26',
+      name: '401-Crlv/MG',
+      description: 'Emite o CRLV-e digital para veículos registrados em Minas Gerais, conforme dados oficiais do Detran/MG.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '27',
+      name: '402-Crlv/MS',
+      description: 'Emite o CRLV-e digital para veículos registrados em Mato Grosso do Sul, conforme dados oficiais do Detran/MS.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '28',
+      name: '399-Crlv/GO',
+      description: 'Emite o CRLV-e digital para veículos registrados em Goiás, conforme dados oficiais do Detran/GO.',
+      price: 8.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '29',
+      name: '392-Crlv/AL',
+      description: 'Emite o CRLV-e digital para veículos registrados em Alagoas, conforme dados oficiais do Detran/AL.',
+      price: 9.00,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '30',
+      name: '394-Crlv/AP',
+      description: 'Emite o CRLV-e digital para veículos registrados no Amapá, conforme dados oficiais do Detran/AP.',
+      price: 6.50,
+      plugin: 'infosimples',
+      active: true
+    },
+    {
+      id: '31',
+      name: '395-Crlv/BA',
+      description: 'Emite o CRLV-e digital para veículos registrados na Bahia, conforme dados oficiais do Detran/BA.',
+      price: 15.90,
+      plugin: 'infosimples',
+      active: true
     }
   ]
 
@@ -141,10 +366,29 @@ export default function ConsultaVeicular() {
     }
   }
 
+  const truncateDescription = (text: string, maxLength: number = 180): string => {
+    if (text.length <= maxLength) return text
+    const truncated = text.substring(0, maxLength)
+    const lastSpace = truncated.lastIndexOf(' ')
+    return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
+  }
+
   const handleInputChange = (value: string) => {
     const formatted = formatPlate(value)
     setInputValue(formatted)
     setInputError('')
+  }
+
+  const toggleCardExpansion = (id: string) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
   }
 
   return (
@@ -157,13 +401,13 @@ export default function ConsultaVeicular() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
+        <main className="flex-1 lg:ml-64 pb-20">
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Page Header */}
               <div className="text-center">
-                <h1 className="text-3xl font-bold text-gray-900">Consulta Veicular</h1>
-                <p className="text-gray-600 mt-2">
+                <h1 className="text-3xl font-bold text-foreground">Consulta Veicular</h1>
+                <p className="text-muted-foreground mt-2">
                   Verifique informações de veículos por placa
                 </p>
               </div>
@@ -173,8 +417,21 @@ export default function ConsultaVeicular() {
                 {veicularQueries.map((query) => (
                   <Card key={query.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
-                      <CardTitle className="text-lg">{query.name}</CardTitle>
-                      <CardDescription>{query.description}</CardDescription>
+                      <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Veicular</p>
+                        <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
+                          {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
+                        </CardDescription>
+                        {query.description.length > 180 && (
+                          <button
+                            onClick={() => toggleCardExpansion(query.id)}
+                            className="text-xs text-primary hover:underline mt-1"
+                          >
+                            {expandedCards.has(query.id) ? 'Ver menos' : 'Mais...'}
+                          </button>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between mb-4">

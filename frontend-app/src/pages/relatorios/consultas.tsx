@@ -152,7 +152,7 @@ export default function RelatorioConsultas() {
         <Header />
         <div className="flex">
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <main className="flex-1 lg:ml-0">
+          <main className="flex-1 lg:ml-64 pb-20">
             <div className="p-6">
               <div className="text-center">Carregando...</div>
             </div>
@@ -173,7 +173,7 @@ export default function RelatorioConsultas() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
+        <main className="flex-1 lg:ml-64 pb-20">
           <div className="p-6">
             <div className="max-w-7xl mx-auto space-y-6">
               {/* Page Header */}

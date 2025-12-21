@@ -7,7 +7,7 @@ import ThemeToggle from './ThemeToggle'
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border px-6 py-4">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-4">
           <h1 className="text-xl font-bold text-foreground">BigTech</h1>
