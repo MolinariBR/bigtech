@@ -6,6 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppwriteService = void 0;
 const node_appwrite_1 = require("node-appwrite");
 class AppwriteService {
+    static instance;
+    client;
+    databases;
+    account;
+    users;
     constructor() {
         this.client = new node_appwrite_1.Client()
             .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost:80/v1')

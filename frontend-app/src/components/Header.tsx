@@ -1,6 +1,8 @@
 // Baseado em: 5.Pages.md, 8.DesignSystem.md
 // Componente Header compartilhado - navegação superior com logo e notificações
 
+import Link from 'next/link'
+import { User } from 'lucide-react'
 import { Button } from './Button'
 import ThemeToggle from './ThemeToggle'
 
@@ -10,7 +12,7 @@ export default function Header() {
       <div className="flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold text-foreground">BigTech</h1>
+          <div className="text-xl font-bold text-foreground">BigTech</div>
           <span className="text-sm text-muted-foreground">Consultas</span>
         </div>
 
@@ -20,9 +22,9 @@ export default function Header() {
           <Button variant="outline" size="sm">
             Notificações
           </Button>
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-            U
-          </div>
+          <Link href="/minha-conta" title="Minha Conta">
+            <User className="w-6 h-6 text-foreground hover:text-primary cursor-pointer" />
+          </Link>
         </div>
       </div>
     </header>

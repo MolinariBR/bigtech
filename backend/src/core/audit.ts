@@ -3,6 +3,7 @@
 // Decisão: Logger de auditoria para compliance e rastreamento (conforme US-012)
 
 import { AppwriteService } from '../lib/appwrite';
+import { Query } from 'appwrite';
 
 interface AuditEntry {
   tenantId: string;
@@ -85,13 +86,13 @@ export class AuditLogger {
     } = {}
   ): Promise<any[]> {
     try {
-      const queries = [`tenantId=${tenantId}`];
+      const queries = [Query.equal('tenantId', tenantId)];
 
-      if (filters.userId) queries.push(`userId=${filters.userId}`);
-      if (filters.action) queries.push(`action=${filters.action}`);
-      if (filters.resource) queries.push(`resource=${filters.resource}`);
-      if (filters.startDate) queries.push(`timestamp>=${filters.startDate.toISOString()}`);
-      if (filters.endDate) queries.push(`timestamp<=${filters.endDate.toISOString()}`);
+      if (filters.userId) queries.push(Query.equal('userId', filters.userId));
+      if (filters.action) queries.push(Query.equal('action', filters.action));
+      if (filters.resource) queries.push(Query.equal('resource', filters.resource));
+      if (filters.startDate) queries.push(Query.greaterThanEqual('timestamp', filters.startDate.toISOString()));
+      if (filters.endDate) queries.push(Query.lessThanEqual('timestamp', filters.endDate.toISOString()));
 
       const result = await this.appwrite.databases.listDocuments(
         process.env.APPWRITE_DATABASE_ID || 'bigtechdb',

@@ -5,11 +5,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.auditLogger = exports.AuditLogger = void 0;
 const appwrite_1 = require("../lib/appwrite");
+const appwrite_2 = require("appwrite");
 class AuditLogger {
-    constructor() {
-        this.appwrite = appwrite_1.AppwriteService.getInstance();
-        this.initialized = false;
-    }
+    static instance;
+    appwrite = appwrite_1.AppwriteService.getInstance();
+    initialized = false;
+    constructor() { }
     static getInstance() {
         if (!AuditLogger.instance) {
             AuditLogger.instance = new AuditLogger();
@@ -52,17 +53,17 @@ class AuditLogger {
     }
     async getLogs(tenantId, filters = {}) {
         try {
-            const queries = [`tenantId=${tenantId}`];
+            const queries = [appwrite_2.Query.equal('tenantId', tenantId)];
             if (filters.userId)
-                queries.push(`userId=${filters.userId}`);
+                queries.push(appwrite_2.Query.equal('userId', filters.userId));
             if (filters.action)
-                queries.push(`action=${filters.action}`);
+                queries.push(appwrite_2.Query.equal('action', filters.action));
             if (filters.resource)
-                queries.push(`resource=${filters.resource}`);
+                queries.push(appwrite_2.Query.equal('resource', filters.resource));
             if (filters.startDate)
-                queries.push(`timestamp>=${filters.startDate.toISOString()}`);
+                queries.push(appwrite_2.Query.greaterThanEqual('timestamp', filters.startDate.toISOString()));
             if (filters.endDate)
-                queries.push(`timestamp<=${filters.endDate.toISOString()}`);
+                queries.push(appwrite_2.Query.lessThanEqual('timestamp', filters.endDate.toISOString()));
             const result = await this.appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'audits', queries);
             return result.documents.slice(0, filters.limit || 100);
         }

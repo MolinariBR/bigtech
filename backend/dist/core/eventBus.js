@@ -6,8 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.eventBus = exports.EventBus = void 0;
 const events_1 = require("events");
 class EventBus {
+    static instance;
+    emitter;
+    handlers = new Map();
     constructor() {
-        this.handlers = new Map();
         this.emitter = new events_1.EventEmitter();
         this.emitter.setMaxListeners(50); // Aumentar limite de listeners
     }

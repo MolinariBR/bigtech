@@ -1,0 +1,7 @@
+/* Tema escuro para frontend-admin */
+.dark {
+  --bg-primary: #0f172a;
+  --text-primary: #f1f5f9;
+  --bg-secondary: #334155;
+  --text-secondary: #cbd5e1;
+}

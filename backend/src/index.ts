@@ -13,6 +13,9 @@ import { pluginLoader } from './core/pluginLoader';
 import { eventBus } from './core/eventBus';
 import { billingEngine } from './core/billingEngine';
 import { auditLogger } from './core/audit';
+import { adminBillingRouter } from './controllers/admin/billing';
+import { adminPluginsRouter } from './controllers/admin/plugins';
+import { pluginsRouter } from './controllers/plugins';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -37,20 +40,25 @@ app.use(limiter);
 // Body parsing
 app.use(json({ limit: '10mb' }));
 
+// Endpoint para listar plugins disponíveis (antes do middleware multi-tenant)
+app.get('/api/plugins', (req, res) => {
+  try {
+    const plugins = pluginLoader.getAvailablePlugins();
+    res.json({ plugins, count: plugins.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get plugins' });
+  }
+});
+
 // Middleware multi-tenant
 app.use(multiTenantMiddleware);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    tenant: req.tenantId || 'unknown'
-  });
-});
+// Rotas admin
+app.use('/api/admin/billing', adminBillingRouter);
+app.use('/api/admin/plugins', adminPluginsRouter);
 
-// Rotas CORE
-app.use('/auth', authRouter);
+// Rotas de execução de plugins (após middleware multi-tenant)
+app.use('/api/plugins', pluginsRouter);
 
 // Inicialização de componentes CORE
 async function initializeCore() {

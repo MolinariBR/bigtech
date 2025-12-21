@@ -1,4 +1,4 @@
-interface Plugin {
+export interface Plugin {
     id: string;
     type: 'consulta' | 'pagamento' | 'mercado' | 'funcional';
     version: string;
@@ -7,13 +7,13 @@ interface Plugin {
     disable(tenantId: string): Promise<void>;
     execute(context: PluginContext): Promise<PluginResult>;
 }
-interface PluginContext {
+export interface PluginContext {
     tenantId: string;
     userId: string;
     input: any;
     config: any;
 }
-interface PluginResult {
+export interface PluginResult {
     success: boolean;
     data?: any;
     error?: string;
@@ -40,5 +40,4 @@ export declare class PluginLoader {
     }[];
 }
 export declare const pluginLoader: PluginLoader;
-export {};
 //# sourceMappingURL=pluginLoader.d.ts.map

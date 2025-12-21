@@ -2,13 +2,12 @@
 // Baseado em: 2.Architecture.md v1.0.2, 4.Entities.md v1.2, 7.Tasks.md v1.9
 // Precedência: 1.Project → 2.Architecture → 4.Entities → 7.Tasks
 // Decisão: Plugin Asaas para processamento de pagamentos conforme TASK-017
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleAsaasWebhook = handleAsaasWebhook;
-const axios_1 = __importDefault(require("axios"));
-const appwrite_1 = require("../../lib/appwrite");
+const axios = require('axios');
+const appwrite_1 = require("../../../lib/appwrite");
+const node_appwrite_1 = require("node-appwrite");
+const config_1 = require("./config");
 const plugin = {
     id: 'pagamento-asaas',
     type: 'pagamento',
@@ -47,13 +46,27 @@ const plugin = {
     async execute(context) {
         try {
             const paymentContext = context.input;
-            const config = this.getAsaasConfig(paymentContext.tenantId);
+            const config = await getAsaasConfig(paymentContext.tenantId);
+            // Validar valor mínimo e máximo
+            if (paymentContext.amount < config.minAmount || paymentContext.amount > config.maxAmount) {
+                return {
+                    success: false,
+                    error: `Valor deve estar entre R$ ${config.minAmount.toFixed(2)} e R$ ${config.maxAmount.toFixed(2)}`
+                };
+            }
+            // Validar método de pagamento
+            if (!config.defaultPaymentMethods.includes(paymentContext.paymentMethod)) {
+                return {
+                    success: false,
+                    error: `Método de pagamento não suportado: ${paymentContext.paymentMethod}`
+                };
+            }
             // Criar ou obter cliente no Asaas
-            const customerId = await this.getOrCreateCustomer(paymentContext, config);
+            const customerId = await getOrCreateCustomer(paymentContext, config);
             // Criar cobrança
-            const payment = await this.createPayment(customerId, paymentContext, config);
+            const payment = await createPayment(customerId, paymentContext, config);
             // Registrar transação no billing
-            await this.registerBillingTransaction(paymentContext, payment);
+            await registerBillingTransaction(paymentContext, payment);
             return {
                 success: true,
                 data: {
@@ -79,34 +92,32 @@ const plugin = {
     }
 };
 // Métodos auxiliares
-function getAsaasConfig(tenantId) {
-    const appwrite = appwrite_1.AppwriteService.getInstance();
-    // Em produção, buscar configuração do tenant
-    // Por enquanto, usar variáveis de ambiente
-    return {
-        apiKey: process.env.ASAAS_API_KEY,
-        webhookUrl: process.env.ASAAS_WEBHOOK_URL,
-        environment: process.env.ASAAS_ENVIRONMENT || 'sandbox'
-    };
+async function getAsaasConfig(tenantId) {
+    const config = await (0, config_1.getTenantConfig)(tenantId);
+    // Validar configuração
+    const validation = (0, config_1.validateConfig)(config);
+    if (!validation.valid) {
+        throw new Error(`Configuração Asaas inválida: ${validation.errors.join(', ')}`);
+    }
+    return config;
 }
 async function getOrCreateCustomer(context, config) {
-    const baseUrl = config.environment === 'production'
-        ? 'https://www.asaas.com/api/v3'
-        : 'https://sandbox.asaas.com/api/v3';
+    const baseUrl = config_1.ASAAS_URLS[config.environment];
     try {
         // Buscar cliente existente
-        const searchResponse = await axios_1.default.get(`${baseUrl}/customers`, {
+        const searchResponse = await axios.get(`${baseUrl}/customers`, {
             params: { cpfCnpj: context.customerDocument },
             headers: {
                 'access_token': config.apiKey,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: config.timeout
         });
         if (searchResponse.data.data && searchResponse.data.data.length > 0) {
             return searchResponse.data.data[0].id;
         }
         // Criar novo cliente
-        const createResponse = await axios_1.default.post(`${baseUrl}/customers`, {
+        const createResponse = await axios.post(`${baseUrl}/customers`, {
             name: context.customerName,
             cpfCnpj: context.customerDocument,
             email: context.customerEmail
@@ -114,7 +125,8 @@ async function getOrCreateCustomer(context, config) {
             headers: {
                 'access_token': config.apiKey,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: config.timeout
         });
         return createResponse.data.id;
     }
@@ -124,27 +136,28 @@ async function getOrCreateCustomer(context, config) {
     }
 }
 async function createPayment(customerId, context, config) {
-    const baseUrl = config.environment === 'production'
-        ? 'https://www.asaas.com/api/v3'
-        : 'https://sandbox.asaas.com/api/v3';
+    const baseUrl = config_1.ASAAS_URLS[config.environment];
+    // Calcular data de vencimento
+    const dueDate = new Date(Date.now() + config.defaultDueDateDays * 24 * 60 * 60 * 1000);
     const paymentData = {
         customer: customerId,
-        billingType: context.paymentMethod.toUpperCase(),
+        billingType: config_1.PAYMENT_METHOD_MAPPING[context.paymentMethod],
         value: context.amount,
-        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Vence amanhã
+        dueDate: dueDate.toISOString().split('T')[0],
         description: `Compra de ${context.creditAmount} créditos - R$ ${context.creditValue.toFixed(2)} cada`,
         externalReference: `credit_purchase_${context.userId}_${Date.now()}`,
         callback: {
-            successUrl: `${process.env.FRONTEND_URL}/financeiro/sucesso`,
+            successUrl: config.successUrl,
             autoRedirect: true
         }
     };
     try {
-        const response = await axios_1.default.post(`${baseUrl}/payments`, paymentData, {
+        const response = await axios.post(`${baseUrl}/payments`, paymentData, {
             headers: {
                 'access_token': config.apiKey,
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: config.timeout
         });
         return response.data;
     }
@@ -187,8 +200,8 @@ async function handleAsaasWebhook(webhookData) {
         if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
             // Atualizar status da transação
             const billingRecords = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'billing', [
-                appwrite.Query.equal('externalTransactionId', payment.id),
-                appwrite.Query.equal('status', 'pending')
+                node_appwrite_1.Query.equal('externalTransactionId', payment.id),
+                node_appwrite_1.Query.equal('status', 'pending')
             ]);
             if (billingRecords.documents.length > 0) {
                 const billingRecord = billingRecords.documents[0];

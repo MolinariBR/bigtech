@@ -11,12 +11,13 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const body_parser_1 = require("body-parser");
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-const auth_1 = require("./core/auth");
 const multiTenant_1 = require("./core/multiTenant");
 const pluginLoader_1 = require("./core/pluginLoader");
 const eventBus_1 = require("./core/eventBus");
 const billingEngine_1 = require("./core/billingEngine");
 const audit_1 = require("./core/audit");
+const billing_1 = require("./controllers/admin/billing");
+const plugins_1 = require("./controllers/admin/plugins");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
 // Middleware de segurança
@@ -36,18 +37,21 @@ const limiter = (0, express_rate_limit_1.default)({
 app.use(limiter);
 // Body parsing
 app.use((0, body_parser_1.json)({ limit: '10mb' }));
+// Endpoint para listar plugins disponíveis (antes do middleware multi-tenant)
+app.get('/api/plugins', (req, res) => {
+    try {
+        const plugins = pluginLoader_1.pluginLoader.getAvailablePlugins();
+        res.json({ plugins, count: plugins.length });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to get plugins' });
+    }
+});
 // Middleware multi-tenant
 app.use(multiTenant_1.multiTenantMiddleware);
-// Health check
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        tenant: req.tenantId || 'unknown'
-    });
-});
-// Rotas CORE
-app.use('/auth', auth_1.authRouter);
+// Rotas admin
+app.use('/api/admin/billing', billing_1.adminBillingRouter);
+app.use('/api/admin/plugins', plugins_1.adminPluginsRouter);
 // Inicialização de componentes CORE
 async function initializeCore() {
     try {

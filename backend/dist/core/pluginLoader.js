@@ -41,11 +41,11 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const appwrite_1 = require("../lib/appwrite");
 class PluginLoader {
-    constructor() {
-        this.appwrite = appwrite_1.AppwriteService.getInstance();
-        this.plugins = new Map();
-        this.activePlugins = new Map(); // tenantId -> Set<pluginIds>
-    }
+    static instance;
+    appwrite = appwrite_1.AppwriteService.getInstance();
+    plugins = new Map();
+    activePlugins = new Map(); // tenantId -> Set<pluginIds>
+    constructor() { }
     static getInstance() {
         if (!PluginLoader.instance) {
             PluginLoader.instance = new PluginLoader();
@@ -68,49 +68,73 @@ class PluginLoader {
             return;
         }
         const pluginTypes = fs.readdirSync(pluginsDir);
+        console.log('🔍 Found plugin types:', pluginTypes);
         for (const type of pluginTypes) {
             const typeDir = path.join(pluginsDir, type);
             if (!fs.statSync(typeDir).isDirectory())
                 continue;
             const pluginNames = fs.readdirSync(typeDir);
+            console.log(`🔍 Found plugins in ${type}:`, pluginNames);
             for (const name of pluginNames) {
                 const pluginDir = path.join(typeDir, name);
-                const pluginPath = path.join(pluginDir, 'index.ts');
+                const pluginPath = path.join(pluginDir, 'index.js');
+                console.log(`🔍 Checking plugin path: ${pluginPath}`);
                 if (fs.existsSync(pluginPath)) {
                     try {
+                        console.log(`🔄 Importing plugin: ${type}-${name}`);
                         const pluginModule = await Promise.resolve(`${pluginPath}`).then(s => __importStar(require(s)));
-                        const plugin = pluginModule.default || pluginModule;
+                        let plugin = pluginModule.default || pluginModule;
+                        // If it's a class constructor, instantiate it
+                        if (typeof plugin === 'function' && plugin.prototype && plugin.prototype.constructor === plugin) {
+                            plugin = new plugin();
+                        }
                         if (this.validatePlugin(plugin)) {
                             this.plugins.set(`${type}-${name}`, plugin);
                             console.log(`✅ Plugin loaded: ${type}-${name} v${plugin.version}`);
+                        }
+                        else {
+                            console.log(`❌ Plugin validation failed: ${type}-${name}`);
+                        }
+                        if (this.validatePlugin(plugin)) {
+                            this.plugins.set(`${type}-${name}`, plugin);
+                            console.log(`✅ Plugin loaded: ${type}-${name} v${plugin.version}`);
+                        }
+                        else {
+                            console.log(`❌ Plugin validation failed: ${type}-${name}`);
                         }
                     }
                     catch (error) {
                         console.error(`❌ Failed to load plugin ${type}-${name}:`, error);
                     }
                 }
+                else {
+                    console.log(`❌ Plugin index.js not found: ${pluginPath}`);
+                }
             }
         }
     }
     validatePlugin(plugin) {
-        return (plugin &&
-            typeof plugin.id === 'string' &&
-            typeof plugin.type === 'string' &&
-            typeof plugin.version === 'string' &&
-            typeof plugin.install === 'function' &&
-            typeof plugin.enable === 'function' &&
-            typeof plugin.disable === 'function' &&
-            typeof plugin.execute === 'function');
+        const checks = [
+            { prop: 'id', valid: typeof plugin.id === 'string' },
+            { prop: 'type', valid: typeof plugin.type === 'string' },
+            { prop: 'version', valid: typeof plugin.version === 'string' },
+            { prop: 'install', valid: typeof plugin.install === 'function' },
+            { prop: 'enable', valid: typeof plugin.enable === 'function' },
+            { prop: 'disable', valid: typeof plugin.disable === 'function' },
+            { prop: 'execute', valid: typeof plugin.execute === 'function' },
+        ];
+        const failed = checks.filter(check => !check.valid);
+        if (failed.length > 0) {
+            console.log(`❌ Plugin validation failed for properties:`, failed.map(f => f.prop));
+            return false;
+        }
+        console.log(`✅ Plugin validation passed for: ${plugin.id}`);
+        return true;
     }
     async loadActivePlugins() {
         try {
-            const plugins = await this.appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'plugins', ['status=enabled']);
-            for (const plugin of plugins.documents) {
-                if (!this.activePlugins.has(plugin.tenantId)) {
-                    this.activePlugins.set(plugin.tenantId, new Set());
-                }
-                this.activePlugins.get(plugin.tenantId).add(plugin.$id);
-            }
+            // TODO: Implementar carregamento de plugins ativos do Appwrite quando estiver configurado
+            console.log('[DEV] Skipping active plugins load from database');
         }
         catch (error) {
             console.warn('Failed to load active plugins from database:', error);
@@ -119,7 +143,7 @@ class PluginLoader {
     async getActivePlugins(tenantId) {
         const activePluginIds = this.activePlugins.get(tenantId) || new Set();
         const activePlugins = [];
-        for (const pluginId of activePluginIds) {
+        for (const pluginId of Array.from(activePluginIds)) {
             // Map plugin database ID to plugin instance
             // This is a simplified mapping - in reality you'd need proper mapping
             const plugin = Array.from(this.plugins.values()).find(p => p.id === pluginId);
@@ -150,9 +174,10 @@ class PluginLoader {
         }
         catch (error) {
             console.error(`Plugin ${pluginId} execution error:`, error);
+            const err = error instanceof Error ? error : new Error(String(error));
             return {
                 success: false,
-                error: `Plugin execution failed: ${error.message}`
+                error: `Plugin execution failed: ${err.message}`
             };
         }
     }

@@ -95,6 +95,9 @@ class AuthValidators {
 exports.AuthValidators = AuthValidators;
 // Classe principal de autenticação
 class AuthService {
+    static JWT_SECRET = process.env.JWT_SECRET || 'bigtech-secret-key';
+    static JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+    static BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
     // Login de usuário
     static async login(identifier, tenantId) {
         try {
@@ -314,9 +317,6 @@ class AuthService {
     }
 }
 exports.AuthService = AuthService;
-AuthService.JWT_SECRET = process.env.JWT_SECRET || 'bigtech-secret-key';
-AuthService.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
-AuthService.BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
 // Middleware de autenticação
 const authenticateMiddleware = async (req, res, next) => {
     try {
