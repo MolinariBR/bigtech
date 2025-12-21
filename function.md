@@ -50,6 +50,16 @@
 - **Correções:** Asserções de tipo adicionadas para propriedades validadas
 - **QA:** ✅ Build testado e validado
 
+## PAC-032.1: Correção Build - Frontend-App Next.js
+- **Status:** ✅ Concluído
+- **Objetivo:** Resolver erro de módulo não encontrado no build do Next.js
+- **Análise:**
+  - **Frontend-app:** Erro 'Cannot find module ./209.js' causado por cache corrompido
+  - **Solução:** Limpeza do diretório .next e rebuild completo
+  - **Build:** ✅ Todas as páginas compilando corretamente
+- **Correções:** Cache do Next.js limpo e rebuild executado
+- **QA:** ✅ Build validado com 12/12 páginas geradas
+
 ## PAC-004: Plugin Infosimples - Consultas
 - **Status:** ❌ Pendente análise
 - **Objetivo:** Verificar consultas externas (cadastral, crédito, veicular)
@@ -421,11 +431,11 @@
 - Pode impactar operação
 
 ## Métricas de Análise:
-- **Total PACs:** 42
-- **✅ Verificados:** 4 (9.5%)
-- **❌ Pendente análise:** 15 (35.7%)
-- **❌ Pendente análise:** 3 (7.1%)
-- **❌ Pendentes:** 20 (47.6%)
+- **Total PACs:** 43
+- **✅ Verificados:** 5 (11.6%)
+- **❌ Pendente análise:** 15 (34.9%)
+- **❌ Pendente análise:** 3 (7.0%)
+- **❌ Pendentes:** 20 (46.5%)
 
 ## Checklist de QA Geral:
 
