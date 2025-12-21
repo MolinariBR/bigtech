@@ -12,8 +12,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@types/axios": "^0.9.36",
     "amqplib": "^0.10.0",
     "appwrite": "^13.0.0",
+    "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
@@ -21,6 +23,7 @@
     "express-rate-limit": "^7.0.0",
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.0",
+    "node-appwrite": "^21.0.0",
     "node-cron": "^3.0.0",
     "uuid": "^9.0.0"
   },

@@ -1,0 +1,179 @@
+"use strict";
+// Baseado em: 4.Entities.md v1.1, 6.UserStories.md v1.1
+// Precedência: 1.Project → 2.Architecture → 4.Entities → 6.UserStories
+// Decisão: Engine genérica de cobrança para consumo de créditos
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.billingEngine = exports.BillingEngine = void 0;
+const appwrite_1 = require("../lib/appwrite");
+const eventBus_1 = require("./eventBus");
+const audit_1 = require("./audit");
+class BillingEngine {
+    constructor() {
+        this.appwrite = appwrite_1.AppwriteService.getInstance();
+        this.setupEventListeners();
+    }
+    static getInstance() {
+        if (!BillingEngine.instance) {
+            BillingEngine.instance = new BillingEngine();
+        }
+        return BillingEngine.instance;
+    }
+    async initialize() {
+        console.log('💰 Billing Engine initialized');
+    }
+    setupEventListeners() {
+        // Escutar eventos de consumo
+        eventBus_1.eventBus.subscribe('query.executed', async (event) => {
+            if (event.payload.cost && event.payload.cost > 0) {
+                await this.debitCredits({
+                    tenantId: event.tenantId,
+                    userId: event.userId,
+                    type: 'query_debit',
+                    amount: -event.payload.cost,
+                    currency: 'BRL',
+                    consultaId: event.payload.consultaId,
+                    description: `Consulta ${event.payload.type}`
+                });
+            }
+        });
+        eventBus_1.eventBus.subscribe('credits.purchased', async (event) => {
+            await this.creditPurchase({
+                tenantId: event.tenantId,
+                userId: event.userId,
+                type: 'credit_purchase',
+                amount: event.payload.amount,
+                currency: 'BRL',
+                pluginId: event.payload.pluginId,
+                description: 'Compra de créditos'
+            });
+        });
+    }
+    async debitCredits(transaction) {
+        try {
+            // Verificar saldo do usuário
+            const user = await this.appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', transaction.userId);
+            if (user.credits + transaction.amount < 0) {
+                return {
+                    success: false,
+                    error: 'Saldo insuficiente'
+                };
+            }
+            // Criar transação
+            const billingData = {
+                tenantId: transaction.tenantId,
+                userId: transaction.userId,
+                type: transaction.type,
+                amount: transaction.amount,
+                currency: transaction.currency,
+                pluginId: transaction.pluginId || null,
+                consultaId: transaction.consultaId || null,
+                status: 'completed',
+                processedAt: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            };
+            const billingDoc = await this.appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'billings', 'unique()', billingData);
+            // Atualizar saldo do usuário
+            await this.appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', transaction.userId, {
+                credits: user.credits + transaction.amount,
+                updatedAt: new Date().toISOString()
+            });
+            // Log de auditoria
+            await audit_1.auditLogger.log({
+                tenantId: transaction.tenantId,
+                userId: transaction.userId,
+                action: 'billing_debit',
+                resource: `billing:${billingDoc.$id}`,
+                details: {
+                    amount: transaction.amount,
+                    type: transaction.type,
+                    newBalance: user.credits + transaction.amount
+                },
+                ipAddress: 'system'
+            });
+            return {
+                success: true,
+                transactionId: billingDoc.$id
+            };
+        }
+        catch (error) {
+            console.error('Billing debit error:', error);
+            return {
+                success: false,
+                error: 'Erro ao processar débito'
+            };
+        }
+    }
+    async creditPurchase(transaction) {
+        try {
+            // Criar transação
+            const billingData = {
+                tenantId: transaction.tenantId,
+                userId: transaction.userId,
+                type: transaction.type,
+                amount: transaction.amount,
+                currency: transaction.currency,
+                pluginId: transaction.pluginId || null,
+                consultaId: null,
+                status: 'completed',
+                processedAt: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            };
+            const billingDoc = await this.appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'billings', 'unique()', billingData);
+            // Atualizar saldo do usuário
+            const user = await this.appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', transaction.userId);
+            await this.appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', transaction.userId, {
+                credits: user.credits + transaction.amount,
+                updatedAt: new Date().toISOString()
+            });
+            // Log de auditoria
+            await audit_1.auditLogger.log({
+                tenantId: transaction.tenantId,
+                userId: transaction.userId,
+                action: 'billing_credit',
+                resource: `billing:${billingDoc.$id}`,
+                details: {
+                    amount: transaction.amount,
+                    type: transaction.type,
+                    newBalance: user.credits + transaction.amount
+                },
+                ipAddress: 'system'
+            });
+            return {
+                success: true,
+                transactionId: billingDoc.$id
+            };
+        }
+        catch (error) {
+            console.error('Billing credit error:', error);
+            return {
+                success: false,
+                error: 'Erro ao processar crédito'
+            };
+        }
+    }
+    async getBalance(userId) {
+        try {
+            const user = await this.appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', userId);
+            return user.credits || 0;
+        }
+        catch (error) {
+            console.error('Error getting balance:', error);
+            return 0;
+        }
+    }
+    async getTransactionHistory(userId, limit = 50) {
+        try {
+            const result = await this.appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'billings', [`userId=${userId}`]);
+            return result.documents
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, limit);
+        }
+        catch (error) {
+            console.error('Error getting transaction history:', error);
+            return [];
+        }
+    }
+}
+exports.BillingEngine = BillingEngine;
+exports.billingEngine = BillingEngine.getInstance();
+//# sourceMappingURL=billingEngine.js.map
