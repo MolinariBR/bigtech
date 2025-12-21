@@ -93,6 +93,126 @@ Exemplos de respostas:
   ]
 }
 
+lens 600
+
+{
+  "code": 600,
+  "code_message": "Um erro inesperado ocorreu e será analisado.",
+  "errors": [],
+  "header": {
+    "api_version": "v2",
+    "api_version_full": "2.2.33-20251219183709",
+    "product": null,
+    "service": "cenprot-sp/protestos",
+    "parameters": {
+      "cnpj": "",
+      "cpf": ""
+    },
+    "client_name": "Minha Empresa LTDA",
+    "token_name": "desenvolvimento",
+    "billable": false,
+    "price": "0.0",
+    "requested_at": "2025-12-21T16:12:48.609-03:00",
+    "elapsed_time_in_milliseconds": 1172,
+    "remote_ip": null,
+    "signature": "OWVfYtn4N+HneQnHt1Pao7MC36rmaurTzAoJKqS/iLfIIGYotlzXDtB06/7J+h72jgq9+rBqjcdwymd2Ca6HPcBeo+F6RtPK2xiAzA=="
+  },
+  "data_count": 0,
+  "data": [],
+  "site_receipts": [
+    "https://api.infosimples.com/exemplo-de-url"
+  ]
+}
+
+601
+
+{
+  "code": 601,
+  "code_message": "Não foi possível se autenticar com o token informado.",
+  "errors": [],
+  "header": {
+    "api_version": "v2",
+    "api_version_full": "2.2.33-20251219183709",
+    "product": null,
+    "service": "cenprot-sp/protestos",
+    "parameters": {
+      "cnpj": "",
+      "cpf": ""
+    },
+    "client_name": "Minha Empresa LTDA",
+    "token_name": "desenvolvimento",
+    "billable": false,
+    "price": "0.0",
+    "requested_at": "2025-12-21T16:12:48.637-03:00",
+    "elapsed_time_in_milliseconds": 1548,
+    "remote_ip": null,
+    "signature": "NLO7X26q1JjxFhVZpcfuh64EADsayuyk0CLWgXAh3A4R5idQ1UuYXTsCMVInRTbVR5aZDjFqxI7N//KCLySTM+pJGUSlf0kx3U5j6g=="
+  },
+  "data_count": 0,
+  "data": [],
+  "site_receipts": [
+    "https://api.infosimples.com/exemplo-de-url"
+  ]
+}
+
+{
+  "code": 602,
+  "code_message": "O serviço informado na URL não é válido.",
+  "errors": [],
+  "header": {
+    "api_version": "v2",
+    "api_version_full": "2.2.33-20251219183709",
+    "product": null,
+    "service": "cenprot-sp/protestos",
+    "parameters": {
+      "cnpj": "",
+      "cpf": ""
+    },
+    "client_name": "Minha Empresa LTDA",
+    "token_name": "desenvolvimento",
+    "billable": false,
+    "price": "0.0",
+    "requested_at": "2025-12-21T16:12:48.666-03:00",
+    "elapsed_time_in_milliseconds": 1451,
+    "remote_ip": null,
+    "signature": "IqhkNwL7gq4j9jpo4MGBfbQavLef2tOtJ7Zvy1xI730Pz4Pyh5aIluVXxnmueCf5Y5ndW1fZH4P48XPlbEEj8dwJBr/ntx6U1ZhHYw=="
+  },
+  "data_count": 0,
+  "data": [],
+  "site_receipts": [
+    "https://api.infosimples.com/exemplo-de-url"
+  ]
+}
+
+{
+  "code": 603,
+  "code_message": "O token informado não tem autorização de acesso ao serviço. Verifique se ele continua ativo e se ele não possui algum limite de uso especificado.",
+  "errors": [],
+  "header": {
+    "api_version": "v2",
+    "api_version_full": "2.2.33-20251219183709",
+    "product": null,
+    "service": "cenprot-sp/protestos",
+    "parameters": {
+      "cnpj": "",
+      "cpf": ""
+    },
+    "client_name": "Minha Empresa LTDA",
+    "token_name": "desenvolvimento",
+    "billable": false,
+    "price": "0.0",
+    "requested_at": "2025-12-21T16:12:48.695-03:00",
+    "elapsed_time_in_milliseconds": 1987,
+    "remote_ip": null,
+    "signature": "E+mwhrjvT26Nkjg/v3CsZYH3u+nKaCJ0c34EOvzFZ+nPKYRAh4UlK4RjTnKHd3tvQ3RnrUudanh3VGMUeF3IDK9uew3gPSOqk1+vOQ=="
+  },
+  "data_count": 0,
+  "data": [],
+  "site_receipts": [
+    "https://api.infosimples.com/exemplo-de-url"
+  ]
+}
+
 ## Arquivo de visualização de consulta
 O arquivo de visualização de consulta (site_receipts) disponibilizado no retorno da API pode ser sintetizado pela Infosimples usando as informações originais da fonte quando o arquivo emitido pela fonte não for adequado para visualização.
 

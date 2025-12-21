@@ -61,7 +61,42 @@ class InfosimplesPlugin {
         }
     }
     getConsultaCode(type, input) {
-        const codes = config_1.consultaCodes[type];
+        // Mapeamento direto para endpoints da API Infosimples
+        const endpointMap = {
+            // Crédito
+            'cenprot_protestos_sp': config_1.consultaCodes.cenprot_protestos_sp,
+            'serasa_score': config_1.consultaCodes.serasa_score,
+            'boavista_credito': config_1.consultaCodes.boavista_credito,
+            'scpc_negativacao': config_1.consultaCodes.scpc_negativacao,
+            // Cadastral
+            'receita_federal_cpf': config_1.consultaCodes.receita_federal_cpf,
+            'receita_federal_cnpj': config_1.consultaCodes.receita_federal_cnpj,
+            'portal_transparencia_ceis': config_1.consultaCodes.portal_transparencia_ceis,
+            'portal_transparencia_cepim': config_1.consultaCodes.portal_transparencia_cepim,
+            'portal_transparencia_cnep': config_1.consultaCodes.portal_transparencia_cnep,
+            'tse_situacao_eleitoral': config_1.consultaCodes.tse_situacao_eleitoral,
+            'cnis_pre_inscricao': config_1.consultaCodes.cnis_pre_inscricao,
+            'dataprev_qualificacao': config_1.consultaCodes.dataprev_qualificacao,
+            // Veicular
+            'serpro_radar_veiculo': config_1.consultaCodes.serpro_radar_veiculo,
+            'detran_rj_veiculo': config_1.consultaCodes.detran_rj_veiculo,
+            'detran_rs_veiculo': config_1.consultaCodes.detran_rs_veiculo,
+            'detran_sp_veiculo': config_1.consultaCodes.detran_sp_veiculo,
+            'detran_mg_veiculo': config_1.consultaCodes.detran_mg_veiculo,
+            // Previdenciário
+            'dataprev_fap': config_1.consultaCodes.dataprev_fap,
+            // Endereço
+            'correios_cep': config_1.consultaCodes.correios_cep,
+        };
+        const endpoint = endpointMap[type];
+        if (!endpoint) {
+            // Fallback para códigos legados se não encontrado
+            return this.getLegacyCode(type, input);
+        }
+        return endpoint;
+    }
+    getLegacyCode(type, input) {
+        const codes = config_1.legacyCodes[type];
         if (!codes)
             return null;
         // Verificar qual propriedade usar baseado no tipo
@@ -80,16 +115,73 @@ class InfosimplesPlugin {
         }
         return null;
     }
-    async callInfosimplesAPI(code, data) {
-        const url = `${this.config.baseUrl}/consultas/${code}`;
-        const body = { code, data };
-        const response = await fetch(url, {
+    async callInfosimplesAPI(endpoint, data) {
+        const url = `${this.config.baseUrl}${endpoint}`;
+        // Preparar parâmetros de query baseados no endpoint
+        const queryParams = new URLSearchParams();
+        // Mapeamento de campos baseado no endpoint
+        if (endpoint.includes('cenprot-sp/protestos')) {
+            if (data.cpf)
+                queryParams.append('cpf', data.cpf);
+            if (data.cnpj)
+                queryParams.append('cnpj', data.cnpj);
+        }
+        else if (endpoint.includes('receita-federal/cpf')) {
+            queryParams.append('cpf', data.cpf);
+            queryParams.append('birthdate', data.birthdate);
+        }
+        else if (endpoint.includes('receita-federal/cnpj')) {
+            queryParams.append('cnpj', data.cnpj);
+        }
+        else if (endpoint.includes('portal-transparencia')) {
+            if (data.cpf)
+                queryParams.append('cpf', data.cpf);
+            if (data.cnpj)
+                queryParams.append('cnpj', data.cnpj);
+        }
+        else if (endpoint.includes('tse/situacao-eleitoral')) {
+            queryParams.append('name', data.name);
+            queryParams.append('cpf', data.cpf);
+            queryParams.append('titulo_eleitoral', data.titulo_eleitoral);
+            queryParams.append('birthdate', data.birthdate);
+        }
+        else if (endpoint.includes('serpro/radar-veiculo')) {
+            queryParams.append('placa', data.placa);
+        }
+        else if (endpoint.includes('correios/cep')) {
+            queryParams.append('cep', data.cep);
+        }
+        else if (endpoint.includes('cnis/pre-inscricao')) {
+            queryParams.append('cpf', data.cpf);
+            queryParams.append('nis', data.nis);
+            queryParams.append('name', data.name);
+            queryParams.append('birthdate', data.birthdate);
+        }
+        else if (endpoint.includes('dataprev/fap')) {
+            queryParams.append('cnpj_estabelecimento', data.cnpj_estabelecimento);
+            if (data.ano_vigencia)
+                queryParams.append('ano_vigencia', data.ano_vigencia);
+        }
+        else if (endpoint.includes('dataprev/qualificacao')) {
+            queryParams.append('nis', data.nis);
+            queryParams.append('name', data.name);
+            queryParams.append('birthdate', data.birthdate);
+            queryParams.append('cpf', data.cpf);
+        }
+        else if (endpoint.includes('detran/rj/veiculo')) {
+            queryParams.append('placa', data.placa);
+        }
+        else if (endpoint.includes('detran/rs/veiculo')) {
+            queryParams.append('placa', data.placa);
+            queryParams.append('renavam', data.renavam);
+        }
+        const finalUrl = `${url}?${queryParams.toString()}`;
+        const response = await fetch(finalUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.config.apiKey}`,
             },
-            body: JSON.stringify(body),
             signal: AbortSignal.timeout(this.config.timeout),
         });
         if (!response.ok) {

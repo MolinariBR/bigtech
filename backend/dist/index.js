@@ -18,6 +18,7 @@ const billingEngine_1 = require("./core/billingEngine");
 const audit_1 = require("./core/audit");
 const billing_1 = require("./controllers/admin/billing");
 const plugins_1 = require("./controllers/admin/plugins");
+const plugins_2 = require("./controllers/plugins");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
 // Middleware de segurança
@@ -52,6 +53,8 @@ app.use(multiTenant_1.multiTenantMiddleware);
 // Rotas admin
 app.use('/api/admin/billing', billing_1.adminBillingRouter);
 app.use('/api/admin/plugins', plugins_1.adminPluginsRouter);
+// Rotas de execução de plugins (após middleware multi-tenant)
+app.use('/api/plugins', plugins_2.pluginsRouter);
 // Inicialização de componentes CORE
 async function initializeCore() {
     try {

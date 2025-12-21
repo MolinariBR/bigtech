@@ -20,12 +20,8 @@ export interface InfosimplesResponse {
 }
 
 export interface NormalizedConsulta {
-  type: 'credito' | 'cadastral' | 'veicular';
-  input: {
-    cpf?: string;
-    cnpj?: string;
-    placa?: string;
-  };
+  type: 'credito' | 'cadastral' | 'veicular' | 'previdenciario' | 'endereco' | 'eleitoral' | 'compliance';
+  input: ConsultaInputType;
   output: {
     status: 'success' | 'failed';
     data?: any;
@@ -36,7 +32,32 @@ export interface NormalizedConsulta {
 }
 
 export type ConsultaInputType = {
+  // Crédito
   cpf?: string;
   cnpj?: string;
+
+  // Cadastral adicional
+  birthdate?: string;
+  name?: string;
+  titulo_eleitoral?: string;
+  nis?: string;
+
+  // Veicular
   placa?: string;
+  renavam?: string;
+  chassi?: string;
+  ano?: string;
+
+  // Previdenciário
+  cnpj_estabelecimento?: string;
+  ano_vigencia?: string;
+
+  // Endereço
+  cep?: string;
+
+  // Autenticação ECRVSP
+  a3?: string;
+  a3_pin?: string;
+  login_cpf?: string;
+  login_senha?: string;
 };

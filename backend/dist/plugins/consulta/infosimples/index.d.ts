@@ -12,6 +12,7 @@ export declare class InfosimplesPlugin implements Plugin {
     disable(tenantId: string): Promise<void>;
     execute(context: PluginContext): Promise<PluginResult>;
     private getConsultaCode;
+    private getLegacyCode;
     private callInfosimplesAPI;
     private normalizeResponse;
     private normalizeData;

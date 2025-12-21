@@ -1,16 +1,44 @@
 "use strict";
-// Baseado em: 4.Entities.md v1.7
+// Baseado em: 4.Entities.md v1.7, Docs/APIServicosSelecionados.md
 // Configurações para plugin Infosimples
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.consultaCodes = exports.defaultConfig = void 0;
+exports.legacyCodes = exports.consultaCodes = exports.defaultConfig = void 0;
 exports.defaultConfig = {
     apiKey: process.env.INFOSIMPLES_API_KEY || '',
     baseUrl: 'https://api.infosimples.com/v1',
     timeout: 30000, // 30 segundos
     fallbackSources: ['brasilapi'], // Fontes de fallback se Infosimples falhar
 };
-// Mapeamento de tipos de consulta para códigos Infosimples
+// Mapeamento de tipos de consulta para endpoints Infosimples
+// Baseado na especificação OpenAPI v2.2.33
 exports.consultaCodes = {
+    // Crédito e Protestos
+    cenprot_protestos_sp: '/consultas/cenprot-sp/protestos',
+    serasa_score: null, // Não identificado na API pública
+    boavista_credito: null, // Não identificado na API pública
+    scpc_negativacao: null, // Não identificado na API pública
+    // Cadastral
+    receita_federal_cpf: '/consultas/receita-federal/cpf',
+    receita_federal_cnpj: '/consultas/receita-federal/cnpj',
+    portal_transparencia_ceis: '/consultas/portal-transparencia/ceis',
+    portal_transparencia_cepim: '/consultas/portal-transparencia/cepim',
+    portal_transparencia_cnep: '/consultas/portal-transparencia/cnep',
+    tse_situacao_eleitoral: '/consultas/tse/situacao-eleitoral',
+    cnis_pre_inscricao: '/consultas/cnis/pre-inscricao',
+    dataprev_qualificacao: '/consultas/dataprev/qualificacao',
+    // Veicular
+    serpro_radar_veiculo: '/consultas/serpro/radar-veiculo',
+    detran_rj_veiculo: '/consultas/detran/rj/veiculo',
+    detran_rs_veiculo: '/consultas/detran/rs/veiculo',
+    detran_sp_veiculo: null, // Não encontrado endpoint específico
+    detran_mg_veiculo: null, // Não encontrado endpoint específico
+    // Previdenciário
+    dataprev_fap: '/consultas/dataprev/fap',
+    // Endereço
+    correios_cep: '/consultas/correios/cep',
+};
+// Mapeamento legado (para compatibilidade)
+exports.legacyCodes = {
     credito: {
         cpf: '39-TeleConfirma', // POSITIVO ACERTA ESSENCIAL PF
         cnpj: 'POSITIVO DEFINE RISCO CNPJ',

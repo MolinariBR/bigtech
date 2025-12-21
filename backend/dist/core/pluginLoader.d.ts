@@ -38,6 +38,8 @@ export declare class PluginLoader {
         type: string;
         version: string;
     }[];
+    getActivePluginsForTenant(tenantId: string): Set<string>;
+    isPluginActiveForTenant(pluginId: string, tenantId: string): boolean;
 }
 export declare const pluginLoader: PluginLoader;
 //# sourceMappingURL=pluginLoader.d.ts.map

@@ -3,7 +3,7 @@
 
 import { Plugin, PluginContext, PluginResult } from '../../../core/pluginLoader';
 import { InfosimplesConfig, InfosimplesRequest, InfosimplesResponse, NormalizedConsulta, ConsultaInputType } from './types2';
-import { defaultConfig, consultaCodes } from './config';
+import { defaultConfig, consultaCodes, legacyCodes } from './config';
 
 export class InfosimplesPlugin implements Plugin {
   id = 'consulta-infosimples';
@@ -72,7 +72,51 @@ export class InfosimplesPlugin implements Plugin {
   }
 
   private getConsultaCode(type: string, input: ConsultaInputType): string | null {
-    const codes = consultaCodes[type as keyof typeof consultaCodes];
+    // Mapeamento direto para endpoints da API Infosimples
+    const endpointMap: Record<string, string | null> = {
+      // Crédito
+      'cenprot_protestos_sp': consultaCodes.cenprot_protestos_sp,
+      'serasa_score': consultaCodes.serasa_score,
+      'boavista_credito': consultaCodes.boavista_credito,
+      'scpc_negativacao': consultaCodes.scpc_negativacao,
+
+      // Cadastral
+      'receita_federal_cpf': consultaCodes.receita_federal_cpf,
+      'receita_federal_cnpj': consultaCodes.receita_federal_cnpj,
+      'portal_transparencia_ceis': consultaCodes.portal_transparencia_ceis,
+      'portal_transparencia_cepim': consultaCodes.portal_transparencia_cepim,
+      'portal_transparencia_cnep': consultaCodes.portal_transparencia_cnep,
+      'tse_situacao_eleitoral': consultaCodes.tse_situacao_eleitoral,
+      'cnis_pre_inscricao': consultaCodes.cnis_pre_inscricao,
+      'dataprev_qualificacao': consultaCodes.dataprev_qualificacao,
+
+      // Veicular
+      'serpro_radar_veiculo': consultaCodes.serpro_radar_veiculo,
+      'detran_rj_veiculo': consultaCodes.detran_rj_veiculo,
+      'detran_rs_veiculo': consultaCodes.detran_rs_veiculo,
+      'detran_sp_veiculo': consultaCodes.detran_sp_veiculo,
+      'detran_mg_veic_nao_licenciado': consultaCodes.detran_mg_veic_nao_licenciado,
+      'detran_mg_multas_extrato': consultaCodes.detran_mg_multas_extrato,
+      'detran_mg_trlav': consultaCodes.detran_mg_trlav,
+
+      // Previdenciário
+      'dataprev_fap': consultaCodes.dataprev_fap,
+
+      // Endereço
+      'correios_cep': consultaCodes.correios_cep,
+    };
+
+    const endpoint = endpointMap[type];
+    if (!endpoint) {
+      // Fallback para códigos legados se não encontrado
+      return this.getLegacyCode(type, input);
+    }
+
+    return endpoint;
+  }
+
+  private getLegacyCode(type: string, input: ConsultaInputType): string | null {
+    const codes = legacyCodes[type as keyof typeof legacyCodes];
     if (!codes) return null;
 
     // Verificar qual propriedade usar baseado no tipo
@@ -90,17 +134,77 @@ export class InfosimplesPlugin implements Plugin {
     return null;
   }
 
-  private async callInfosimplesAPI(code: string, data: ConsultaInputType): Promise<InfosimplesResponse> {
-    const url = `${this.config.baseUrl}/consultas/${code}`;
-    const body: InfosimplesRequest = { code, data };
+  private async callInfosimplesAPI(endpoint: string, data: ConsultaInputType): Promise<InfosimplesResponse> {
+    const url = `${this.config.baseUrl}${endpoint}`;
 
-    const response = await fetch(url, {
+    // Preparar parâmetros de query baseados no endpoint
+    const queryParams = new URLSearchParams();
+
+    // Mapeamento de campos baseado no endpoint
+    if (endpoint.includes('cenprot-sp/protestos')) {
+      if ((data as any).cpf) queryParams.append('cpf', (data as any).cpf);
+      if ((data as any).cnpj) queryParams.append('cnpj', (data as any).cnpj);
+    } else if (endpoint.includes('receita-federal/cpf')) {
+      queryParams.append('cpf', (data as any).cpf);
+      queryParams.append('birthdate', (data as any).birthdate);
+    } else if (endpoint.includes('receita-federal/cnpj')) {
+      queryParams.append('cnpj', (data as any).cnpj);
+    } else if (endpoint.includes('portal-transparencia')) {
+      if ((data as any).cpf) queryParams.append('cpf', (data as any).cpf);
+      if ((data as any).cnpj) queryParams.append('cnpj', (data as any).cnpj);
+    } else if (endpoint.includes('tse/situacao-eleitoral')) {
+      queryParams.append('name', (data as any).name);
+      queryParams.append('cpf', (data as any).cpf);
+      queryParams.append('titulo_eleitoral', (data as any).titulo_eleitoral);
+      queryParams.append('birthdate', (data as any).birthdate);
+    } else if (endpoint.includes('serpro/radar-veiculo')) {
+      queryParams.append('placa', (data as any).placa);
+    } else if (endpoint.includes('correios/cep')) {
+      queryParams.append('cep', (data as any).cep);
+    } else if (endpoint.includes('cnis/pre-inscricao')) {
+      queryParams.append('cpf', (data as any).cpf);
+      queryParams.append('nis', (data as any).nis);
+      queryParams.append('name', (data as any).name);
+      queryParams.append('birthdate', (data as any).birthdate);
+    } else if (endpoint.includes('dataprev/fap')) {
+      queryParams.append('cnpj_estabelecimento', (data as any).cnpj_estabelecimento);
+      if ((data as any).ano_vigencia) queryParams.append('ano_vigencia', (data as any).ano_vigencia);
+    } else if (endpoint.includes('dataprev/qualificacao')) {
+      queryParams.append('nis', (data as any).nis);
+      queryParams.append('name', (data as any).name);
+      queryParams.append('birthdate', (data as any).birthdate);
+      queryParams.append('cpf', (data as any).cpf);
+    } else if (endpoint.includes('detran/rj/veiculo')) {
+      queryParams.append('placa', (data as any).placa);
+    } else if (endpoint.includes('detran/mg/veic-nao-licenciado')) {
+      queryParams.append('placa', (data as any).placa);
+      queryParams.append('chassi', (data as any).chassi);
+      queryParams.append('renavam', (data as any).renavam);
+    } else if (endpoint.includes('detran/mg/multas-extrato')) {
+      if ((data as any).placa) queryParams.append('placa', (data as any).placa);
+      queryParams.append('renavam', (data as any).renavam);
+      queryParams.append('chassi', (data as any).chassi);
+    } else if (endpoint.includes('detran/mg/trlav')) {
+      queryParams.append('renavam', (data as any).renavam);
+      queryParams.append('ano', (data as any).ano || new Date().getFullYear().toString());
+    } else if (endpoint.includes('ecrvsp/veiculos/base-sp')) {
+      queryParams.append('a3', (data as any).a3);
+      queryParams.append('a3_pin', (data as any).a3_pin);
+      queryParams.append('login_cpf', (data as any).login_cpf);
+      queryParams.append('login_senha', (data as any).login_senha);
+      if ((data as any).chassi) queryParams.append('chassi', (data as any).chassi);
+      if ((data as any).placa) queryParams.append('placa', (data as any).placa);
+      if ((data as any).renavam) queryParams.append('renavam', (data as any).renavam);
+    }
+
+    const finalUrl = `${url}?${queryParams.toString()}`;
+
+    const response = await fetch(finalUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.config.apiKey}`,
       },
-      body: JSON.stringify(body),
       signal: AbortSignal.timeout(this.config.timeout),
     });
 

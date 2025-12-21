@@ -77,7 +77,7 @@ class PluginLoader {
             console.log(`🔍 Found plugins in ${type}:`, pluginNames);
             for (const name of pluginNames) {
                 const pluginDir = path.join(typeDir, name);
-                const pluginPath = path.join(pluginDir, 'index.js');
+                const pluginPath = path.join(pluginDir, 'index.ts');
                 console.log(`🔍 Checking plugin path: ${pluginPath}`);
                 if (fs.existsSync(pluginPath)) {
                     try {
@@ -108,7 +108,7 @@ class PluginLoader {
                     }
                 }
                 else {
-                    console.log(`❌ Plugin index.js not found: ${pluginPath}`);
+                    console.log(`❌ Plugin index.ts not found: ${pluginPath}`);
                 }
             }
         }
@@ -187,6 +187,13 @@ class PluginLoader {
             type: plugin.type,
             version: plugin.version
         }));
+    }
+    getActivePluginsForTenant(tenantId) {
+        return this.activePlugins.get(tenantId) || new Set();
+    }
+    isPluginActiveForTenant(pluginId, tenantId) {
+        const activePlugins = this.activePlugins.get(tenantId) || new Set();
+        return activePlugins.has(pluginId);
     }
 }
 exports.PluginLoader = PluginLoader;
