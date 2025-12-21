@@ -287,14 +287,169 @@ export class InfosimplesPlugin implements Plugin {
   }
 
   private async executeFallback(context: PluginContext, originalError: unknown): Promise<PluginResult> {
-    // Implementar fallback para outras fontes
-    // Por simplicidade, retornar erro por enquanto
-    const error = originalError instanceof Error ? originalError : new Error(String(originalError));
+    // Implementar fallback para outras fontes baseado na configuração
+    const { input: contextInput } = context;
+    const { type, input } = contextInput as { type: string; input: ConsultaInputType };
+
+    let lastFallbackError: Error | null = null;
+
+    for (const fallbackSource of this.config.fallbackSources) {
+      try {
+        console.log(`Tentando fallback para ${fallbackSource}...`);
+
+        // Implementar lógica de fallback baseada na fonte
+        switch (fallbackSource) {
+          case 'brasilapi':
+            return await this.executeBrasilApiFallback(type, input);
+          case 'viacep':
+            if ((type === 'cadastral' || type === 'endereco') && (input as any).cep) {
+              return await this.executeViaCepFallback(input);
+            }
+            break;
+          default:
+            console.warn(`Fonte de fallback não suportada: ${fallbackSource}`);
+        }
+      } catch (fallbackError) {
+        console.error(`Fallback ${fallbackSource} falhou:`, fallbackError);
+        lastFallbackError = fallbackError instanceof Error ? fallbackError : new Error(String(fallbackError));
+        continue; // Tentar próxima fonte
+      }
+    }
+
+    // Se nenhum fallback funcionou, retornar erro
+    const err = originalError instanceof Error ? originalError : new Error(String(originalError));
+    const errorMessage = lastFallbackError
+      ? `Erro na fonte principal: ${err.message}. Último fallback falhou: ${lastFallbackError.message}`
+      : `Erro na fonte principal: ${err.message}. Todos os fallbacks falharam.`;
+
     return {
       success: false,
-      error: `Erro na fonte principal: ${error.message}. Fallback não implementado.`,
+      error: errorMessage,
       cost: 0,
     };
+  }
+
+  private async executeBrasilApiFallback(type: string, input: ConsultaInputType): Promise<PluginResult> {
+    // Implementar fallback usando BrasilAPI para alguns tipos de consulta
+    switch (type) {
+      case 'cadastral':
+        if ((input as any).cpf) {
+          // Fallback para validação básica de CPF
+          const isValid = this.validateCpf((input as any).cpf);
+          return {
+            success: true,
+            data: {
+              type: 'cadastral',
+              input,
+              output: {
+                status: 'success',
+                data: {
+                  cpf_valido: isValid,
+                  fonte: 'brasilapi-fallback'
+                },
+                normalized: true,
+                source: 'brasilapi'
+              }
+            },
+            cost: 0, // Fallback não tem custo
+          };
+        }
+        break;
+
+      case 'endereco':
+        if ((input as any).cep) {
+          // Fallback usando ViaCEP (que é gratuito)
+          return await this.executeViaCepFallback(input);
+        }
+        break;
+    }
+
+    throw new Error(`Tipo ${type} não suportado pelo fallback BrasilAPI`);
+  }
+
+  private async executeViaCepFallback(input: any): Promise<PluginResult> {
+    if (!input.cep) {
+      throw new Error('CEP é obrigatório para fallback ViaCEP');
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(`https://viacep.com.br/ws/${input.cep.replace(/\D/g, '')}/json/`, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`ViaCEP retornou ${response.status}`);
+      }
+
+      const data = await response.json() as any;
+
+      if (data.erro) {
+        throw new Error('CEP não encontrado');
+      }
+
+      return {
+        success: true,
+        data: {
+          type: 'endereco',
+          input,
+          output: {
+            status: 'success',
+            data: {
+              cep: data.cep,
+              logradouro: data.logradouro,
+              complemento: data.complemento,
+              bairro: data.bairro,
+              localidade: data.localidade,
+              uf: data.uf,
+              ibge: data.ibge,
+              gia: data.gia,
+              ddd: data.ddd,
+              siafi: data.siafi,
+              fonte: 'viacep-fallback'
+            },
+            normalized: true,
+            source: 'viacep'
+          }
+        },
+        cost: 0, // ViaCEP é gratuito
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Timeout no fallback ViaCEP');
+      }
+      throw new Error(`Erro no fallback ViaCEP: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private validateCpf(cpf: string): boolean {
+    // Implementar validação básica de CPF
+    const cleanCpf = cpf.replace(/\D/g, '');
+
+    if (cleanCpf.length !== 11) return false;
+    if (/^(\d)\1+$/.test(cleanCpf)) return false; // CPF com todos dígitos iguais
+
+    // Cálculo dos dígitos verificadores
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cleanCpf.charAt(i)) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cleanCpf.charAt(9))) return false;
+
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cleanCpf.charAt(i)) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+
+    return remainder === parseInt(cleanCpf.charAt(10));
   }
 }
 

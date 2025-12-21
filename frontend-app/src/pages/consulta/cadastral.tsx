@@ -30,56 +30,9 @@ export default function ConsultaCadastral() {
   const [result, setResult] = useState<any>(null)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
-  // TODO: Buscar dados reais dos plugins ativos
+  // TODO: Buscar dados reais dos plugins ativos via API
   const cadastralQueries: CadastralQuery[] = [
-    {
-      id: '1',
-      name: 'QUOD CADASTRAL PF',
-      description: 'Reúne dados completos de identificação de pessoa física, incluindo endereço e situação do CPF.',
-      price: 1.00,
-      plugin: 'infosimples',
-      active: true
-    },
-    {
-      id: '2',
-      name: '424-ValidaID - Localizacao',
-      description: 'Valida identidade e localização com dados cadastrais e endereço.',
-      price: 2.20,
-      plugin: 'infosimples',
-      active: true
-    },
-    {
-      id: '3',
-      name: '431-Dados de CNH',
-      description: 'Apresenta dados de CNH em nível nacional a partir do CPF.',
-      price: 3.45,
-      plugin: 'infosimples',
-      active: true
-    },
-    {
-      id: '4',
-      name: '320-Contatos Por CEP',
-      description: 'Consulta contatos e informações cadastrais por CEP, facilitando localização de endereços.',
-      price: 2.20,
-      plugin: 'infosimples',
-      active: true
-    },
-    {
-      id: '5',
-      name: 'RELATÓRIO JURIDICO PF',
-      description: 'Apresenta processos judiciais relacionados a pessoa física.',
-      price: 4.00,
-      plugin: 'infosimples',
-      active: true
-    },
-    {
-      id: '6',
-      name: 'RELATÓRIO JURIDICO PJ',
-      description: 'Reúne informações jurídicas sobre empresa, incluindo processos e restrições.',
-      price: 4.00,
-      plugin: 'infosimples',
-      active: true
-    }
+    // Dados serão carregados dinamicamente da API do backend
   ]
 
   const validateDocument = (value: string): boolean => {

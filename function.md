@@ -30,6 +30,16 @@
 - **Correções:** Ajustar tratamento de erros de pagamento
 - **QA:** Testes de transações simuladas
 
+## PAC-004.1: Limpeza de Cards Mock - Frontend-App
+- **Status:** ✅ Concluído
+- **Objetivo:** Remover dados mock das páginas de consulta para preparar integração com API real
+- **Análise:**
+  - **Frontend-app:** Arrays de dados mock removidas das páginas cadastral, credito e veicular
+  - **Estrutura:** Páginas mantêm funcionalidade completa, aguardando dados da API backend
+  - **Build:** ✅ Compilação bem-sucedida após remoção
+- **Correções:** Nenhuma - limpeza executada conforme solicitado
+- **QA:** ✅ Build testado e validado
+
 ## PAC-004: Plugin Infosimples - Consultas
 - **Status:** ❌ Pendente análise
 - **Objetivo:** Verificar consultas externas (cadastral, crédito, veicular)
@@ -38,7 +48,7 @@
   - **Frontend-app:** Testar páginas de consulta
   - **Frontend-admin:** Verificar configuração de API keys
 - **Correções:** Implementar fallbacks para APIs externas
-- **QA:** Testes com dados mockados
+- **QA:** Testes com dados reais e mockados
 
 ## PAC-005: Multi-tenancy - Middleware
 - **Status:** ❌ Pendente análise
@@ -401,11 +411,11 @@
 - Pode impactar operação
 
 ## Métricas de Análise:
-- **Total PACs:** 40
-- **✅ Verificados:** 2 (5%)
-- **❌ Pendente análise:** 15 (37.5%)
-- **❌ Pendente análise:** 3 (7.5%)
-- **❌ Pendentes:** 20 (50%)
+- **Total PACs:** 41
+- **✅ Verificados:** 3 (7.3%)
+- **❌ Pendente análise:** 15 (36.6%)
+- **❌ Pendente análise:** 3 (7.3%)
+- **❌ Pendentes:** 20 (48.8%)
 
 ## Checklist de QA Geral:
 
