@@ -5,8 +5,8 @@
 # Arquivo principal da aplicação Next.js
 MAIN=frontend-app/next.config.js
 
-# Versão do Node.js recomendada
-VERSION=recommended
+# Versão do Node.js (18 para menor uso de memória)
+VERSION=18
 
 # Memória alocada (1024MB disponível no plano)
 MEMORY=1024
