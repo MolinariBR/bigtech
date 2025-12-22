@@ -97,6 +97,8 @@ exports.AuthValidators = AuthValidators;
 class AuthService {
     static JWT_SECRET = process.env.JWT_SECRET || 'bigtech-secret-key';
     static JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+    static REFRESH_SECRET = process.env.REFRESH_SECRET || 'bigtech-refresh-secret';
+    static REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '7d';
     static BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
     // Login de usuário
     static async login(identifier, tenantId) {
@@ -108,6 +110,8 @@ class AuthService {
                     message: 'CPF/CNPJ inválido'
                 };
             }
+            // Verificar se tenant existe, se não existir, criar automaticamente (auto-onboarding)
+            const tenantExists = await this.ensureTenantExists(tenantId);
             // Buscar usuário no Appwrite
             const users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [
                 `tenantId=${tenantId}`,
@@ -119,25 +123,32 @@ class AuthService {
                 const newUser = await this.createUser(identifier, tenantId);
                 // Gerar token JWT
                 const token = this.generateToken(newUser);
+                // Gerar refresh token e salvar no usuário
+                const refreshToken = await this.generateRefreshToken(newUser);
                 // Log de auditoria
                 await audit_1.auditLogger.log({
                     tenantId,
                     userId: newUser.$id,
-                    action: 'user_login_first_time',
+                    action: tenantExists ? 'user_login_first_time' : 'user_login_tenant_created',
                     resource: `user:${newUser.$id}`,
-                    details: { identifier: AuthValidators.formatIdentifier(identifier) },
+                    details: {
+                        identifier: AuthValidators.formatIdentifier(identifier),
+                        tenantCreated: !tenantExists
+                    },
                     ipAddress: 'system' // Será preenchido pelo middleware
                 });
                 return {
                     success: true,
                     token,
+                    refreshToken,
                     user: {
                         id: newUser.$id,
                         identifier: AuthValidators.formatIdentifier(identifier),
                         type: newUser.type,
                         role: newUser.role,
                         credits: newUser.credits
-                    }
+                    },
+                    tenantCreated: !tenantExists // Flag para indicar se tenant foi criado
                 };
             }
             const user = users.documents[0];
@@ -150,6 +161,8 @@ class AuthService {
             }
             // Gerar token JWT
             const token = this.generateToken(user);
+            // Gerar refresh token e salvar no usuário
+            const refreshToken = await this.generateRefreshToken(user);
             // Log de auditoria
             await audit_1.auditLogger.log({
                 tenantId,
@@ -162,6 +175,7 @@ class AuthService {
             return {
                 success: true,
                 token,
+                refreshToken,
                 user: {
                     id: user.$id,
                     identifier: AuthValidators.formatIdentifier(user.identifier),
@@ -195,6 +209,51 @@ class AuthService {
         return await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', 'unique()', // Auto-generate ID
         userData);
     }
+    // Garantir que tenant existe, criar se necessário (auto-onboarding)
+    static async ensureTenantExists(tenantId) {
+        try {
+            // Tentar buscar tenant
+            await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', tenantId);
+            return true; // Tenant já existe
+        }
+        catch (error) {
+            // Se erro for "document not found", criar tenant
+            if (error.code === 404 || error.message?.includes('not found')) {
+                try {
+                    const tenantData = {
+                        name: tenantId, // Usar tenantId como nome base
+                        domain: `${tenantId}.bigtech.com`, // Domínio derivado
+                        status: 'pending', // Status pending para aprovação admin
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        plugins: 'consulta', // Plugin padrão
+                        settings: JSON.stringify({
+                            theme: 'light',
+                            language: 'pt-BR',
+                            timezone: 'America/Sao_Paulo'
+                        })
+                    };
+                    await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', tenantId, // Usar tenantId como ID do documento
+                    tenantData);
+                    // Log de auditoria para criação de tenant
+                    await audit_1.auditLogger.log({
+                        tenantId,
+                        action: 'tenant_auto_created',
+                        resource: `tenant:${tenantId}`,
+                        details: { name: tenantId, status: 'pending' },
+                        ipAddress: 'system'
+                    });
+                    return false; // Tenant foi criado
+                }
+                catch (createError) {
+                    console.error('Erro ao criar tenant automaticamente:', createError);
+                    throw createError;
+                }
+            }
+            // Outro erro, relançar
+            throw error;
+        }
+    }
     // Gerar token JWT
     static generateToken(user) {
         const payload = {
@@ -211,6 +270,26 @@ class AuthService {
         };
         return jsonwebtoken_1.default.sign(payload, secret, options);
     }
+    // Gerar refresh token e armazenar no documento do usuário
+    static async generateRefreshToken(user) {
+        const payload = {
+            userId: user.$id,
+            tenantId: user.tenantId,
+            iat: Math.floor(Date.now() / 1000)
+        };
+        const options = {
+            expiresIn: this.REFRESH_EXPIRES_IN
+        };
+        const refreshToken = jsonwebtoken_1.default.sign(payload, this.REFRESH_SECRET, options);
+        try {
+            // Armazenar refresh token no documento do usuário (substitui token anterior)
+            await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', user.$id, { refreshToken });
+        }
+        catch (error) {
+            console.error('Erro ao salvar refresh token:', error);
+        }
+        return refreshToken;
+    }
     // Verificar token JWT
     static async verifyToken(token) {
         try {
@@ -226,8 +305,29 @@ class AuthService {
             return null;
         }
     }
+    // Verificar refresh token: valida assinatura e checa se bate com o armazenado
+    static async verifyRefreshToken(token) {
+        try {
+            const decoded = jsonwebtoken_1.default.verify(token, this.REFRESH_SECRET);
+            // Buscar usuário e comparar token salvo
+            const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', decoded.userId);
+            if (!user || user.refreshToken !== token)
+                return null;
+            return decoded;
+        }
+        catch (error) {
+            return null;
+        }
+    }
     // Logout (apenas log de auditoria)
     static async logout(userId, tenantId) {
+        // Limpar refresh token armazenado
+        try {
+            await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', userId, { refreshToken: null });
+        }
+        catch (err) {
+            console.error('Erro ao limpar refresh token no logout:', err);
+        }
         await audit_1.auditLogger.log({
             tenantId,
             userId,
@@ -396,6 +496,18 @@ router.post('/login', async (req, res) => {
         });
     }
     const result = await AuthService.login(identifier, tenantId);
+    // Se houver refreshToken, enviar como cookie HttpOnly e não expor no body
+    if (result.success && result.refreshToken) {
+        const refreshMaxAge = parseInt(process.env.REFRESH_EXPIRES_MS || String(7 * 24 * 60 * 60 * 1000));
+        res.cookie('refreshToken', result.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: refreshMaxAge
+        });
+        // Remover do body
+        delete result.refreshToken;
+    }
     res.json(result);
 });
 // Rota de login para administradores
@@ -410,8 +522,42 @@ router.post('/admin/login', async (req, res) => {
     const result = await AuthService.adminLogin(identifier);
     res.json(result);
 });
+// Rota para renovar access token usando refresh token
+router.post('/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+        return res.status(400).json({ success: false, message: 'refreshToken é obrigatório' });
+    }
+    const decoded = await AuthService.verifyRefreshToken(refreshToken);
+    if (!decoded) {
+        return res.status(401).json({ success: false, message: 'Refresh token inválido ou expirado' });
+    }
+    try {
+        // Buscar usuário e gerar novos tokens
+        const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', decoded.userId);
+        if (!user || user.status !== 'active') {
+            return res.status(401).json({ success: false, message: 'Usuário inválido' });
+        }
+        const token = AuthService.generateToken(user);
+        const newRefresh = await AuthService.generateRefreshToken(user);
+        const refreshMaxAge = parseInt(process.env.REFRESH_EXPIRES_MS || String(7 * 24 * 60 * 60 * 1000));
+        res.cookie('refreshToken', newRefresh, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: refreshMaxAge
+        });
+        return res.json({ success: true, token });
+    }
+    catch (error) {
+        console.error('Erro no refresh token:', error);
+        return res.status(500).json({ success: false, message: 'Erro interno' });
+    }
+});
 router.post('/logout', exports.authenticateMiddleware, async (req, res) => {
     await AuthService.logout(req.userId, req.tenantId);
+    // Limpar cookie de refresh token no cliente
+    res.clearCookie('refreshToken');
     res.json({ success: true, message: 'Logout realizado com sucesso' });
 });
 router.get('/me', exports.authenticateMiddleware, async (req, res) => {

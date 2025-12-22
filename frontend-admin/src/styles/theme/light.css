@@ -1,5 +1,8 @@
-/* Tema claro para frontend-admin */
-.light {
+/* Tema claro para frontend-admin
+   Aplicado no :root para ser o tema padrão (não requer classe .light).
+   Isso evita a necessidade de dois mecanismos separados (classe .light + classe .dark)
+*/
+:root {
   --bg-primary: #f9fafb;
   --text-primary: #111827;
   --bg-secondary: #e5e7eb;

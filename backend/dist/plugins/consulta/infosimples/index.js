@@ -212,19 +212,51 @@ class InfosimplesPlugin {
             if (data.renavam)
                 queryParams.append('renavam', data.renavam);
         }
-        const finalUrl = `${url}?${queryParams.toString()}`;
-        const response = await fetch(finalUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.config.apiKey}`,
-            },
-            signal: AbortSignal.timeout(this.config.timeout),
-        });
-        if (!response.ok) {
-            throw new Error(`Erro na API Infosimples: ${response.status} ${response.statusText}`);
+        const finalUrl = `${url}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const retries = (this.config.retries ?? 0);
+        const baseDelay = (this.config.retryDelayMs ?? 200);
+        let lastError = null;
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+            try {
+                const response = await fetch(finalUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.config.apiKey}`,
+                    },
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    const err = new Error(`Erro na API Infosimples: ${response.status} ${response.statusText}`);
+                    lastError = err;
+                    throw err;
+                }
+                return response.json();
+            }
+            catch (err) {
+                clearTimeout(timeoutId);
+                const isAbort = err instanceof Error && (err.name === 'AbortError' || /aborted/i.test(err.message));
+                lastError = err instanceof Error ? err : new Error(String(err));
+                // If there are remaining attempts, wait exponential backoff then retry
+                if (attempt < retries) {
+                    const backoff = Math.floor(baseDelay * Math.pow(2, attempt));
+                    const jitter = Math.floor(Math.random() * Math.min(100, backoff));
+                    const waitMs = backoff + jitter;
+                    console.warn(`Infosimples request failed (attempt ${attempt + 1}/${retries + 1}): ${lastError.message}. Retrying in ${waitMs}ms`);
+                    await this.sleep(waitMs);
+                    continue;
+                }
+                // No more retries, rethrow
+                throw lastError;
+            }
         }
-        return response.json();
+        throw lastError ?? new Error('Erro desconhecido na chamada Infosimples');
+    }
+    sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
     normalizeResponse(type, input, response) {
         if (!response.success) {

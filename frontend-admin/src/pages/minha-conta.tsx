@@ -5,19 +5,36 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function AccountPage() {
-  const [user, setUser] = useState({
+  const { theme, setThemePreference } = useTheme()
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    notifications: boolean;
+    theme: 'light' | 'dark' | 'auto';
+    language: string;
+    systemAlerts: boolean;
+  }>({
     name: '',
     email: '',
     phone: '',
     role: 'admin',
     notifications: true,
-    theme: 'light',
+    theme: theme, // Inicializar com o tema atual
     language: 'pt-BR',
     systemAlerts: true
   })
   const [editing, setEditing] = useState(false)
+
+  // Simulação de carregamento de dados - substituir por API real
+  useEffect(() => {
+    // TODO: Buscar dados do usuário admin via API (User entity: name, email, role)
+    setUser(prev => ({ ...prev, theme }))
+  }, [theme])
 
   // Simulação de carregamento de dados - substituir por API real
   useEffect(() => {
@@ -28,7 +45,7 @@ export default function AccountPage() {
       phone: '(11) 99999-9999',
       role: 'admin',
       notifications: true,
-      theme: 'light',
+      theme: theme,
       language: 'pt-BR',
       systemAlerts: true
     })
@@ -36,6 +53,8 @@ export default function AccountPage() {
 
   const handleSave = () => {
     // TODO: Salvar alterações via API
+    // Aplicar o tema selecionado
+    setThemePreference(user.theme as 'light' | 'dark' | 'auto')
     setEditing(false)
   }
 
@@ -127,7 +146,7 @@ export default function AccountPage() {
                       <label className="block text-sm font-medium mb-1">Tema Preferido</label>
                       <select
                         value={user.theme}
-                        onChange={(e) => setUser({ ...user, theme: e.target.value })}
+                        onChange={(e) => setUser({ ...user, theme: e.target.value as 'light' | 'dark' | 'auto' })}
                         className="w-full px-3 py-2 border border-border rounded-md bg-background"
                       >
                         <option value="light">Claro</option>

@@ -15,6 +15,8 @@ interface AuthResponse {
     token?: string;
     user?: any;
     message?: string;
+    refreshToken?: string;
+    tenantCreated?: boolean;
 }
 export declare class AuthValidators {
     static isValidCPF(cpf: string): boolean;
@@ -25,11 +27,16 @@ export declare class AuthValidators {
 export declare class AuthService {
     private static readonly JWT_SECRET;
     private static readonly JWT_EXPIRES_IN;
+    private static readonly REFRESH_SECRET;
+    private static readonly REFRESH_EXPIRES_IN;
     private static readonly BCRYPT_ROUNDS;
     static login(identifier: string, tenantId: string): Promise<AuthResponse>;
     private static createUser;
-    private static generateToken;
+    private static ensureTenantExists;
+    static generateToken(user: any): string;
+    static generateRefreshToken(user: any): Promise<string>;
     static verifyToken(token: string): Promise<any | null>;
+    static verifyRefreshToken(token: string): Promise<any | null>;
     static logout(userId: string, tenantId: string): Promise<void>;
     static adminLogin(identifier: string): Promise<AuthResponse>;
     private static generateAdminToken;

@@ -6,6 +6,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AppwriteService } from '../lib/appwrite';
+import { Query } from 'node-appwrite';
 import { auditLogger } from './audit';
 
 const router = Router();
@@ -35,6 +36,7 @@ interface AuthResponse {
   user?: any;
   message?: string;
   refreshToken?: string;
+  tenantCreated?: boolean; // Flag para indicar se tenant foi criado automaticamente
 }
 
 // Utilitários de validação
@@ -138,14 +140,17 @@ export class AuthService {
         };
       }
 
+      // Verificar se tenant existe, se não existir, criar automaticamente (auto-onboarding)
+      const tenantExists = await this.ensureTenantExists(tenantId);
+
       // Buscar usuário no Appwrite
       const users = await appwrite.databases.listDocuments(
         process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
         'users',
         [
-          `tenantId=${tenantId}`,
-          `identifier=${identifier}`,
-          'status=active'
+          Query.equal('tenantId', tenantId),
+          Query.equal('identifier', identifier),
+          Query.equal('status', 'active')
         ]
       );
 
@@ -162,9 +167,12 @@ export class AuthService {
         await auditLogger.log({
           tenantId,
           userId: newUser.$id,
-          action: 'user_login_first_time',
+          action: tenantExists ? 'user_login_first_time' : 'user_login_tenant_created',
           resource: `user:${newUser.$id}`,
-          details: { identifier: AuthValidators.formatIdentifier(identifier) },
+          details: {
+            identifier: AuthValidators.formatIdentifier(identifier),
+            tenantCreated: !tenantExists
+          },
           ipAddress: 'system' // Será preenchido pelo middleware
         });
 
@@ -178,7 +186,8 @@ export class AuthService {
             type: newUser.type,
             role: newUser.role,
             credits: newUser.credits
-          }
+          },
+          tenantCreated: !tenantExists // Flag para indicar se tenant foi criado
         };
       }
 
@@ -218,7 +227,8 @@ export class AuthService {
           type: user.type,
           role: user.role,
           credits: user.credits
-        }
+        },
+        tenantCreated: false
       };
 
     } catch (error) {
@@ -250,6 +260,61 @@ export class AuthService {
       'unique()', // Auto-generate ID
       userData
     );
+  }
+
+  // Garantir que tenant existe, criar se necessário (auto-onboarding)
+  private static async ensureTenantExists(tenantId: string): Promise<boolean> {
+    try {
+      // Tentar buscar tenant
+      await appwrite.databases.getDocument(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'tenants',
+        tenantId
+      );
+      return true; // Tenant já existe
+    } catch (error: any) {
+      // Se erro for "document not found", criar tenant
+      if (error.code === 404 || error.message?.includes('not found')) {
+        try {
+          const tenantData = {
+            name: tenantId, // Usar tenantId como nome base
+            domain: `${tenantId}.bigtech.com`, // Domínio derivado
+            status: 'pending', // Status pending para aprovação admin
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            plugins: ['consulta'], // Plugin padrão (array conforme schema Appwrite)
+            settings: JSON.stringify({
+              theme: 'light',
+              language: 'pt-BR',
+              timezone: 'America/Sao_Paulo'
+            })
+          };
+
+          await appwrite.databases.createDocument(
+            process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+            'tenants',
+            tenantId, // Usar tenantId como ID do documento
+            tenantData
+          );
+
+          // Log de auditoria para criação de tenant
+          await auditLogger.log({
+            tenantId,
+            action: 'tenant_auto_created',
+            resource: `tenant:${tenantId}`,
+            details: { name: tenantId, status: 'pending' },
+            ipAddress: 'system'
+          });
+
+          return false; // Tenant foi criado
+        } catch (createError) {
+          console.error('Erro ao criar tenant automaticamente:', createError);
+          throw createError;
+        }
+      }
+      // Outro erro, relançar
+      throw error;
+    }
   }
 
   // Gerar token JWT
@@ -382,9 +447,9 @@ export class AuthService {
         process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
         'users',
         [
-          `identifier=${identifier}`,
-          'status=active', // Garantir que está ativo
-          'role=admin'
+          Query.equal('identifier', identifier),
+          Query.equal('status', 'active'), // Garantir que está ativo
+          Query.equal('role', 'admin')
         ]
       );
 

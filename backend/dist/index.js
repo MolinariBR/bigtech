@@ -6,6 +6,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = require("dotenv");
+const path_1 = __importDefault(require("path"));
+// Carregar explicitamente variáveis de ambiente do diretório `backend`
+(0, dotenv_1.config)({ path: path_1.default.join(__dirname, '..', '.env') });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
@@ -18,6 +22,7 @@ const billingEngine_1 = require("./core/billingEngine");
 const audit_1 = require("./core/audit");
 const billing_1 = require("./controllers/admin/billing");
 const plugins_1 = require("./controllers/admin/plugins");
+const tenants_1 = require("./controllers/admin/tenants");
 const plugins_2 = require("./controllers/plugins");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
@@ -53,6 +58,7 @@ app.use(multiTenant_1.multiTenantMiddleware);
 // Rotas admin
 app.use('/api/admin/billing', billing_1.adminBillingRouter);
 app.use('/api/admin/plugins', plugins_1.adminPluginsRouter);
+app.use('/api/admin/tenants', tenants_1.adminTenantsRouter);
 // Rotas de execução de plugins (após middleware multi-tenant)
 app.use('/api/plugins', plugins_2.pluginsRouter);
 // Inicialização de componentes CORE

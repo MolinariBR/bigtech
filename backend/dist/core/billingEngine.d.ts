@@ -16,6 +16,10 @@ interface BillingResult {
 export declare class BillingEngine {
     private static instance;
     private appwrite;
+    private userLocks;
+    private runWithUserLock;
+    private normalizeAmount;
+    private getISOWeekKey;
     private constructor();
     static getInstance(): BillingEngine;
     initialize(): Promise<void>;

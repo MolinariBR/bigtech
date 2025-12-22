@@ -33,7 +33,6 @@ export default function AdminDashboard() {
   });
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [chartData, setChartData] = useState([]);
-  const [theme, setTheme] = useState('light'); // Mock: Tenant.settings.theme
 
   // Mock data para MVP - substituir por Appwrite queries reais
   useEffect(() => {
@@ -68,17 +67,10 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
   return (
-    <div className={`space-y-6 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
-        <Button onClick={toggleTheme} variant="outline">
-          {theme === 'light' ? 'Dark' : 'Light'} Mode
-        </Button>
       </div>
 
       {/* Métricas Globais */}

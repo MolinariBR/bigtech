@@ -7,6 +7,8 @@ exports.defaultConfig = {
     apiKey: process.env.INFOSIMPLES_API_KEY || '',
     baseUrl: 'https://api.infosimples.com/v1',
     timeout: 30000, // 30 segundos
+    retries: 2,
+    retryDelayMs: 300,
     fallbackSources: ['brasilapi'], // Fontes de fallback se Infosimples falhar
 };
 // Mapeamento de tipos de consulta para endpoints Infosimples

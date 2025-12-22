@@ -1,5 +1,5 @@
-// Página de gestão de tenants (TASK-012)
-import { useState } from 'react';
+// Página de gestão de tenants (TASK-TENANT-001)
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,12 +19,29 @@ interface Tenant {
 }
 
 export default function TenantsPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([
-    { id: '1', name: 'Tenant A', status: 'active', plugins: ['consulta', 'pagamento'], createdAt: '2025-01-01' },
-    { id: '2', name: 'Tenant B', status: 'inactive', plugins: ['consulta'], createdAt: '2025-01-02' },
-  ]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const loadTenants = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/admin/tenants');
+      if (!res.ok) throw new Error('Failed to load tenants');
+      const data = await res.json();
+      setTenants(data.tenants || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTenants();
+  }, []);
 
   const handleCreate = () => {
     setEditingTenant({ id: '', name: '', status: 'active', plugins: [], createdAt: new Date().toISOString().split('T')[0] });
@@ -36,25 +53,54 @@ export default function TenantsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingTenant) return;
-    if (editingTenant.id) {
-      setTenants(tenants.map(t => t.id === editingTenant.id ? editingTenant : t));
-    } else {
-      const newTenant = { ...editingTenant, id: Date.now().toString() };
-      setTenants([...tenants, newTenant]);
+    try {
+      const method = editingTenant.id ? 'PUT' : 'POST';
+      const url = editingTenant.id ? `/api/admin/tenants/${editingTenant.id}` : '/api/admin/tenants';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingTenant),
+      });
+      if (!res.ok) throw new Error('Failed to save tenant');
+      await loadTenants();
+      setIsDialogOpen(false);
+      setEditingTenant(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     }
-    setIsDialogOpen(false);
-    setEditingTenant(null);
   };
 
-  const handleToggleStatus = (id: string) => {
-    setTenants(tenants.map(t => t.id === id ? { ...t, status: t.status === 'active' ? 'inactive' : 'active' } : t));
+  const handleToggleStatus = async (id: string) => {
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) return;
+    const newStatus = tenant.status === 'active' ? 'inactive' : 'active';
+    try {
+      const res = await fetch(`/api/admin/tenants/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...tenant, status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update tenant');
+      await loadTenants();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setTenants(tenants.filter(t => t.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/tenants/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete tenant');
+      await loadTenants();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    }
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="p-6 space-y-6">
@@ -68,44 +114,50 @@ export default function TenantsPage() {
           <CardTitle>Lista de Tenants</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Plugins</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tenants.map((tenant) => (
-                <TableRow key={tenant.id}>
-                  <TableCell>{tenant.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={tenant.status === 'active' ? 'default' : 'secondary'}>
-                      {tenant.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{tenant.plugins.join(', ')}</TableCell>
-                  <TableCell>{tenant.createdAt}</TableCell>
-                  <TableCell className="space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(tenant)}>Editar</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleToggleStatus(tenant.id)}>
-                      {tenant.status === 'active' ? 'Desativar' : 'Ativar'}
-                    </Button>
-                    <Link href={`/plugins?tenant=${tenant.id}`}>
-                      <Button variant="outline" size="sm">Plugins</Button>
-                    </Link>
-                    <Link href={`/billing?tenant=${tenant.id}`}>
-                      <Button variant="outline" size="sm">Billing</Button>
-                    </Link>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(tenant.id)}>Excluir</Button>
-                  </TableCell>
+          {tenants.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">Nenhum tenant encontrado. Clique em "Criar Tenant" para começar.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Plugins</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tenants.map((tenant) => (
+                  <TableRow key={tenant.id}>
+                    <TableCell>{tenant.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={tenant.status === 'active' ? 'default' : 'secondary'}>
+                        {tenant.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{tenant.plugins.join(', ')}</TableCell>
+                    <TableCell>{tenant.createdAt}</TableCell>
+                    <TableCell className="space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(tenant)}>Editar</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleToggleStatus(tenant.id)}>
+                        {tenant.status === 'active' ? 'Desativar' : 'Ativar'}
+                      </Button>
+                      <Link href={`/plugins?tenant=${tenant.id}`}>
+                        <Button variant="outline" size="sm">Plugins</Button>
+                      </Link>
+                      <Link href={`/billing?tenant=${tenant.id}`}>
+                        <Button variant="outline" size="sm">Billing</Button>
+                      </Link>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(tenant.id)}>Excluir</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

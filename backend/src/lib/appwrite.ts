@@ -13,7 +13,7 @@ export class AppwriteService {
 
   private constructor() {
     this.client = new Client()
-      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost:80/v1')
+      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost/v1')
       .setProject(process.env.APPWRITE_PROJECT_ID || 'bigtech')
       .setKey(process.env.APPWRITE_API_KEY || '');
 
@@ -32,7 +32,7 @@ export class AppwriteService {
   // Método para criar cliente com JWT do usuário
   public createUserClient(jwt: string): Client {
     return new Client()
-      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost:80/v1')
+      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost/v1')
       .setProject(process.env.APPWRITE_PROJECT_ID || 'bigtech')
       .setJWT(jwt);
   }

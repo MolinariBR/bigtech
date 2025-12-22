@@ -1,8 +1,8 @@
 import { Client, Databases, Account } from 'appwrite';
 
 const client = new Client()
-  .setEndpoint('https://cloud.appwrite.io/v1') // Substitua pelo seu endpoint
-  .setProject('your-project-id'); // Substitua pelo seu project ID
+  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || 'http://localhost/v1')
+  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || 'bigtech');
 
 export const databases = new Databases(client);
 export const account = new Account(client);

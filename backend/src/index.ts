@@ -2,6 +2,10 @@
 // Precedência: 1.Project → 2.Architecture → 3.Structure
 // Decisão: Ponto de entrada CORE mínimo e agnóstico (conforme 2.Architecture.md seção 3.2)
 
+import { config } from 'dotenv';
+import path from 'path';
+// Carregar explicitamente variáveis de ambiente do diretório `backend`
+config({ path: path.join(__dirname, '..', '.env') });
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -15,6 +19,7 @@ import { billingEngine } from './core/billingEngine';
 import { auditLogger } from './core/audit';
 import { adminBillingRouter } from './controllers/admin/billing';
 import { adminPluginsRouter } from './controllers/admin/plugins';
+import { adminTenantsRouter } from './controllers/admin/tenants';
 import { pluginsRouter } from './controllers/plugins';
 
 const app = express();
@@ -53,9 +58,13 @@ app.get('/api/plugins', (req, res) => {
 // Middleware multi-tenant
 app.use(multiTenantMiddleware);
 
+// Rotas de autenticação (login, refresh, logout, me)
+app.use('/api/auth', authRouter);
+
 // Rotas admin
 app.use('/api/admin/billing', adminBillingRouter);
 app.use('/api/admin/plugins', adminPluginsRouter);
+app.use('/api/admin/tenants', adminTenantsRouter);
 
 // Rotas de execução de plugins (após middleware multi-tenant)
 app.use('/api/plugins', pluginsRouter);
@@ -84,10 +93,15 @@ async function initializeCore() {
 
 // Inicializar e iniciar servidor
 initializeCore().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 BigTech CORE running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  });
+  // Em ambiente de teste (Jest) evitar iniciar o listener HTTP para não causar EADDRINUSE
+  if (!process.env.JEST_WORKER_ID) {
+    app.listen(PORT, () => {
+      console.log(`🚀 BigTech CORE running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    });
+  } else {
+    console.log('✅ CORE initialized (test mode) - HTTP listener não iniciado');
+  }
 });
 
 // Graceful shutdown

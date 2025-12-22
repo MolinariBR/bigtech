@@ -13,7 +13,7 @@ class AppwriteService {
     users;
     constructor() {
         this.client = new node_appwrite_1.Client()
-            .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost:80/v1')
+            .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost/v1')
             .setProject(process.env.APPWRITE_PROJECT_ID || 'bigtech')
             .setKey(process.env.APPWRITE_API_KEY || '');
         this.databases = new node_appwrite_1.Databases(this.client);
@@ -29,7 +29,7 @@ class AppwriteService {
     // Método para criar cliente com JWT do usuário
     createUserClient(jwt) {
         return new node_appwrite_1.Client()
-            .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost:80/v1')
+            .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost/v1')
             .setProject(process.env.APPWRITE_PROJECT_ID || 'bigtech')
             .setJWT(jwt);
     }

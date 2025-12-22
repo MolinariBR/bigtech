@@ -15,6 +15,7 @@ export declare class InfosimplesPlugin implements Plugin {
     private getConsultaCode;
     private getLegacyCode;
     private callInfosimplesAPI;
+    private sleep;
     private normalizeResponse;
     private normalizeData;
     private calculateCost;
