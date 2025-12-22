@@ -9,7 +9,7 @@ MAIN=frontend-app/next.config.js
 VERSION=recommended
 
 # Memória alocada (2048MB recomendado para Next.js)
-MEMORY=2048
+MEMORY=1024
 
 # Nome de exibição da aplicação
 DISPLAY_NAME=BigTech Frontend App
