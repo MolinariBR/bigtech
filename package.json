@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=frontend-app",
     "test": "npm run test --workspaces",
     "e2e:up": "docker compose -f appwrite/docker-compose.yml up -d && docker compose -f infrastructure/docker/docker-compose.dev.yml up -d",
     "e2e:down": "docker compose -f infrastructure/docker/docker-compose.dev.yml down && docker compose -f appwrite/docker-compose.yml down",

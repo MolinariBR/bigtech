@@ -18,7 +18,7 @@ DISPLAY_NAME=BigTech Frontend App
 DESCRIPTION=Aplicação frontend Next.js do sistema BigTech
 
 # Comando customizado para iniciar (build + start para Next.js)
-START=npm run build && npm run start
+START=npm run build && npm run start --workspace=frontend-app
 
 # Reinício automático em caso de falha
 AUTORESTART=true

@@ -5,6 +5,8 @@
 // Simulação de persistência para desenvolvimento (TODO: usar Appwrite)
 const pluginStatusStore: Record<string, Record<string, string>> = {};
 
+import { Router } from 'express';
+import { AppwriteService } from '../../lib/appwrite';
 import { pluginLoader } from '../../core/pluginLoader';
 
 const router = Router();

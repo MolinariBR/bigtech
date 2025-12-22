@@ -125,7 +125,7 @@ export default function LoginPage() {
             Um novo tenant foi criado automaticamente para você: <strong>{tenantId || 'default'}</strong>
           </p>
           <p className="text-sm text-muted-foreground">
-            O tenant está em status "pendente" e aguarda aprovação do administrador.
+            O tenant está em status &quot;pendente&quot; e aguarda aprovação do administrador.
             Você pode usar o sistema normalmente, mas algumas funcionalidades podem estar limitadas até a aprovação.
           </p>
           <Button onClick={handleTenantConfirm} className="w-full">
