@@ -8,7 +8,7 @@ MAIN=frontend-app/next.config.js
 # Versão do Node.js recomendada
 VERSION=recommended
 
-# Memória alocada (2048MB recomendado para Next.js)
+# Memória alocada (1024MB disponível no plano)
 MEMORY=1024
 
 # Nome de exibição da aplicação
