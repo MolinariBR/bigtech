@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/Card'
 import { Button } from '../components/Button'
-import { Input } from '../components/Input'
+import { Input } from '../components'
 import { Modal } from '../components/Modal'
 
 export default function LoginPage() {
@@ -82,7 +82,7 @@ export default function LoginPage() {
                 id="identifier"
                 type="text"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIdentifier(e.target.value)}
                 placeholder="000.000.000-00 ou 00.000.000/0000-00"
                 required
               />
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 id="tenantId"
                 type="text"
                 value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTenantId(e.target.value)}
                 placeholder="Deixe vazio para tenant padrão"
               />
             </div>

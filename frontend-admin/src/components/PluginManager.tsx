@@ -1,4 +1,4 @@
-// Componente para gestão de plugins (TASK-013)
+// Componente para gestão de plugins (TASK-PLUGIN-001)
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import * as api from '@/lib/api/plugins';
+import * as tenantApi from '@/lib/api/tenants';
+
+interface Tenant {
+  id: string;
+  name: string;
+  status: string;
+  plugins: string[];
+  createdAt: string;
+}
 
 interface Plugin {
   id: string;
@@ -22,17 +31,35 @@ interface Plugin {
 
 export default function PluginManager() {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [editingPlugin, setEditingPlugin] = useState<Plugin | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTenant, setSelectedTenant] = useState('tenant1');
+  const [isInstallDialogOpen, setIsInstallDialogOpen] = useState(false);
+  const [availablePlugins, setAvailablePlugins] = useState<any[]>([]);
+  const [selectedPluginToInstall, setSelectedPluginToInstall] = useState<string>('');
+  const [selectedTenant, setSelectedTenant] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const loadPlugins = async (tenantId: string) => {
+  const loadTenants = async () => {
+    try {
+      const res = await tenantApi.listTenants();
+      setTenants(res || []);
+      if (res && res.length > 0 && !selectedTenant) {
+        setSelectedTenant(res[0].id);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao carregar tenants: ' + (err.message || err));
+    }
+  };
+
+  const loadPlugins = async () => {
+    if (!selectedTenant) return;
     setLoading(true);
     try {
-      const res = await api.listPlugins(tenantId);
+      const res = await api.listPlugins(selectedTenant);
       setPlugins(res || []);
-    } catch (err:any) {
+    } catch (err: any) {
       console.error(err);
       alert('Erro ao carregar plugins: ' + (err.message || err));
     } finally {
@@ -40,17 +67,34 @@ export default function PluginManager() {
     }
   };
 
+  const loadAvailablePlugins = async () => {
+    try {
+      const res = await fetch('/api/plugins');
+      if (!res.ok) throw new Error('Failed to load available plugins');
+      const data = await res.json();
+      setAvailablePlugins(data.plugins || []);
+    } catch (err: any) {
+      console.error('Erro ao carregar plugins disponíveis:', err);
+    }
+  };
+
   useEffect(() => {
-    loadPlugins(selectedTenant);
+    loadTenants();
+    loadAvailablePlugins();
+  }, []);
+
+  useEffect(() => {
+    loadPlugins();
   }, [selectedTenant]);
 
   const handleToggleStatus = async (plugin: Plugin) => {
+    if (!selectedTenant) return;
     try {
       const action = plugin.status === 'enabled' ? 'disable' : 'enable';
-      const resp = await api.togglePlugin(plugin.id, action);
+      const resp = await api.togglePluginForTenant(selectedTenant, plugin.id, action);
       if (resp?.auditId) alert('Operação enviada. auditId: ' + resp.auditId);
-      await loadPlugins(selectedTenant);
-    } catch (err:any) {
+      await loadPlugins();
+    } catch (err: any) {
       console.error(err);
       alert('Erro ao alterar status: ' + (err.message || err));
     }
@@ -64,23 +108,38 @@ export default function PluginManager() {
   const handleSave = async () => {
     if (!editingPlugin) return;
     try {
-      const resp = await api.configurePlugin(editingPlugin.id, editingPlugin.config);
+      const resp = await api.configurePlugin(editingPlugin.id, editingPlugin.config, selectedTenant);
       if (resp?.auditId) alert('Configuração salva. auditId: ' + resp.auditId);
       setIsDialogOpen(false);
       setEditingPlugin(null);
-      await loadPlugins(selectedTenant);
-    } catch (err:any) {
+      await loadPlugins();
+    } catch (err: any) {
       console.error(err);
       alert('Erro ao salvar configuração: ' + (err.message || err));
     }
   };
 
-  const handleInstall = async () => {
+  const handleInstall = () => {
+    setIsInstallDialogOpen(true);
+  };
+
+  const handleInstallConfirm = async () => {
+    if (!selectedPluginToInstall || !selectedTenant) return;
+
+    const plugin = availablePlugins.find(p => p.id === selectedPluginToInstall);
+    if (!plugin) return;
+
     try {
-      const resp = await api.installPlugin(selectedTenant, { name: 'new-plugin', type: 'consulta', version: '1.0.0' });
+      const resp = await api.installPlugin({
+        name: plugin.id,
+        type: plugin.type,
+        version: plugin.version
+      }, selectedTenant);
       if (resp?.auditId) alert('Instalação iniciada. auditId: ' + resp.auditId);
-      await loadPlugins(selectedTenant);
-    } catch (err:any) {
+      setIsInstallDialogOpen(false);
+      setSelectedPluginToInstall('');
+      await loadPlugins();
+    } catch (err: any) {
       console.error(err);
       alert('Erro ao instalar plugin: ' + (err.message || err));
     }
@@ -89,10 +148,10 @@ export default function PluginManager() {
   const handleRemove = async (id: string) => {
     if (!confirm('Tem certeza que deseja remover este plugin?')) return;
     try {
-      const resp = await api.removePlugin(id);
+      const resp = await api.removePlugin(id, selectedTenant);
       if (resp?.auditId) alert('Remoção iniciada. auditId: ' + resp.auditId);
-      await loadPlugins(selectedTenant);
-    } catch (err:any) {
+      await loadPlugins();
+    } catch (err: any) {
       console.error(err);
       alert('Erro ao remover plugin: ' + (err.message || err));
     }
@@ -105,11 +164,14 @@ export default function PluginManager() {
           <Label>Selecionar Tenant</Label>
           <Select value={selectedTenant} onValueChange={setSelectedTenant}>
             <SelectTrigger className="w-48">
-              <SelectValue />
+              <SelectValue placeholder="Selecione um tenant" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="tenant1">Tenant 1</SelectItem>
-              <SelectItem value="tenant2">Tenant 2</SelectItem>
+              {tenants.map((tenant) => (
+                <SelectItem key={tenant.id} value={tenant.id}>
+                  {tenant.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -118,11 +180,15 @@ export default function PluginManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Plugins para Tenant {selectedTenant}</CardTitle>
+          <CardTitle>Plugins</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div>Carregando plugins...</div>
+          ) : plugins.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum plugin encontrado. Clique em "Instalar Novo Plugin" para começar.
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -201,6 +267,42 @@ export default function PluginManager() {
               <Button onClick={handleSave}>Salvar</Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isInstallDialogOpen} onOpenChange={setIsInstallDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Instalar Novo Plugin</DialogTitle>
+            <DialogDescription>
+              Selecione um plugin disponível para instalar no tenant atual.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Plugin Disponível</Label>
+              <Select value={selectedPluginToInstall} onValueChange={setSelectedPluginToInstall}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um plugin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePlugins.map((plugin) => (
+                    <SelectItem key={plugin.id} value={plugin.id}>
+                      {plugin.id} ({plugin.type}) - v{plugin.version}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsInstallDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleInstallConfirm} disabled={!selectedPluginToInstall}>
+                Instalar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -22,3 +22,5 @@ export function Input({ className, error, ...props }: InputProps) {
     </div>
   )
 }
+
+export default Input;

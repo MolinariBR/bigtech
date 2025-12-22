@@ -52,7 +52,7 @@ O Appwrite já está incluído no repositório e configurado em `appwrite/docker
   - **Propriedade 2: Operações geram auditId único em Audit**
   - **Valida: Requisito 4.1, 4.6**
 
-## TASK-TENANT-003. Permitir Criação de Tenant via Frontend-App Login/Register
+- [x] TASK-TENANT-003. Permitir Criação de Tenant via Frontend-App Login/Register
 - Modificar fluxo de autenticação em frontend-app para detectar tenant inexistente e permitir criação automática (auto-onboarding) se usuário for admin ou primeiro usuário.
 - Adicionar modal/register para criar tenant durante login, com campos básicos (name derivado de domínio/subdomain).
 - Backend: Extender AuthService para criar tenant se não existir, com status 'pending' para aprovação admin.
@@ -63,12 +63,12 @@ O Appwrite já está incluído no repositório e configurado em `appwrite/docker
 - Endereço Físico: frontend-app/src/pages/_app.tsx, backend/src/core/auth.ts
 - _Requisitos: 2.1, 4.1
 
-- [ ] TASK-TENANT-003.1 Escrever testes property-based de integração para TASK-TENANT-003
+- [x] TASK-TENANT-003.1 Escrever testes property-based de integração para TASK-TENANT-003
   - **Descrição:** Testes de integração que simulam fluxo de login/register contra a stack Docker (Appwrite + funções + backend). Validar que tenant é criado automaticamente quando inexistente e que o fluxo de autenticação funciona com a stack real.
   - **Propriedade 1: Tenant criado automaticamente se inexistente durante login**
   - **Valida: Requisito 2.1**
 
-### TASK-TENANT-004. Criar Testes CRUD Reais para Tenants
+- [ ] TASK-TENANT-004. Criar Testes CRUD Reais para Tenants
 - Implementar testes de integração end-to-end (E2E) com Appwrite real, executados contra uma stack Docker completa (Appwrite + banco + funções + backend + auth). Esses testes não usam mocks: devem criar tenant via API, verificar isolamento, atualizar, deletar e validar auditoria em coleções reais do Appwrite rodando em containers.
 - Usar Jest + Supertest para backend, Playwright para frontend E2E. Preferir `docker-compose` para levantar a stack em CI, ou `testcontainers` para testes programáticos que exigem isolamento dinâmico.
 - User Story Relacionada: US-009

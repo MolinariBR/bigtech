@@ -2,9 +2,10 @@
 // Precedência: 1.Project → 2.Architecture → 4.Entities → 7.Tasks
 // Decisão: Controlador admin para gerenciamento de plugins conforme contratos padronizados
 
-import { Router } from 'express';
+// Simulação de persistência para desenvolvimento (TODO: usar Appwrite)
+const pluginStatusStore: Record<string, Record<string, string>> = {};
+
 import { pluginLoader } from '../../core/pluginLoader';
-import { AppwriteService } from '../../lib/appwrite';
 
 const router = Router();
 const appwrite = AppwriteService.getInstance();
@@ -18,26 +19,25 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'tenantId is required' });
     }
 
-    // Para desenvolvimento: simular plugins ativos (TODO: integrar com Appwrite)
-    const activePlugins = [
-      // Simular alguns plugins ativos para desenvolvimento
-      { pluginId: 'pagamento-asaas', status: 'enabled', config: { apiKey: 'test' }, $createdAt: new Date().toISOString(), $updatedAt: new Date().toISOString() }
-    ];
+    // Para desenvolvimento: usar plugins do pluginLoader diretamente
+    // TODO: Integrar com Appwrite quando estiver configurado
+    console.log(`[DEV] Listando plugins para tenant ${tenantId}`);
 
     // Buscar plugins disponíveis
     const availablePlugins = pluginLoader.getAvailablePlugins();
 
-    // Combinar informações
+    // Simular plugins instalados (todos disponíveis para desenvolvimento)
     const plugins = availablePlugins.map(available => {
-      const active = activePlugins.find((active: any) => active.pluginId === available.id);
+      const tenantStatuses = pluginStatusStore[tenantId] || {};
+      const status = tenantStatuses[available.id] || (available.id === 'pagamento-asaas' ? 'enabled' : 'disabled');
       return {
         id: available.id,
         type: available.type,
         version: available.version,
-        status: active ? active.status : 'disabled',
-        config: active ? active.config : null,
-        installedAt: active ? active.$createdAt : null,
-        updatedAt: active ? active.$updatedAt : null,
+        status: status,
+        config: available.id === 'pagamento-asaas' ? { apiKey: 'test' } : null,
+        installedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     });
 
@@ -51,7 +51,9 @@ router.get('/', async (req, res) => {
 // POST /api/admin/plugins - Instalar plugin
 router.post('/', async (req, res) => {
   try {
-    const { tenantId, name, type, version } = req.body;
+    const { tenantId: bodyTenantId, name, type, version } = req.body;
+    const { tenantId: queryTenantId } = req.query as any;
+    const tenantId = bodyTenantId || queryTenantId;
 
     if (!tenantId || !name || !type || !version) {
       return res.status(400).json({ error: 'tenantId, name, type, and version are required' });
@@ -123,38 +125,29 @@ router.post('/:pluginId/toggle', async (req, res) => {
       return res.status(400).json({ error: 'action must be enable or disable' });
     }
 
-    // Buscar plugin no banco
-    const plugins = await appwrite.databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-      'plugins',
-      [`tenantId=${tenantId}`, `pluginId=${pluginId}`]
-    );
-
-    if (plugins.documents.length === 0) {
-      return res.status(404).json({ error: 'Plugin not found' });
-    }
-
-    const pluginDoc = plugins.documents[0];
-    const plugin = Array.from(pluginLoader['plugins'].values()).find(p => p.id === pluginId);
-
+    // Para desenvolvimento: verificar se plugin existe no pluginLoader
+    // TODO: Integrar com Appwrite quando estiver configurado
+    const plugin = pluginLoader.getPlugin(pluginId);
     if (!plugin) {
+      console.log(`Plugin ${pluginId} not found in pluginLoader`);
       return res.status(404).json({ error: 'Plugin implementation not found' });
     }
 
     // Executar ação (simplificado para desenvolvimento)
     console.log(`[DEV] Plugin ${pluginId} would be ${action}d for tenant ${tenantId}`);
 
-    // Atualizar no banco
-    await appwrite.databases.updateDocument(
-      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-      'plugins',
-      pluginDoc.$id,
-      { status: pluginDoc.status }
-    );
+    // Calcular novo status baseado na ação
+    const newStatus = action === 'enable' ? 'enabled' : 'disabled';
+
+    // Persistir status (simulação)
+    if (!pluginStatusStore[tenantId]) {
+      pluginStatusStore[tenantId] = {};
+    }
+    pluginStatusStore[tenantId][pluginId] = newStatus;
 
     res.json({
       pluginId,
-      status: pluginDoc.status,
+      status: newStatus,
       message: `Plugin ${action}d successfully`
     });
   } catch (error) {
