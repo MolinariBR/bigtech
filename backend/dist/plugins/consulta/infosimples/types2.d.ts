@@ -45,4 +45,26 @@ export type ConsultaInputType = {
     login_cpf?: string;
     login_senha?: string;
 };
+export interface ConsultaSchema {
+    id: string;
+    provider: 'infosimples';
+    method: 'POST';
+    endpoint: string;
+    form: {
+        title: string;
+        submit_label: string;
+        fields: Field[];
+    };
+}
+export interface Field {
+    name: string;
+    type: string;
+    required: boolean;
+    label?: string;
+    validation?: {
+        pattern?: string;
+        minLength?: number;
+        maxLength?: number;
+    };
+}
 //# sourceMappingURL=types2.d.ts.map

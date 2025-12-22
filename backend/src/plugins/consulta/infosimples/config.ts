@@ -5,10 +5,10 @@ import { InfosimplesConfig } from './types2';
 
 export const defaultConfig: InfosimplesConfig = {
   apiKey: process.env.INFOSIMPLES_API_KEY || '',
-  baseUrl: 'https://api.infosimples.com/v1',
+  baseUrl: 'https://api.infosimples.com/api/v2',
   timeout: 30000, // 30 segundos
-  retries: 2,
-  retryDelayMs: 300,
+  retries: 3, // Aumentar retries para lidar com rate limiting
+  retryDelayMs: 5000, // Aumentar delay base entre retries
   fallbackSources: ['brasilapi'], // Fontes de fallback se Infosimples falhar
 };
 

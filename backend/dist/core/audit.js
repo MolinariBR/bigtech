@@ -35,6 +35,7 @@ class AuditLogger {
             return;
         }
         try {
+            // Gravamos apenas os campos suportados pelo schema atual da collection
             const auditData = {
                 tenantId: entry.tenantId,
                 userId: entry.userId || null,
@@ -42,9 +43,10 @@ class AuditLogger {
                 resource: entry.resource,
                 details: JSON.stringify(entry.details),
                 ipAddress: entry.ipAddress,
-                timestamp: entry.timestamp || new Date()
+                timestamp: (entry.timestamp || new Date()).toISOString()
             };
-            await this.appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'audits', 'unique()', auditData);
+            const created = await this.appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'audits', 'unique()', auditData);
+            console.log('AuditLogger: created audit document', created);
         }
         catch (error) {
             console.error('Failed to log audit entry:', error);

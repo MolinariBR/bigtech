@@ -6,10 +6,11 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card'
 import { Button } from '@/components/Button'
-import { Modal, ModalInput } from '@/components/Modal'
+import { Modal, ModalForm, ModalResult } from '@/components/Modal'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import Footer from '@/components/Footer'
+import { useDynamicValidation, InitialFormField } from '@/hooks/useDynamicValidation'
 
 interface CadastralQuery {
   id: string
@@ -24,13 +25,29 @@ export default function ConsultaCadastral() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedQuery, setSelectedQuery] = useState<CadastralQuery | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [inputValue, setInputValue] = useState('')
-  const [inputError, setInputError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
   const [cadastralQueries, setCadastralQueries] = useState<CadastralQuery[]>([])
   const [loadingServices, setLoadingServices] = useState(true)
+
+  // Campos dinâmicos para validação
+  const cadastralFields: InitialFormField[] = [
+    {
+      name: 'document',
+      label: 'CPF ou CNPJ',
+      type: 'document',
+      value: '',
+      placeholder: '000.000.000-00 ou 00.000.000/0000-00',
+      required: true
+    }
+  ]
+
+  // Hook de validação dinâmica
+  const { fields, validateForm, resetValidation } = useDynamicValidation(cadastralFields)
+
+  // Função helper para acessar campos por nome
+  const getField = (name: string) => fields.find(f => f.name === name)
 
   // Buscar serviços cadastrais do backend
   useEffect(() => {
@@ -82,102 +99,75 @@ export default function ConsultaCadastral() {
     fetchCadastralServices()
   }, [])
 
-  const validateDocument = (value: string): boolean => {
-    // Remove caracteres não numéricos
-    const cleanValue = value.replace(/\D/g, '')
-
-    // Valida CPF (11 dígitos)
-    if (cleanValue.length === 11) {
-      return validateCPF(cleanValue)
-    }
-
-    // Valida CNPJ (14 dígitos)
-    if (cleanValue.length === 14) {
-      return validateCNPJ(cleanValue)
-    }
-
-    return false
-  }
-
-  const validateCPF = (cpf: string): boolean => {
-    // Lógica básica de validação CPF
-    if (cpf.length !== 11) return false
-    if (/^(\d)\1+$/.test(cpf)) return false // CPF com todos dígitos iguais
-
-    let sum = 0
-    for (let i = 0; i < 9; i++) {
-      sum += parseInt(cpf.charAt(i)) * (10 - i)
-    }
-    let remainder = (sum * 10) % 11
-    if (remainder === 10 || remainder === 11) remainder = 0
-    if (remainder !== parseInt(cpf.charAt(9))) return false
-
-    sum = 0
-    for (let i = 0; i < 10; i++) {
-      sum += parseInt(cpf.charAt(i)) * (11 - i)
-    }
-    remainder = (sum * 10) % 11
-    if (remainder === 10 || remainder === 11) remainder = 0
-
-    return remainder === parseInt(cpf.charAt(10))
-  }
-
-  const validateCNPJ = (cnpj: string): boolean => {
-    // Lógica básica de validação CNPJ
-    if (cnpj.length !== 14) return false
-    if (/^(\d)\1+$/.test(cnpj)) return false // CNPJ com todos dígitos iguais
-
-    // Validação dos dígitos verificadores (simplificada)
-    return true // TODO: Implementar validação completa CNPJ
-  }
-
   const handleExecuteQuery = (query: CadastralQuery) => {
     setSelectedQuery(query)
     setModalOpen(true)
-    setInputValue('')
-    setInputError('')
+    resetValidation()
     setResult(null)
   }
 
   const handleSubmit = async () => {
     if (!selectedQuery) return
 
-    // Valida documento
-    if (!validateDocument(inputValue)) {
-      setInputError('CPF ou CNPJ inválido')
+    // Validação dinâmica
+    if (!validateForm()) {
       return
     }
 
     // TODO: Verificar saldo de créditos do usuário
     const userCredits = 150 // Mock
     if (userCredits < selectedQuery.price) {
-      setInputError('Saldo insuficiente para esta consulta')
+      // Adicionar erro ao campo se necessário
       return
     }
 
     setIsLoading(true)
-    setInputError('')
 
     try {
-      // TODO: Executar consulta via plugin
-      // Simulação de chamada API
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // Mock result
-      setResult({
-        status: 'success',
-        data: {
-          document: inputValue,
-          name: 'João Silva',
-          processes: Math.floor(Math.random() * 5),
-          query: selectedQuery.name
-        }
+      // Executar consulta via plugin
+      const response = await fetch('/api/plugins/infosimples/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
+          // TODO: Adicionar Authorization se necessário
+        },
+        body: JSON.stringify({
+          input: {
+            type: selectedQuery.id, // Usar o ID do serviço como tipo
+            input: {
+              cpf: getField('document')?.value?.replace(/\D/g, '').length === 11 ? getField('document')?.value?.replace(/\D/g, '') : undefined,
+              cnpj: getField('document')?.value?.replace(/\D/g, '').length === 14 ? getField('document')?.value?.replace(/\D/g, '') : undefined,
+            }
+          }
+        })
       })
-    } catch (error) {
-      // Fallback automático para outro plugin se disponível
-      console.log('Tentando fallback...')
-      // TODO: Implementar lógica de fallback
 
+      if (!response.ok) {
+        throw new Error(`Erro na consulta: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Extrair dados reais da resposta normalizada
+        const consultaData = data.data?.output?.data || {}
+
+        // Normalizar resultado para exibição
+        setResult({
+          status: 'success',
+          data: consultaData,
+          raw: data.data
+        })
+      } else {
+        setResult({
+          status: 'error',
+          message: data.error || 'Erro na consulta. Tente novamente.',
+          details: data.details
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao executar consulta:', error)
       setResult({
         status: 'error',
         message: 'Erro na consulta. Tente novamente ou entre em contato com o suporte.'
@@ -187,36 +177,11 @@ export default function ConsultaCadastral() {
     }
   }
 
-  const formatDocument = (value: string): string => {
-    const cleanValue = value.replace(/\D/g, '')
-
-    if (cleanValue.length <= 11) {
-      // Formatar CPF: 000.000.000-00
-      return cleanValue
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-    } else {
-      // Formatar CNPJ: 00.000.000/0000-00
-      return cleanValue
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1/$2')
-        .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
-    }
-  }
-
   const truncateDescription = (text: string, maxLength: number = 180): string => {
     if (text.length <= maxLength) return text
     const truncated = text.substring(0, maxLength)
     const lastSpace = truncated.lastIndexOf(' ')
     return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
-  }
-
-  const handleInputChange = (value: string) => {
-    const formatted = formatDocument(value)
-    setInputValue(formatted)
-    setInputError('')
   }
 
   const toggleCardExpansion = (id: string) => {
@@ -285,12 +250,17 @@ export default function ConsultaCadastral() {
                 ) : (
                   // Services cards
                   cadastralQueries.map((query) => (
-                    <Card key={query.id} className="hover:shadow-md transition-shadow">
+                    <Card key={query.id} className="hover:shadow-md transition-shadow" data-testid="consulta-card">
                       <CardHeader>
-                        <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
+                        <div className="flex items-start justify-between mb-2">
+                          <CardTitle className="text-lg uppercase flex-1" data-testid="card-title">{query.name}</CardTitle>
+                          <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium ml-2">
+                            Cadastral
+                          </span>
+                        </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Cadastral</p>
-                          <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
+                          <p className="text-sm font-medium text-muted-foreground mb-1" data-testid="card-category">Grupo: Cadastral</p>
+                          <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'} data-testid="card-description">
                             {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
                           </CardDescription>
                           {query.description.length > 180 && (
@@ -305,7 +275,7 @@ export default function ConsultaCadastral() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-2xl font-bold text-success">
+                          <span className="text-2xl font-bold text-success" data-testid="card-price">
                             R$ {query.price.toFixed(2)}
                           </span>
                           <span className={`px-2 py-1 rounded-full text-xs ${
@@ -336,12 +306,10 @@ export default function ConsultaCadastral() {
                 title={selectedQuery?.name || 'Consulta Cadastral'}
               >
                 <div className="space-y-4">
-                  <ModalInput
-                    label="CPF ou CNPJ"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                    error={inputError}
+                  <ModalForm
+                    fields={fields}
+                    onSubmit={handleSubmit}
+                    isLoading={isLoading}
                   />
 
                   {selectedQuery && (
@@ -356,46 +324,8 @@ export default function ConsultaCadastral() {
                   )}
 
                   {result && (
-                    <div className={`p-3 rounded-md ${
-                      result.status === 'success'
-                        ? 'bg-success/10 text-success-foreground'
-                        : 'bg-error/10 text-error-foreground'
-                    }`}>
-                      {result.status === 'success' ? (
-                        <div>
-                          <p className="font-medium">Consulta realizada com sucesso!</p>
-                          <p className="text-sm mt-1">
-                            Documento: {result.data.document}
-                          </p>
-                          <p className="text-sm">
-                            Nome: {result.data.name}
-                          </p>
-                          <p className="text-sm">
-                            Processos: {result.data.processes}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="font-medium">{result.message}</p>
-                      )}
-                    </div>
+                    <ModalResult result={result} inputValue={getField('document')?.value || ''} />
                   )}
-
-                  <div className="flex space-x-3">
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={isLoading}
-                      className="flex-1"
-                    >
-                      {isLoading ? 'Processando...' : 'Confirmar Consulta'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setModalOpen(false)}
-                      className="flex-1"
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
                 </div>
               </Modal>
             </div>

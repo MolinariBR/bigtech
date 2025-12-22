@@ -43,7 +43,10 @@ export const multiTenantMiddleware = async (
       tenantId = 'default';
     }
 
-    // Validar se tenant existe (opcional - pode ser feito em cada rota)
+    // Em desenvolvimento, permitir sem userId ou pegar do header
+    if (!req.userId && process.env.NODE_ENV !== 'production') {
+      req.userId = req.headers['x-user-id'] as string || 'dev-user';
+    }
     const appwrite = AppwriteService.getInstance();
     try {
       const tenant = await appwrite.databases.getDocument(

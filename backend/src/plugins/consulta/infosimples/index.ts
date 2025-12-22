@@ -2,8 +2,10 @@
 // Plugin Consulta Infosimples
 
 import { Plugin, PluginContext, PluginResult } from '../../../core/pluginLoader';
-import { InfosimplesConfig, InfosimplesRequest, InfosimplesResponse, NormalizedConsulta, ConsultaInputType } from './types2';
+import { InfosimplesConfig, InfosimplesRequest, InfosimplesResponse, NormalizedConsulta, ConsultaInputType, ConsultaSchema } from './types2';
 import { defaultConfig, consultaCodes, legacyCodes } from './config';
+import { OpenApiParser } from '../../../utils/openapiParser';
+import * as path from 'path';
 
 export class InfosimplesPlugin implements Plugin {
   id = 'infosimples';
@@ -11,6 +13,14 @@ export class InfosimplesPlugin implements Plugin {
   name = 'Infosimples';
   version = '1.0.0';
   config: InfosimplesConfig;
+
+  // Cache de schemas para performance
+  private schemasCache: ConsultaSchema[] | null = null;
+
+  // Rate limiting
+  private requestTimestamps: number[] = [];
+  private readonly maxRequestsPerMinute = 10; // Limitar a 10 requisições por minuto
+  private readonly minRequestInterval = 6000; // Mínimo 6 segundos entre requisições
 
   constructor(config?: Partial<InfosimplesConfig>) {
     this.config = { ...defaultConfig, ...config };
@@ -34,48 +44,36 @@ export class InfosimplesPlugin implements Plugin {
     console.log(`Plugin Infosimples desabilitado para tenant ${tenantId}`);
   }
 
-  // Novo método para listar serviços disponíveis
-  getAvailableServices(): any[] {
-    // Retornar lista de serviços disponíveis baseada nos códigos mapeados
-    const services = [];
+  private getSchemas(): ConsultaSchema[] {
+    if (!this.schemasCache) {
+      try {
+        const yamlPath = path.join(__dirname, 'infosimples.yaml');
+        const parser = new OpenApiParser();
+        this.schemasCache = parser.parseFromFile(yamlPath);
+      } catch (error) {
+        console.error('Erro ao carregar schemas:', error);
+        this.schemasCache = [];
+      }
+    }
+    return this.schemasCache;
+  }
 
-    // Crédito
-    services.push(
-      { id: 'cenprot_protestos_sp', name: 'CENPROT Protestos SP', description: 'Consulta de protestos em cartório no estado de São Paulo', price: 2.50, category: 'credito', active: true },
-      { id: 'serasa_score', name: 'Serasa Score', description: 'Consulta de score de crédito Serasa', price: 1.80, category: 'credito', active: true },
-      { id: 'boavista_credito', name: 'Boa Vista Crédito', description: 'Consulta de crédito na base Boa Vista', price: 2.20, category: 'credito', active: true },
-      { id: 'scpc_negativacao', name: 'SCPC Negativação', description: 'Consulta de negativações no SCPC', price: 1.50, category: 'credito', active: true }
-    );
+  private getSchemaForService(serviceId: string): ConsultaSchema | null {
+    const schemas = this.getSchemas();
+    return schemas.find(s => s.id === serviceId) || null;
+  }
 
-    // Cadastral
-    services.push(
-      { id: 'receita_federal_cpf', name: 'Receita Federal CPF', description: 'Consulta de dados cadastrais na Receita Federal', price: 1.00, category: 'cadastral', active: true },
-      { id: 'receita_federal_cnpj', name: 'Receita Federal CNPJ', description: 'Consulta de dados cadastrais de empresa', price: 1.20, category: 'cadastral', active: true },
-      { id: 'portal_transparencia_ceis', name: 'CEIS - CNPJ', description: 'Consulta no Cadastro de Empresas Inidôneas e Suspensas', price: 0.80, category: 'cadastral', active: true },
-      { id: 'portal_transparencia_cepim', name: 'CEPIM - CPF', description: 'Consulta no Cadastro de Entidades Privadas sem Fins Lucrativos', price: 0.80, category: 'cadastral', active: true },
-      { id: 'portal_transparencia_cnep', name: 'CNEP - CNPJ', description: 'Consulta no Cadastro Nacional de Empresas Punidas', price: 0.80, category: 'cadastral', active: true },
-      { id: 'tse_situacao_eleitoral', name: 'TSE Situação Eleitoral', description: 'Consulta de situação eleitoral do cidadão', price: 1.50, category: 'cadastral', active: true },
-      { id: 'cnis_pre_inscricao', name: 'CNIS Pré-Inscrição', description: 'Consulta no Cadastro Nacional de Informações Sociais', price: 2.00, category: 'cadastral', active: true },
-      { id: 'dataprev_qualificacao', name: 'Dataprev Qualificação', description: 'Consulta de qualificação previdenciária', price: 1.80, category: 'cadastral', active: true }
-    );
-
-    // Veicular
-    services.push(
-      { id: 'serpro_radar_veiculo', name: 'SERPRO Radar Veículo', description: 'Consulta de dados veiculares no SERPRO', price: 3.00, category: 'veicular', active: true },
-      { id: 'detran_rj_veiculo', name: 'DETRAN RJ Veículo', description: 'Consulta de veículo no DETRAN Rio de Janeiro', price: 4.50, category: 'veicular', active: true },
-      { id: 'detran_rs_veiculo', name: 'DETRAN RS Veículo', description: 'Consulta de veículo no DETRAN Rio Grande do Sul', price: 4.00, category: 'veicular', active: true },
-      { id: 'detran_sp_veiculo', name: 'ECRVSP SP', description: 'Consulta de veículo no DETRAN São Paulo', price: 5.00, category: 'veicular', active: true },
-      { id: 'detran_mg_veic_nao_licenciado', name: 'DETRAN MG Não Licenciado', description: 'Consulta de veículos não licenciados em Minas Gerais', price: 3.50, category: 'veicular', active: true },
-      { id: 'detran_mg_multas_extrato', name: 'DETRAN MG Multas', description: 'Consulta de multas no DETRAN Minas Gerais', price: 2.80, category: 'veicular', active: true },
-      { id: 'detran_mg_trlav', name: 'DETRAN MG TRLAV', description: 'Consulta de transferência de veículo em Minas Gerais', price: 3.20, category: 'veicular', active: true }
-    );
-
-    return services;
+  private getEndpointForService(serviceId: string): string | null {
+    const schema = this.getSchemaForService(serviceId);
+    return schema ? schema.endpoint : null;
   }
 
   async execute(context: PluginContext): Promise<PluginResult> {
-    const { tenantId, userId, input: contextInput } = context;
+    const { tenantId, userId, input: contextInput, config: contextConfig } = context;
     const { type, input } = contextInput as { type: string; input: ConsultaInputType };
+
+    // Usar config do context se disponível, senão this.config
+    const effectiveConfig = contextConfig && Object.keys(contextConfig).length > 0 ? { ...this.config, ...contextConfig } : this.config;
 
     try {
       // Mapear tipo para código Infosimples
@@ -85,7 +83,7 @@ export class InfosimplesPlugin implements Plugin {
       }
 
       // Chamar API Infosimples
-      const response = await this.callInfosimplesAPI(code, input);
+      const response = await this.callInfosimplesAPI(code, input, effectiveConfig);
 
       // Normalizar resposta
       const normalized = this.normalizeResponse(type, input, response);
@@ -111,47 +109,14 @@ export class InfosimplesPlugin implements Plugin {
   }
 
   private getConsultaCode(type: string, input: ConsultaInputType): string | null {
-    // Mapeamento direto para endpoints da API Infosimples
-    const endpointMap: Record<string, string | null> = {
-      // Crédito
-      'cenprot_protestos_sp': consultaCodes.cenprot_protestos_sp,
-      'serasa_score': consultaCodes.serasa_score,
-      'boavista_credito': consultaCodes.boavista_credito,
-      'scpc_negativacao': consultaCodes.scpc_negativacao,
-
-      // Cadastral
-      'receita_federal_cpf': consultaCodes.receita_federal_cpf,
-      'receita_federal_cnpj': consultaCodes.receita_federal_cnpj,
-      'portal_transparencia_ceis': consultaCodes.portal_transparencia_ceis,
-      'portal_transparencia_cepim': consultaCodes.portal_transparencia_cepim,
-      'portal_transparencia_cnep': consultaCodes.portal_transparencia_cnep,
-      'tse_situacao_eleitoral': consultaCodes.tse_situacao_eleitoral,
-      'cnis_pre_inscricao': consultaCodes.cnis_pre_inscricao,
-      'dataprev_qualificacao': consultaCodes.dataprev_qualificacao,
-
-      // Veicular
-      'serpro_radar_veiculo': consultaCodes.serpro_radar_veiculo,
-      'detran_rj_veiculo': consultaCodes.detran_rj_veiculo,
-      'detran_rs_veiculo': consultaCodes.detran_rs_veiculo,
-      'detran_sp_veiculo': consultaCodes.detran_sp_veiculo,
-      'detran_mg_veic_nao_licenciado': consultaCodes.detran_mg_veic_nao_licenciado,
-      'detran_mg_multas_extrato': consultaCodes.detran_mg_multas_extrato,
-      'detran_mg_trlav': consultaCodes.detran_mg_trlav,
-
-      // Previdenciário
-      'dataprev_fap': consultaCodes.dataprev_fap,
-
-      // Endereço
-      'correios_cep': consultaCodes.correios_cep,
-    };
-
-    const endpoint = endpointMap[type];
-    if (!endpoint) {
-      // Fallback para códigos legados se não encontrado
-      return this.getLegacyCode(type, input);
+    // Buscar endpoint diretamente do schema baseado no serviceId (type)
+    const endpoint = this.getEndpointForService(type);
+    if (endpoint) {
+      return endpoint;
     }
 
-    return endpoint;
+    // Fallback para códigos legados se não encontrado no schema
+    return this.getLegacyCode(type, input);
   }
 
   private getLegacyCode(type: string, input: ConsultaInputType): string | null {
@@ -173,19 +138,163 @@ export class InfosimplesPlugin implements Plugin {
     return null;
   }
 
-  private async callInfosimplesAPI(endpoint: string, data: ConsultaInputType): Promise<InfosimplesResponse> {
-    const url = `${this.config.baseUrl}${endpoint}`;
+  private async callInfosimplesAPI(endpoint: string, data: ConsultaInputType, config?: InfosimplesConfig): Promise<InfosimplesResponse> {
+    const effectiveConfig = config || this.config;
+    const url = `${effectiveConfig.baseUrl}${endpoint}`;
 
-    // Preparar parâmetros de query baseados no endpoint
+    // Aplicar rate limiting
+    await this.applyRateLimiting();
+
+    // Preparar parâmetros de query baseados no schema
     const queryParams = new URLSearchParams();
 
-    // Mapeamento de campos baseado no endpoint
+    // Obter schema para este endpoint
+    const serviceId = this.getServiceIdFromEndpoint(endpoint);
+    const schema = serviceId ? this.getSchemaForService(serviceId) : null;
+
+    if (schema) {
+      // Usar schema dinâmico para mapear campos
+      this.buildQueryParamsFromSchema(queryParams, schema, data, effectiveConfig);
+    } else {
+      // Fallback para mapeamento hardcoded se schema não encontrado
+      this.buildQueryParamsFallback(queryParams, endpoint, data, effectiveConfig);
+    }
+
+    const finalUrl = url;
+
+    const retries = (effectiveConfig.retries ?? 0);
+    const baseDelay = (effectiveConfig.retryDelayMs ?? 200);
+
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), effectiveConfig.timeout);
+
+      try {
+        const response = await fetch(finalUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: queryParams.toString(),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          // Tratamento específico para erro 429 (Too Many Requests)
+          if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After');
+            const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 30000; // 30 segundos se não especificado
+            console.warn(`Erro 429 recebido. Aguardando ${waitTime}ms conforme indicado pela API.`);
+            await this.sleep(waitTime);
+            // Retry após aguardar
+            continue;
+          }
+
+          const err = new Error(`Erro na API Infosimples: ${response.status} ${response.statusText}`);
+          lastError = err;
+          throw err;
+        }
+
+        return response.json() as Promise<InfosimplesResponse>;
+      } catch (err) {
+        clearTimeout(timeoutId);
+
+        const isAbort = err instanceof Error && (err.name === 'AbortError' || /aborted/i.test(err.message));
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        // If there are remaining attempts, wait exponential backoff then retry
+        if (attempt < retries) {
+          const backoff = Math.floor(baseDelay * Math.pow(2, attempt));
+          const jitter = Math.floor(Math.random() * Math.min(100, backoff));
+          const waitMs = backoff + jitter;
+          console.warn(`Infosimples request failed (attempt ${attempt + 1}/${retries + 1}): ${lastError.message}. Retrying in ${waitMs}ms`);
+          await this.sleep(waitMs);
+          continue;
+        }
+
+        // No more retries, rethrow
+        throw lastError;
+      }
+    }
+
+    throw lastError ?? new Error('Erro desconhecido na chamada Infosimples');
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private getServiceIdFromEndpoint(endpoint: string): string | null {
+    // Extrair serviceId do endpoint (ex: /receita-federal/cpf -> receita_federal_cpf)
+    const match = endpoint.match(/^\/([^\/]+)\/([^\/]+)/);
+    if (match) {
+      return `${match[1]}_${match[2]}`;
+    }
+    return null;
+  }
+
+  private buildQueryParamsFromSchema(
+    queryParams: URLSearchParams,
+    schema: ConsultaSchema,
+    data: ConsultaInputType,
+    config: InfosimplesConfig
+  ): void {
+    // Adicionar campos dinâmicos baseados no schema
+    for (const field of schema.form.fields) {
+      const fieldName = field.name;
+      const fieldValue = (data as any)[fieldName];
+
+      if (fieldValue !== undefined && fieldValue !== null) {
+        let processedValue = fieldValue;
+
+        // Aplicar processamento baseado no tipo de campo
+        switch (field.type) {
+          case 'document.cpf':
+            processedValue = String(fieldValue).replace(/\D/g, ''); // Remove máscara
+            break;
+          case 'document.cnpj':
+            processedValue = String(fieldValue).replace(/\D/g, ''); // Remove máscara
+            break;
+          case 'date.iso':
+            processedValue = this.formatBirthdate(String(fieldValue));
+            break;
+          case 'vehicle.plate':
+            processedValue = String(fieldValue).toUpperCase().replace(/[^A-Z0-9]/g, '');
+            break;
+          default:
+            processedValue = String(fieldValue);
+        }
+
+        queryParams.append(fieldName, processedValue);
+      }
+    }
+
+    // Adicionar parâmetros de infraestrutura
+    queryParams.append('token', config.apiKey);
+    queryParams.append('timeout', '300');
+  }
+
+  private buildQueryParamsFallback(
+    queryParams: URLSearchParams,
+    endpoint: string,
+    data: ConsultaInputType,
+    config: InfosimplesConfig
+  ): void {
+    // Fallback para mapeamento hardcoded se schema não encontrado
     if (endpoint.includes('cenprot-sp/protestos')) {
       if ((data as any).cpf) queryParams.append('cpf', (data as any).cpf);
       if ((data as any).cnpj) queryParams.append('cnpj', (data as any).cnpj);
     } else if (endpoint.includes('receita-federal/cpf')) {
-      queryParams.append('cpf', (data as any).cpf);
-      queryParams.append('birthdate', (data as any).birthdate);
+      const cpf = (data as any).cpf.replace(/\D/g, ''); // Remove máscara, API exige apenas dígitos
+      const formattedBirthdate = this.formatBirthdate((data as any).birthdate);
+      queryParams.append('cpf', cpf);
+      queryParams.append('birthdate', formattedBirthdate);
+      queryParams.append('token', config.apiKey);
+      queryParams.append('timeout', '300');
     } else if (endpoint.includes('receita-federal/cnpj')) {
       queryParams.append('cnpj', (data as any).cnpj);
     } else if (endpoint.includes('portal-transparencia')) {
@@ -236,62 +345,46 @@ export class InfosimplesPlugin implements Plugin {
       if ((data as any).renavam) queryParams.append('renavam', (data as any).renavam);
     }
 
-    const finalUrl = `${url}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    // Adicionar token e timeout se não foram adicionados acima
+    if (!queryParams.has('token')) {
+      queryParams.append('token', config.apiKey);
+    }
+    if (!queryParams.has('timeout')) {
+      queryParams.append('timeout', '300');
+    }
+  }
 
-    const retries = (this.config.retries ?? 0);
-    const baseDelay = (this.config.retryDelayMs ?? 200);
+  private async applyRateLimiting(): Promise<void> {
+    const now = Date.now();
 
-    let lastError: Error | null = null;
+    // Limpar timestamps antigos (mais de 1 minuto)
+    this.requestTimestamps = this.requestTimestamps.filter(timestamp => now - timestamp < 60000);
 
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
-
-      try {
-        const response = await fetch(finalUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.config.apiKey}`,
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const err = new Error(`Erro na API Infosimples: ${response.status} ${response.statusText}`);
-          lastError = err;
-          throw err;
-        }
-
-        return response.json() as Promise<InfosimplesResponse>;
-      } catch (err) {
-        clearTimeout(timeoutId);
-
-        const isAbort = err instanceof Error && (err.name === 'AbortError' || /aborted/i.test(err.message));
-        lastError = err instanceof Error ? err : new Error(String(err));
-
-        // If there are remaining attempts, wait exponential backoff then retry
-        if (attempt < retries) {
-          const backoff = Math.floor(baseDelay * Math.pow(2, attempt));
-          const jitter = Math.floor(Math.random() * Math.min(100, backoff));
-          const waitMs = backoff + jitter;
-          console.warn(`Infosimples request failed (attempt ${attempt + 1}/${retries + 1}): ${lastError.message}. Retrying in ${waitMs}ms`);
-          await this.sleep(waitMs);
-          continue;
-        }
-
-        // No more retries, rethrow
-        throw lastError;
+    // Verificar se excedeu o limite por minuto
+    if (this.requestTimestamps.length >= this.maxRequestsPerMinute) {
+      const oldestRequest = Math.min(...this.requestTimestamps);
+      const waitTime = 60000 - (now - oldestRequest);
+      if (waitTime > 0) {
+        console.warn(`Rate limit atingido. Aguardando ${waitTime}ms antes da próxima requisição.`);
+        await this.sleep(waitTime);
+        // Recursivamente verificar novamente após aguardar
+        return this.applyRateLimiting();
       }
     }
 
-    throw lastError ?? new Error('Erro desconhecido na chamada Infosimples');
-  }
+    // Verificar intervalo mínimo entre requisições
+    if (this.requestTimestamps.length > 0) {
+      const lastRequest = Math.max(...this.requestTimestamps);
+      const timeSinceLastRequest = now - lastRequest;
+      if (timeSinceLastRequest < this.minRequestInterval) {
+        const waitTime = this.minRequestInterval - timeSinceLastRequest;
+        console.log(`Aplicando intervalo mínimo. Aguardando ${waitTime}ms.`);
+        await this.sleep(waitTime);
+      }
+    }
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    // Registrar esta requisição
+    this.requestTimestamps.push(now);
   }
 
   private normalizeResponse(type: string, input: ConsultaInputType, response: InfosimplesResponse): NormalizedConsulta {
@@ -529,6 +622,150 @@ export class InfosimplesPlugin implements Plugin {
     if (remainder === 10 || remainder === 11) remainder = 0;
 
     return remainder === parseInt(cleanCpf.charAt(10));
+  }
+
+  private inferCategory(endpoint: string): string {
+    // Remover prefixo /consultas/ para facilitar a inferência
+    const cleanEndpoint = endpoint.replace(/^\/consultas\//, '');
+
+    // Inferir categoria baseada no path do endpoint
+    if (cleanEndpoint.includes('receita-federal') || cleanEndpoint.includes('portal-transparencia') ||
+        cleanEndpoint.includes('tse') || cleanEndpoint.includes('cnis') || cleanEndpoint.includes('dataprev') ||
+        cleanEndpoint.includes('antecedentes-criminais') || cleanEndpoint.includes('antecedentes') ||
+        cleanEndpoint.includes('criminal') || cleanEndpoint.includes('policia') || cleanEndpoint.includes('pf') ||
+        cleanEndpoint.includes('pj')) {
+      return 'cadastral';
+    } else if (cleanEndpoint.includes('cenprot') || cleanEndpoint.includes('serasa') ||
+               cleanEndpoint.includes('boavista') || cleanEndpoint.includes('scpc') ||
+               cleanEndpoint.includes('protesto') || cleanEndpoint.includes('protestos') ||
+               cleanEndpoint.includes('credito') || cleanEndpoint.includes('score') ||
+               cleanEndpoint.includes('financeiro') || cleanEndpoint.includes('banco') ||
+               cleanEndpoint.includes('cartao') || cleanEndpoint.includes('divida')) {
+      return 'credito';
+    } else if (cleanEndpoint.includes('detran') || cleanEndpoint.includes('serpro') ||
+               cleanEndpoint.includes('ecrvsp') || cleanEndpoint.includes('veiculo') ||
+               cleanEndpoint.includes('placa') || cleanEndpoint.includes('renavam') ||
+               cleanEndpoint.includes('chassi') || cleanEndpoint.includes('multa') ||
+               cleanEndpoint.includes('infracao') || cleanEndpoint.includes('transito') ||
+               cleanEndpoint.includes('crlv') || cleanEndpoint.includes('dpvat')) {
+      return 'veicular';
+    } else if (cleanEndpoint.includes('correios') || cleanEndpoint.includes('cep') ||
+               cleanEndpoint.includes('endereco') || cleanEndpoint.includes('logradouro')) {
+      return 'endereco';
+    } else {
+      return 'outros';
+    }
+  }
+
+  private getPriceForCategory(category: string): number {
+    // Preços padrão por categoria baseados em 9.paginas.md
+    const prices: Record<string, number> = {
+      cadastral: 1.00,
+      credito: 1.80,
+      veicular: 3.00,
+      endereco: 0.50,
+      outros: 1.00
+    };
+    return prices[category] || 1.00;
+  }
+
+  private getDescriptionFromSummary(title: string): string {
+    // Gerar descrição baseada no título do OpenAPI
+    const descriptions: Record<string, string> = {
+      'Receita Federal / CPF': 'Consulta de dados cadastrais de pessoa física na Receita Federal',
+      'CENPROT / Protestos': 'Consulta de protestos em cartório no estado de São Paulo',
+      'SERPRO / Radar Veículo': 'Consulta de dados veiculares no sistema SERPRO',
+      'DETRAN RJ / Veículo': 'Consulta de veículo no DETRAN Rio de Janeiro',
+      'Correios / CEP': 'Consulta de endereço por CEP',
+    };
+
+    // Procurar por correspondência parcial
+    for (const [key, description] of Object.entries(descriptions)) {
+      if (title.includes(key.split(' / ')[0]) || title.includes(key.split(' / ')[1])) {
+        return description;
+      }
+    }
+
+    // Descrição genérica baseada no título
+    return `Consulta ${title.toLowerCase()} através da API InfoSimples`;
+  }
+
+  private getHardcodedServices(): any[] {
+    // Fallback hardcoded se o parser falhar
+    const services = [];
+
+    // Crédito
+    services.push(
+      { id: 'cenprot_protestos_sp', name: 'CENPROT Protestos SP', description: 'Consulta de protestos em cartório no estado de São Paulo', price: 2.50, category: 'credito', active: true },
+      { id: 'serasa_score', name: 'Serasa Score', description: 'Consulta de score de crédito Serasa', price: 1.80, category: 'credito', active: true }
+    );
+
+    // Cadastral
+    services.push(
+      { id: 'receita_federal_cpf', name: 'Receita Federal CPF', description: 'Consulta de dados cadastrais na Receita Federal', price: 1.00, category: 'cadastral', active: true },
+      { id: 'receita_federal_cnpj', name: 'Receita Federal CNPJ', description: 'Consulta de dados cadastrais de empresa', price: 1.20, category: 'cadastral', active: true }
+    );
+
+    // Veicular
+    services.push(
+      { id: 'serpro_radar_veiculo', name: 'SERPRO Radar Veículo', description: 'Consulta de dados veiculares no SERPRO', price: 3.00, category: 'veicular', active: true },
+      { id: 'detran_rj_veiculo', name: 'DETRAN RJ Veículo', description: 'Consulta de veículo no DETRAN Rio de Janeiro', price: 4.50, category: 'veicular', active: true }
+    );
+
+    return services;
+  }
+
+  private formatBirthdate(birthdate: string): string {
+    // Converter para formato ISO se necessário
+    // Se já estiver no formato YYYY-MM-DD, retornar como está
+    if (/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
+      return birthdate;
+    }
+
+    // Tentar converter de outros formatos para ISO
+    try {
+      const date = new Date(birthdate);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+    } catch (error) {
+      // Se não conseguir converter, retornar como está
+      console.warn(`Não foi possível converter data de nascimento: ${birthdate}`);
+    }
+
+    return birthdate;
+  }
+
+  async getAvailableServices(): Promise<any[]> {
+    try {
+      const schemas = this.getSchemas();
+      if (schemas.length === 0) {
+        console.warn('Nenhum schema encontrado, usando fallback hardcoded');
+        return this.getHardcodedServices();
+      }
+
+      const services = schemas.map(schema => {
+        const category = this.inferCategory(schema.endpoint);
+        const price = this.getPriceForCategory(category);
+        const description = this.getDescriptionFromSummary(schema.form.title);
+
+        return {
+          id: schema.id,
+          name: schema.form.title,
+          description,
+          price,
+          category,
+          active: true,
+          endpoint: schema.endpoint,
+          fields: schema.form.fields
+        };
+      });
+
+      return services;
+    } catch (error) {
+      console.error('Erro ao obter serviços disponíveis:', error);
+      return this.getHardcodedServices();
+    }
   }
 }
 

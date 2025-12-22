@@ -25,17 +25,29 @@ const multiTenantMiddleware = async (req, res, next) => {
             }
             tenantId = 'default';
         }
-        // Validar se tenant existe (opcional - pode ser feito em cada rota)
+        // Em desenvolvimento, permitir sem userId ou pegar do header
+        if (!req.userId && process.env.NODE_ENV !== 'production') {
+            req.userId = req.headers['x-user-id'] || 'dev-user';
+        }
         const appwrite = appwrite_1.AppwriteService.getInstance();
         try {
             const tenant = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', tenantId);
+            // Se tenant existe mas não está ativo, permitir login em ambientes de desenvolvimento
+            // ou para rotas de autenticação (permitir primeiro acesso / auto-onboarding)
             if (tenant.status !== 'active') {
-                return res.status(403).json({
-                    error: 'Tenant not active',
-                    message: 'This tenant is currently inactive'
-                });
+                if (process.env.NODE_ENV === 'development' || req.path.includes('/auth/login')) {
+                    req.tenantId = tenantId;
+                }
+                else {
+                    return res.status(403).json({
+                        error: 'Tenant not active',
+                        message: 'This tenant is currently inactive'
+                    });
+                }
             }
-            req.tenantId = tenantId;
+            else {
+                req.tenantId = tenantId;
+            }
             // req.tenant = tenant; // Removido pois não está definido no tipo Request
         }
         catch (error) {

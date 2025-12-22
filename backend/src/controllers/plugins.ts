@@ -12,10 +12,22 @@ const router = Router();
 const validateExecutionContext = (req: Request, res: Response, next: any) => {
   const { tenantId, userId } = req;
 
-  if (!tenantId || !userId) {
+  if (!tenantId) {
     return res.status(400).json({
-      error: 'Missing tenant or user context',
-      details: 'tenantId and userId are required in request context'
+      error: 'Missing tenant context',
+      details: 'tenantId is required in request context'
+    });
+  }
+
+  // Em desenvolvimento, permitir sem userId ou pegar do header
+  if (!userId && process.env.NODE_ENV !== 'production') {
+    req.userId = req.headers['x-user-id'] as string || 'dev-user'; // Mock userId para desenvolvimento
+  }
+
+  if (!userId) {
+    return res.status(400).json({
+      error: 'Missing user context',
+      details: 'userId is required in request context'
     });
   }
 
@@ -37,12 +49,18 @@ router.post('/:pluginId/execute', validateExecutionContext, async (req: Request,
       });
     }
 
+    // Buscar config salva do plugin para o tenant (simulação para desenvolvimento)
+    const savedConfig = (tenantId && pluginId) ? (global as any).pluginConfigStore?.[tenantId]?.[pluginId] || {} : {};
+
+    // Mesclar config passada com config salva
+    const effectiveConfig = { ...savedConfig, ...config };
+
     // Criar contexto de execução isolado por tenant
     const context: PluginContext = {
       tenantId: tenantId!,
       userId: userId!,
       input,
-      config
+      config: effectiveConfig
     };
 
     // Executar plugin com isolamento
@@ -101,10 +119,10 @@ router.get('/active', validateExecutionContext, async (req: Request, res: Respon
 });
 
 // GET /api/plugins/:pluginId/services - Listar serviços disponíveis do plugin
-router.get('/:pluginId/services', validateExecutionContext, async (req: Request, res: Response) => {
+router.get('/:pluginId/services', async (req: Request, res: Response) => {
   try {
     const { pluginId } = req.params;
-    const { tenantId } = req;
+    const tenantId = req.tenantId || 'default'; // Usar tenantId do middleware ou default
 
     if (!pluginId) {
       return res.status(400).json({
@@ -114,7 +132,7 @@ router.get('/:pluginId/services', validateExecutionContext, async (req: Request,
     }
 
     // Verificar se plugin está ativo para o tenant
-    const isActive = pluginLoader.isPluginActiveForTenant(pluginId, tenantId!);
+    const isActive = pluginLoader.isPluginActiveForTenant(pluginId, tenantId);
     if (!isActive) {
       return res.status(403).json({
         error: 'Plugin not active',
@@ -139,7 +157,7 @@ router.get('/:pluginId/services', validateExecutionContext, async (req: Request,
       });
     }
 
-    const services = (plugin as any).getAvailableServices();
+    const services = await (plugin as any).getAvailableServices();
 
     res.json({
       pluginId,

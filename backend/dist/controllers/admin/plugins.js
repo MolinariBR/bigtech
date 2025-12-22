@@ -4,9 +4,12 @@
 // Decisão: Controlador admin para gerenciamento de plugins conforme contratos padronizados
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminPluginsRouter = void 0;
+// Simulação de persistência para desenvolvimento (TODO: usar Appwrite)
+const pluginStatusStore = {};
+const pluginConfigStore = {};
 const express_1 = require("express");
-const pluginLoader_1 = require("../../core/pluginLoader");
 const appwrite_1 = require("../../lib/appwrite");
+const pluginLoader_1 = require("../../core/pluginLoader");
 const router = (0, express_1.Router)();
 const appwrite = appwrite_1.AppwriteService.getInstance();
 // GET /api/admin/plugins - Listar plugins do tenant
@@ -16,24 +19,27 @@ router.get('/', async (req, res) => {
         if (!tenantId) {
             return res.status(400).json({ error: 'tenantId is required' });
         }
-        // Para desenvolvimento: simular plugins ativos (TODO: integrar com Appwrite)
-        const activePlugins = [
-            // Simular alguns plugins ativos para desenvolvimento
-            { pluginId: 'pagamento-asaas', status: 'enabled', config: { apiKey: 'test' }, $createdAt: new Date().toISOString(), $updatedAt: new Date().toISOString() }
-        ];
+        // Para desenvolvimento: usar plugins do pluginLoader diretamente
+        // TODO: Integrar com Appwrite quando estiver configurado
+        console.log(`[DEV] Listando plugins para tenant ${tenantId}`);
         // Buscar plugins disponíveis
         const availablePlugins = pluginLoader_1.pluginLoader.getAvailablePlugins();
-        // Combinar informações
+        // Simular plugins instalados (todos disponíveis para desenvolvimento)
         const plugins = availablePlugins.map(available => {
-            const active = activePlugins.find((active) => active.pluginId === available.id);
+            const globalStatusStore = global.pluginStatusStore || {};
+            const tenantStatuses = globalStatusStore[tenantId] || {};
+            const globalConfigStore = global.pluginConfigStore || {};
+            const tenantConfigs = globalConfigStore[tenantId] || {};
+            const status = tenantStatuses[available.id] || (available.id === 'pagamento-asaas' ? 'enabled' : 'disabled');
+            const config = tenantConfigs[available.id] || (available.id === 'pagamento-asaas' ? { apiKey: 'test' } : null);
             return {
                 id: available.id,
                 type: available.type,
                 version: available.version,
-                status: active ? active.status : 'disabled',
-                config: active ? active.config : null,
-                installedAt: active ? active.$createdAt : null,
-                updatedAt: active ? active.$updatedAt : null,
+                status: status,
+                config: config,
+                installedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             };
         });
         res.json({ plugins, count: plugins.length });
@@ -46,7 +52,9 @@ router.get('/', async (req, res) => {
 // POST /api/admin/plugins - Instalar plugin
 router.post('/', async (req, res) => {
     try {
-        const { tenantId, name, type, version } = req.body;
+        const { tenantId: bodyTenantId, name, type, version } = req.body;
+        const { tenantId: queryTenantId } = req.query;
+        const tenantId = bodyTenantId || queryTenantId;
         if (!tenantId || !name || !type || !version) {
             return res.status(400).json({ error: 'tenantId, name, type, and version are required' });
         }
@@ -98,23 +106,26 @@ router.post('/:pluginId/toggle', async (req, res) => {
         if (!['enable', 'disable'].includes(action)) {
             return res.status(400).json({ error: 'action must be enable or disable' });
         }
-        // Buscar plugin no banco
-        const plugins = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'plugins', [`tenantId=${tenantId}`, `pluginId=${pluginId}`]);
-        if (plugins.documents.length === 0) {
-            return res.status(404).json({ error: 'Plugin not found' });
-        }
-        const pluginDoc = plugins.documents[0];
-        const plugin = Array.from(pluginLoader_1.pluginLoader['plugins'].values()).find(p => p.id === pluginId);
+        // Para desenvolvimento: verificar se plugin existe no pluginLoader
+        // TODO: Integrar com Appwrite quando estiver configurado
+        const plugin = pluginLoader_1.pluginLoader.getPlugin(pluginId);
         if (!plugin) {
+            console.log(`Plugin ${pluginId} not found in pluginLoader`);
             return res.status(404).json({ error: 'Plugin implementation not found' });
         }
         // Executar ação (simplificado para desenvolvimento)
         console.log(`[DEV] Plugin ${pluginId} would be ${action}d for tenant ${tenantId}`);
-        // Atualizar no banco
-        await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'plugins', pluginDoc.$id, { status: pluginDoc.status });
+        // Calcular novo status baseado na ação
+        const newStatus = action === 'enable' ? 'enabled' : 'disabled';
+        // Persistir status (simulação)
+        const globalStatusStore = global.pluginStatusStore || pluginStatusStore;
+        if (!globalStatusStore[tenantId]) {
+            globalStatusStore[tenantId] = {};
+        }
+        globalStatusStore[tenantId][pluginId] = newStatus;
         res.json({
             pluginId,
-            status: pluginDoc.status,
+            status: newStatus,
             message: `Plugin ${action}d successfully`
         });
     }
@@ -132,14 +143,12 @@ router.put('/:pluginId/config', async (req, res) => {
         if (!tenantId) {
             return res.status(400).json({ error: 'tenantId is required' });
         }
-        // Buscar plugin no banco
-        const plugins = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'plugins', [`tenantId=${tenantId}`, `pluginId=${pluginId}`]);
-        if (plugins.documents.length === 0) {
-            return res.status(404).json({ error: 'Plugin not found' });
+        // Para desenvolvimento: salvar no store simulado
+        console.log(`[DEV] Saving config for plugin ${pluginId} in tenant ${tenantId}:`, config);
+        if (!pluginConfigStore[tenantId]) {
+            pluginConfigStore[tenantId] = {};
         }
-        const pluginDoc = plugins.documents[0];
-        // Atualizar configuração
-        await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'plugins', pluginDoc.$id, { config: config || {} });
+        pluginConfigStore[tenantId][pluginId] = config || {};
         res.json({
             pluginId,
             config,
@@ -180,4 +189,7 @@ router.delete('/:pluginId', async (req, res) => {
     }
 });
 exports.adminPluginsRouter = router;
+// Expor stores para desenvolvimento
+global.pluginConfigStore = pluginConfigStore;
+global.pluginStatusStore = pluginStatusStore;
 //# sourceMappingURL=plugins.js.map

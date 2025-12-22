@@ -6,10 +6,11 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card'
 import { Button } from '@/components/Button'
-import { Modal, ModalInput } from '@/components/Modal'
+import { Modal, ModalForm, ModalResult } from '@/components/Modal'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import Footer from '@/components/Footer'
+import { useDynamicValidation, InitialFormField } from '@/hooks/useDynamicValidation'
 
 interface VeicularQuery {
   id: string
@@ -24,13 +25,29 @@ export default function ConsultaVeicular() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedQuery, setSelectedQuery] = useState<VeicularQuery | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [inputValue, setInputValue] = useState('')
-  const [inputError, setInputError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
   const [veicularQueries, setVeicularQueries] = useState<VeicularQuery[]>([])
   const [loadingServices, setLoadingServices] = useState(true)
+
+  // Campos dinâmicos para validação
+  const veicularFields: InitialFormField[] = [
+    {
+      name: 'plate',
+      label: 'Placa do Veículo',
+      type: 'vehicle.plate',
+      value: '',
+      placeholder: 'AAA-9999 ou AAA9A99',
+      required: true
+    }
+  ]
+
+  // Hook de validação dinâmica
+  const { fields, validateForm, resetValidation } = useDynamicValidation(veicularFields)
+
+  // Função helper para acessar campos por nome
+  const getField = (name: string) => fields.find(f => f.name === name)
 
   // Buscar serviços veiculares do backend
   useEffect(() => {
@@ -82,65 +99,74 @@ export default function ConsultaVeicular() {
     fetchVeicularServices()
   }, [])
 
-  const validatePlate = (value: string): boolean => {
-    // Remove caracteres não alfanuméricos
-    const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-
-    // Valida formato brasileiro: AAA-9999 ou AAA9A99
-    const oldFormat = /^[A-Z]{3}\d{4}$/
-    const newFormat = /^[A-Z]{3}\d[A-Z]\d{2}$/
-
-    return oldFormat.test(cleanValue) || newFormat.test(cleanValue)
-  }
-
   const handleExecuteQuery = (query: VeicularQuery) => {
     setSelectedQuery(query)
     setModalOpen(true)
-    setInputValue('')
-    setInputError('')
+    resetValidation()
     setResult(null)
   }
 
   const handleSubmit = async () => {
     if (!selectedQuery) return
 
-    // Valida placa
-    if (!validatePlate(inputValue)) {
-      setInputError('Placa inválida (formato: AAA-9999 ou AAA9A99)')
+    // Validação dinâmica
+    if (!validateForm()) {
       return
     }
 
     // TODO: Verificar saldo de créditos do usuário
     const userCredits = 150 // Mock
     if (userCredits < selectedQuery.price) {
-      setInputError('Saldo insuficiente para esta consulta')
+      // Adicionar erro ao campo se necessário
       return
     }
 
     setIsLoading(true)
-    setInputError('')
 
     try {
-      // TODO: Executar consulta via plugin
-      // Simulação de chamada API
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // Mock result
-      setResult({
-        status: 'success',
-        data: {
-          plate: inputValue,
-          model: 'Honda Civic',
-          year: 2020,
-          owner: 'João Silva',
-          query: selectedQuery.name
-        }
+      // Executar consulta via plugin
+      const response = await fetch('/api/plugins/infosimples/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
+          // TODO: Adicionar Authorization se necessário
+        },
+        body: JSON.stringify({
+          input: {
+            type: selectedQuery.id, // Usar o ID do serviço como tipo
+            input: {
+              placa: getField('plate')?.value?.replace(/[^A-Za-z0-9]/g, '').toUpperCase(),
+            }
+          }
+        })
       })
-    } catch (error) {
-      // Fallback automático para outro plugin se disponível
-      console.log('Tentando fallback...')
-      // TODO: Implementar lógica de fallback
 
+      if (!response.ok) {
+        throw new Error(`Erro na consulta: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Extrair dados reais da resposta normalizada
+        const consultaData = data.data?.output?.data || {}
+
+        // Normalizar resultado para exibição
+        setResult({
+          status: 'success',
+          data: consultaData,
+          raw: data.data
+        })
+      } else {
+        setResult({
+          status: 'error',
+          message: data.error || 'Erro na consulta. Tente novamente.',
+          details: data.details
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao executar consulta:', error)
       setResult({
         status: 'error',
         message: 'Erro na consulta. Tente novamente ou entre em contato com o suporte.'
@@ -150,33 +176,11 @@ export default function ConsultaVeicular() {
     }
   }
 
-  const formatPlate = (value: string): string => {
-    const cleanValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-
-    if (cleanValue.length <= 7) {
-      // Formatar como AAA-9999
-      if (cleanValue.length <= 3) {
-        return cleanValue
-      } else {
-        return cleanValue.slice(0, 3) + '-' + cleanValue.slice(3)
-      }
-    } else {
-      // Formatar como AAA9A99
-      return cleanValue.slice(0, 3) + cleanValue.slice(3, 4) + cleanValue.slice(4, 5) + cleanValue.slice(5)
-    }
-  }
-
   const truncateDescription = (text: string, maxLength: number = 180): string => {
     if (text.length <= maxLength) return text
     const truncated = text.substring(0, maxLength)
     const lastSpace = truncated.lastIndexOf(' ')
     return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
-  }
-
-  const handleInputChange = (value: string) => {
-    const formatted = formatPlate(value)
-    setInputValue(formatted)
-    setInputError('')
   }
 
   const toggleCardExpansion = (id: string) => {
@@ -245,12 +249,17 @@ export default function ConsultaVeicular() {
                 ) : (
                   // Services cards
                   veicularQueries.map((query) => (
-                    <Card key={query.id} className="hover:shadow-md transition-shadow">
+                    <Card key={query.id} className="hover:shadow-md transition-shadow" data-testid="consulta-card">
                       <CardHeader>
-                        <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
+                        <div className="flex items-start justify-between mb-2">
+                          <CardTitle className="text-lg uppercase flex-1" data-testid="card-title">{query.name}</CardTitle>
+                          <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium ml-2">
+                            Veicular
+                          </span>
+                        </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Veicular</p>
-                          <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
+                          <p className="text-sm font-medium text-muted-foreground mb-1" data-testid="card-category">Grupo: Veicular</p>
+                          <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'} data-testid="card-description">
                             {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
                           </CardDescription>
                           {query.description.length > 180 && (
@@ -265,7 +274,7 @@ export default function ConsultaVeicular() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between mb-4">
-                          <span className="text-2xl font-bold text-success">
+                          <span className="text-2xl font-bold text-success" data-testid="card-price">
                             R$ {query.price.toFixed(2)}
                           </span>
                           <span className={`px-2 py-1 rounded-full text-xs ${
@@ -296,12 +305,10 @@ export default function ConsultaVeicular() {
                 title={selectedQuery?.name || 'Consulta Veicular'}
               >
                 <div className="space-y-4">
-                  <ModalInput
-                    label="Placa do Veículo"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    placeholder="AAA-9999 ou AAA9A99"
-                    error={inputError}
+                  <ModalForm
+                    fields={fields}
+                    onSubmit={handleSubmit}
+                    isLoading={isLoading}
                   />
 
                   {selectedQuery && (
@@ -316,49 +323,8 @@ export default function ConsultaVeicular() {
                   )}
 
                   {result && (
-                    <div className={`p-3 rounded-md ${
-                      result.status === 'success'
-                        ? 'bg-success/10 text-success-foreground'
-                        : 'bg-error/10 text-error-foreground'
-                    }`}>
-                      {result.status === 'success' ? (
-                        <div>
-                          <p className="font-medium">Consulta realizada com sucesso!</p>
-                          <p className="text-sm mt-1">
-                            Placa: {result.data.plate}
-                          </p>
-                          <p className="text-sm">
-                            Modelo: {result.data.model}
-                          </p>
-                          <p className="text-sm">
-                            Ano: {result.data.year}
-                          </p>
-                          <p className="text-sm">
-                            Proprietário: {result.data.owner}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="font-medium">{result.message}</p>
-                      )}
-                    </div>
+                    <ModalResult result={result} inputValue={getField('plate')?.value || ''} />
                   )}
-
-                  <div className="flex space-x-3">
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={isLoading}
-                      className="flex-1"
-                    >
-                      {isLoading ? 'Processando...' : 'Confirmar Consulta'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setModalOpen(false)}
-                      className="flex-1"
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
                 </div>
               </Modal>
             </div>

@@ -10,6 +10,7 @@ exports.authRouter = exports.authenticateAdminMiddleware = exports.authenticateM
 const express_1 = require("express");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const appwrite_1 = require("../lib/appwrite");
+const node_appwrite_1 = require("node-appwrite");
 const audit_1 = require("./audit");
 const router = (0, express_1.Router)();
 exports.authRouter = router;
@@ -114,9 +115,9 @@ class AuthService {
             const tenantExists = await this.ensureTenantExists(tenantId);
             // Buscar usuário no Appwrite
             const users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [
-                `tenantId=${tenantId}`,
-                `identifier=${identifier}`,
-                'status=active'
+                node_appwrite_1.Query.equal('tenantId', tenantId),
+                node_appwrite_1.Query.equal('identifier', identifier),
+                node_appwrite_1.Query.equal('status', 'active')
             ]);
             if (users.documents.length === 0) {
                 // Usuário não existe - criar automaticamente para MVP
@@ -182,7 +183,8 @@ class AuthService {
                     type: user.type,
                     role: user.role,
                     credits: user.credits
-                }
+                },
+                tenantCreated: false
             };
         }
         catch (error) {
@@ -226,7 +228,7 @@ class AuthService {
                         status: 'pending', // Status pending para aprovação admin
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString(),
-                        plugins: 'consulta', // Plugin padrão
+                        plugins: ['consulta'], // Plugin padrão (array conforme schema Appwrite)
                         settings: JSON.stringify({
                             theme: 'light',
                             language: 'pt-BR',
@@ -349,9 +351,9 @@ class AuthService {
             }
             // Para administradores, buscar em todos os tenants (isolamento global)
             const users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [
-                `identifier=${identifier}`,
-                'status=active', // Garantir que está ativo
-                'role=admin'
+                node_appwrite_1.Query.equal('identifier', identifier),
+                node_appwrite_1.Query.equal('status', 'active'), // Garantir que está ativo
+                node_appwrite_1.Query.equal('role', 'admin')
             ]);
             if (users.documents.length === 0) {
                 return {

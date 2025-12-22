@@ -56,6 +56,7 @@ router.post('/', async (req, res) => {
         });
         // Auditar criação
         try {
+            console.log('Audit: about to log CREATE for tenant', tenantDoc.$id);
             await audit_1.auditLogger.log({
                 tenantId: tenantDoc.$id, // Usar o próprio ID do tenant como tenantId para admin
                 action: 'CREATE',
@@ -64,6 +65,7 @@ router.post('/', async (req, res) => {
                 ipAddress: req.ip || 'unknown',
                 userId: req.userId,
             });
+            console.log('Audit: logged CREATE for tenant', tenantDoc.$id);
         }
         catch (auditErr) {
             console.error('Audit logging failed (non-fatal):', auditErr);

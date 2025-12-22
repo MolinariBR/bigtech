@@ -55,6 +55,9 @@ class PluginLoader {
     async initialize() {
         await this.loadPlugins();
         await this.loadActivePlugins();
+        // Para desenvolvimento: ativar plugin infosimples por padrão
+        this.activePlugins.set('default', new Set(['infosimples']));
+        console.log('✅ Plugin infosimples ativado por padrão para tenant default');
     }
     async shutdown() {
         // Cleanup plugins if needed
@@ -154,7 +157,7 @@ class PluginLoader {
         return activePlugins;
     }
     async executePlugin(pluginId, context) {
-        const plugin = this.plugins.get(pluginId);
+        const plugin = this.getPlugin(pluginId);
         if (!plugin) {
             return {
                 success: false,

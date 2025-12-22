@@ -6,16 +6,26 @@ export declare class InfosimplesPlugin implements Plugin {
     name: string;
     version: string;
     config: InfosimplesConfig;
+    private schemasCache;
+    private requestTimestamps;
+    private readonly maxRequestsPerMinute;
+    private readonly minRequestInterval;
     constructor(config?: Partial<InfosimplesConfig>);
     install(): Promise<void>;
     enable(tenantId: string): Promise<void>;
     disable(tenantId: string): Promise<void>;
-    getAvailableServices(): any[];
+    private getSchemas;
+    private getSchemaForService;
+    private getEndpointForService;
     execute(context: PluginContext): Promise<PluginResult>;
     private getConsultaCode;
     private getLegacyCode;
     private callInfosimplesAPI;
     private sleep;
+    private getServiceIdFromEndpoint;
+    private buildQueryParamsFromSchema;
+    private buildQueryParamsFallback;
+    private applyRateLimiting;
     private normalizeResponse;
     private normalizeData;
     private calculateCost;
@@ -23,6 +33,12 @@ export declare class InfosimplesPlugin implements Plugin {
     private executeBrasilApiFallback;
     private executeViaCepFallback;
     private validateCpf;
+    private inferCategory;
+    private getPriceForCategory;
+    private getDescriptionFromSummary;
+    private getHardcodedServices;
+    private formatBirthdate;
+    getAvailableServices(): Promise<any[]>;
 }
 export default InfosimplesPlugin;
 //# sourceMappingURL=index.d.ts.map

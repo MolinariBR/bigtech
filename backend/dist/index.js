@@ -15,6 +15,7 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const body_parser_1 = require("body-parser");
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const auth_1 = require("./core/auth");
 const multiTenant_1 = require("./core/multiTenant");
 const pluginLoader_1 = require("./core/pluginLoader");
 const eventBus_1 = require("./core/eventBus");
@@ -55,6 +56,8 @@ app.get('/api/plugins', (req, res) => {
 });
 // Middleware multi-tenant
 app.use(multiTenant_1.multiTenantMiddleware);
+// Rotas de autenticação (login, refresh, logout, me)
+app.use('/api/auth', auth_1.authRouter);
 // Rotas admin
 app.use('/api/admin/billing', billing_1.adminBillingRouter);
 app.use('/api/admin/plugins', plugins_1.adminPluginsRouter);
@@ -81,10 +84,16 @@ async function initializeCore() {
 }
 // Inicializar e iniciar servidor
 initializeCore().then(() => {
-    app.listen(PORT, () => {
-        console.log(`🚀 BigTech CORE running on port ${PORT}`);
-        console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    });
+    // Em ambiente de teste (Jest) evitar iniciar o listener HTTP para não causar EADDRINUSE
+    if (!process.env.JEST_WORKER_ID) {
+        app.listen(PORT, () => {
+            console.log(`🚀 BigTech CORE running on port ${PORT}`);
+            console.log(`📊 Health check: http://localhost:${PORT}/health`);
+        });
+    }
+    else {
+        console.log('✅ CORE initialized (test mode) - HTTP listener não iniciado');
+    }
 });
 // Graceful shutdown
 process.on('SIGTERM', async () => {

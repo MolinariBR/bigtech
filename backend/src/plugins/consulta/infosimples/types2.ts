@@ -63,3 +63,28 @@ export type ConsultaInputType = {
   login_cpf?: string;
   login_senha?: string;
 };
+
+// Interfaces para parser OpenAPI dinâmico
+export interface ConsultaSchema {
+  id: string;
+  provider: 'infosimples';
+  method: 'POST';
+  endpoint: string;
+  form: {
+    title: string;
+    submit_label: string;
+    fields: Field[];
+  };
+}
+
+export interface Field {
+  name: string;
+  type: string; // 'document.cpf', 'date.iso', etc.
+  required: boolean;
+  label?: string;
+  validation?: {
+    pattern?: string;
+    minLength?: number;
+    maxLength?: number;
+  };
+}

@@ -48,6 +48,10 @@ export class PluginLoader {
   async initialize(): Promise<void> {
     await this.loadPlugins();
     await this.loadActivePlugins();
+
+    // Para desenvolvimento: ativar plugin infosimples por padrão
+    this.activePlugins.set('default', new Set(['infosimples']));
+    console.log('✅ Plugin infosimples ativado por padrão para tenant default');
   }
 
   async shutdown(): Promise<void> {
@@ -164,7 +168,7 @@ export class PluginLoader {
     pluginId: string,
     context: PluginContext
   ): Promise<PluginResult> {
-    const plugin = this.plugins.get(pluginId);
+    const plugin = this.getPlugin(pluginId);
 
     if (!plugin) {
       return {

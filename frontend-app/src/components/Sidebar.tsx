@@ -23,7 +23,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { name: 'Consultas', href: '/consultas', icon: Search, children: [
       { name: 'Crédito', href: '/consulta/credito' },
       { name: 'Cadastral', href: '/consulta/cadastral' },
-      { name: 'Veicular', href: '/consulta/veicular' }
+      { name: 'Veicular', href: '/consulta/veicular' },
+      { name: 'Diversos', href: '/consulta/outros' }
     ]},
     { name: 'Relatórios', href: '/relatorios/consultas', icon: BarChart3 },
     { name: 'Financeiro', href: '/financeiro', icon: DollarSign, children: [

@@ -4,6 +4,7 @@
 
 // Simulação de persistência para desenvolvimento (TODO: usar Appwrite)
 const pluginStatusStore: Record<string, Record<string, string>> = {};
+const pluginConfigStore: Record<string, Record<string, any>> = {};
 
 import { Router } from 'express';
 import { AppwriteService } from '../../lib/appwrite';
@@ -30,14 +31,18 @@ router.get('/', async (req, res) => {
 
     // Simular plugins instalados (todos disponíveis para desenvolvimento)
     const plugins = availablePlugins.map(available => {
-      const tenantStatuses = pluginStatusStore[tenantId] || {};
+      const globalStatusStore = (global as any).pluginStatusStore || {};
+      const tenantStatuses = globalStatusStore[tenantId] || {};
+      const globalConfigStore = (global as any).pluginConfigStore || {};
+      const tenantConfigs = globalConfigStore[tenantId] || {};
       const status = tenantStatuses[available.id] || (available.id === 'pagamento-asaas' ? 'enabled' : 'disabled');
+      const config = tenantConfigs[available.id] || (available.id === 'pagamento-asaas' ? { apiKey: 'test' } : null);
       return {
         id: available.id,
         type: available.type,
         version: available.version,
         status: status,
-        config: available.id === 'pagamento-asaas' ? { apiKey: 'test' } : null,
+        config: config,
         installedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -142,10 +147,11 @@ router.post('/:pluginId/toggle', async (req, res) => {
     const newStatus = action === 'enable' ? 'enabled' : 'disabled';
 
     // Persistir status (simulação)
-    if (!pluginStatusStore[tenantId]) {
-      pluginStatusStore[tenantId] = {};
+    const globalStatusStore = (global as any).pluginStatusStore || pluginStatusStore;
+    if (!globalStatusStore[tenantId]) {
+      globalStatusStore[tenantId] = {};
     }
-    pluginStatusStore[tenantId][pluginId] = newStatus;
+    globalStatusStore[tenantId][pluginId] = newStatus;
 
     res.json({
       pluginId,
@@ -169,26 +175,13 @@ router.put('/:pluginId/config', async (req, res) => {
       return res.status(400).json({ error: 'tenantId is required' });
     }
 
-    // Buscar plugin no banco
-    const plugins = await appwrite.databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-      'plugins',
-      [`tenantId=${tenantId}`, `pluginId=${pluginId}`]
-    );
+    // Para desenvolvimento: salvar no store simulado
+    console.log(`[DEV] Saving config for plugin ${pluginId} in tenant ${tenantId}:`, config);
 
-    if (plugins.documents.length === 0) {
-      return res.status(404).json({ error: 'Plugin not found' });
+    if (!pluginConfigStore[tenantId]) {
+      pluginConfigStore[tenantId] = {};
     }
-
-    const pluginDoc = plugins.documents[0];
-
-    // Atualizar configuração
-    await appwrite.databases.updateDocument(
-      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-      'plugins',
-      pluginDoc.$id,
-      { config: config || {} }
-    );
+    pluginConfigStore[tenantId][pluginId] = config || {};
 
     res.json({
       pluginId,
@@ -245,3 +238,7 @@ router.delete('/:pluginId', async (req, res) => {
 });
 
 export const adminPluginsRouter = router;
+
+// Expor stores para desenvolvimento
+(global as any).pluginConfigStore = pluginConfigStore;
+(global as any).pluginStatusStore = pluginStatusStore;
