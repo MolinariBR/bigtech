@@ -4,6 +4,7 @@ const nextConfig = {
   swcMinify: true,
   experimental: {
     optimizePackageImports: [],
+    webpackBuildWorker: true,
   },
   images: {
     unoptimized: true,
