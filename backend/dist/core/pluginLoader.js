@@ -191,6 +191,14 @@ class PluginLoader {
     getActivePluginsForTenant(tenantId) {
         return this.activePlugins.get(tenantId) || new Set();
     }
+    getPlugin(pluginId) {
+        // Primeiro tentar chave direta (ex: 'consulta-infosimples')
+        const byKey = this.plugins.get(pluginId);
+        if (byKey)
+            return byKey;
+        // Fallback: procurar pela propriedade `id` do plugin (ex: 'infosimples')
+        return Array.from(this.plugins.values()).find(p => p.id === pluginId);
+    }
     isPluginActiveForTenant(pluginId, tenantId) {
         const activePlugins = this.activePlugins.get(tenantId) || new Set();
         return activePlugins.has(pluginId);

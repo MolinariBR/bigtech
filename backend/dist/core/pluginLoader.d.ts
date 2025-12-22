@@ -39,6 +39,7 @@ export declare class PluginLoader {
         version: string;
     }[];
     getActivePluginsForTenant(tenantId: string): Set<string>;
+    getPlugin(pluginId: string): Plugin | undefined;
     isPluginActiveForTenant(pluginId: string, tenantId: string): boolean;
 }
 export declare const pluginLoader: PluginLoader;

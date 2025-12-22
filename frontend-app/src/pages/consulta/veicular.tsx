@@ -3,7 +3,7 @@
 // Entidades: Consulta, Plugin
 // Componentes: Card, Modal, Button
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card'
 import { Button } from '@/components/Button'
 import { Modal, ModalInput } from '@/components/Modal'
@@ -29,11 +29,58 @@ export default function ConsultaVeicular() {
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
+  const [veicularQueries, setVeicularQueries] = useState<VeicularQuery[]>([])
+  const [loadingServices, setLoadingServices] = useState(true)
 
-  // TODO: Buscar dados reais dos plugins ativos via API
-  const veicularQueries: VeicularQuery[] = [
-    // Dados serão carregados dinamicamente da API do backend
-  ]
+  // Buscar serviços veiculares do backend
+  useEffect(() => {
+    const fetchVeicularServices = async () => {
+      try {
+        setLoadingServices(true)
+
+        // Buscar serviços do plugin infosimples via API REST
+        const response = await fetch('/api/plugins/infosimples/services', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // TODO: Adicionar autenticação se necessário
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (data.services) {
+          // Filtrar apenas serviços veiculares
+          const veicularServices = data.services
+            .filter((service: any) => service.category === 'veicular')
+            .map((service: any) => ({
+              id: service.id,
+              name: service.name,
+              description: service.description,
+              price: service.price,
+              plugin: 'infosimples',
+              active: service.active
+            }))
+
+          setVeicularQueries(veicularServices)
+        } else {
+          console.error('Erro ao buscar serviços:', data.error)
+          setVeicularQueries([])
+        }
+      } catch (error) {
+        console.error('Erro ao buscar serviços veiculares:', error)
+        setVeicularQueries([])
+      } finally {
+        setLoadingServices(false)
+      }
+    }
+
+    fetchVeicularServices()
+  }, [])
 
   const validatePlate = (value: string): boolean => {
     // Remove caracteres não alfanuméricos
@@ -167,48 +214,79 @@ export default function ConsultaVeicular() {
 
               {/* Cards de Consultas */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {veicularQueries.map((query) => (
-                  <Card key={query.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Veicular</p>
-                        <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
-                          {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
-                        </CardDescription>
-                        {query.description.length > 180 && (
-                          <button
-                            onClick={() => toggleCardExpansion(query.id)}
-                            className="text-xs text-primary hover:underline mt-1"
-                          >
-                            {expandedCards.has(query.id) ? 'Ver menos' : 'Mais...'}
-                          </button>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-2xl font-bold text-success">
-                          R$ {query.price.toFixed(2)}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          query.active
-                            ? 'bg-success text-success-foreground'
-                            : 'bg-error text-error-foreground'
-                        }`}>
-                          {query.active ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => handleExecuteQuery(query)}
-                        disabled={!query.active}
-                        className="w-full"
-                      >
-                        {query.active ? 'Executar Consulta' : 'Plugin Indisponível'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
+                {loadingServices ? (
+                  // Loading state
+                  Array.from({ length: 7 }).map((_, index) => (
+                    <Card key={index} className="animate-pulse">
+                      <CardHeader>
+                        <div className="h-6 bg-muted rounded mb-2"></div>
+                        <div className="h-4 bg-muted rounded mb-1"></div>
+                        <div className="h-16 bg-muted rounded"></div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="h-8 w-16 bg-muted rounded"></div>
+                          <div className="h-6 w-12 bg-muted rounded-full"></div>
+                        </div>
+                        <div className="h-10 bg-muted rounded"></div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : veicularQueries.length === 0 ? (
+                  // Empty state
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-muted-foreground text-lg">
+                      Nenhum serviço veicular disponível no momento.
+                    </p>
+                    <p className="text-muted-foreground text-sm mt-2">
+                      Entre em contato com o suporte se o problema persistir.
+                    </p>
+                  </div>
+                ) : (
+                  // Services cards
+                  veicularQueries.map((query) => (
+                    <Card key={query.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="text-lg uppercase">{query.name}</CardTitle>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-1">Grupo: Veicular</p>
+                          <CardDescription className={expandedCards.has(query.id) ? '' : 'line-clamp-3'}>
+                            {expandedCards.has(query.id) ? query.description : truncateDescription(query.description)}
+                          </CardDescription>
+                          {query.description.length > 180 && (
+                            <button
+                              onClick={() => toggleCardExpansion(query.id)}
+                              className="text-xs text-primary hover:underline mt-1"
+                            >
+                              {expandedCards.has(query.id) ? 'Ver menos' : 'Mais...'}
+                            </button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-2xl font-bold text-success">
+                            R$ {query.price.toFixed(2)}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            query.active
+                              ? 'bg-success text-success-foreground'
+                              : 'bg-error text-error-foreground'
+                          }`}>
+                            {query.active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </div>
+                        <Button
+                          onClick={() => handleExecuteQuery(query)}
+                          disabled={!query.active}
+                          className="w-full"
+                        >
+                          {query.active ? 'Executar Consulta' : 'Plugin Indisponível'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
 
               {/* Modal de Input */}

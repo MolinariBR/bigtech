@@ -4,7 +4,7 @@
   "description": "Plataforma SaaS multi-tenant para consultas de dados",
   "private": true,
   "workspaces": [
-    "frontend-user",
+    "frontend-app",
     "frontend-admin",
     "backend"
   ],

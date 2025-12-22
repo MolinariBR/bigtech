@@ -10,6 +10,7 @@ export declare class InfosimplesPlugin implements Plugin {
     install(): Promise<void>;
     enable(tenantId: string): Promise<void>;
     disable(tenantId: string): Promise<void>;
+    getAvailableServices(): any[];
     execute(context: PluginContext): Promise<PluginResult>;
     private getConsultaCode;
     private getLegacyCode;

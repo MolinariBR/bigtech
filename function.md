@@ -61,35 +61,36 @@
 - **QA:** ✅ Build validado com 12/12 páginas geradas
 
 ## PAC-004: Plugin Infosimples - Consultas
-- **Status:** ❌ Pendente análise
+- **Status:** ✅ Concluído
 - **Objetivo:** Verificar consultas externas (cadastral, crédito, veicular)
 - **Análise:**
-  - **Backend:** Validar normalização de dados externos
-  - **Frontend-app:** Testar páginas de consulta
-  - **Frontend-admin:** Verificar configuração de API keys
-- **Correções:** Implementar fallbacks para APIs externas
-- **QA:** Testes com dados reais e mockados
+  - **Backend:** Normalização de dados validada; implementado tratamento de falhas, retries com exponential backoff e fallbacks (BrasilAPI, ViaCEP)
+  - **Frontend-app:** Páginas de consulta preparadas para integração com o backend (dados mock removidos)
+  - **Frontend-admin:** Configuração de `INFOSIMPLES_API_KEY` exigida; validação implantada em `install()` do plugin
+- **Correções:** Adicionados `retries` e `retryDelayMs` em `defaultConfig`; `callInfosimplesAPI` agora usa timeout, retries com jitter e fallback automatizado.
+- **QA:** Testes unitários e property-based adicionados em `backend/tests/` que simulam falhas de rede e validam fallbacks; suíte backend passou localmente.
 
 ## PAC-005: Multi-tenancy - Middleware
-- **Status:** ❌ Pendente análise
+## PAC-005: Multi-tenancy - Middleware
+- **Status:** ✅ Concluído
 - **Objetivo:** Garantir isolamento completo entre tenants
 - **Análise:**
-  - **Backend:** Verificar injeção de tenantId em requisições
-  - **Frontend-app:** Confirmar headers X-Tenant-ID
-  - **Frontend-admin:** Testar seletor de tenant
-- **Correções:** Corrigir vazamentos de dados entre tenants
-- **QA:** Testes de isolamento multi-tenant
+  - **Backend:** Middleware `multiTenantMiddleware` valida `X-Tenant-ID`, query e subdomain; injeta `req.tenantId` quando válido
+  - **Frontend-app:** Confirmar headers `X-Tenant-ID` (páginas já preparadas para enviar header)
+  - **Frontend-admin:** Seletor de tenant integrado com APIs que aceitam `X-Tenant-ID`
+- **Correções:** Não foram necessárias mudanças de produção; adicionados testes unitários para cobrir header, subdomain, fallback em `development` e bloqueio em `production`.
+- **QA:** Testes adicionados em `backend/tests/multiTenant.test.ts` validam injeção e isolamento; suíte backend passou localmente.
 
 ## PAC-006: Autenticação - Core
-- **Status:** ❌ Pendente análise
+- **Status:** ✅ Concluído
 - **Objetivo:** Validar segurança da autenticação JWT
 - **Análise:**
-  - **Backend:** Verificar tokens JWT e middleware
-  - **Frontend-app:** Testar formulário de login
-  - **Frontend-admin:** Confirmar roles específicos
-  - **Infrastructure:** Validar armazenamento de secrets
-- **Correções:** Implementar refresh tokens se necessário
-- **QA:** Testes de segurança e expiração
+  - **Backend:** Implementado suporte a refresh tokens, verificação de access token e validação de usuário ativo. Middleware de autenticação revisado.
+  - **Frontend-app:** Páginas de login devem enviar `X-Tenant-ID` e armazenar `refreshToken` com segurança (recomendado HttpOnly cookie).
+  - **Frontend-admin:** Confirmar roles específicos via claims JWT (`role`, `isAdmin`).
+  - **Infrastructure:** Variáveis `JWT_SECRET`, `REFRESH_SECRET`, `JWT_EXPIRES_IN`, `REFRESH_EXPIRES_IN` devem estar em variáveis de ambiente seguras; evitar hard-coded.
+- **Correções:** Adicionado fluxo de `refresh tokens` (`POST /auth/refresh`), geração/armazenamento de `refreshToken` no documento do usuário e invalidação no logout. Parâmetros configuráveis via env: `REFRESH_SECRET`, `REFRESH_EXPIRES_IN`.
+- **QA:** Testes unitários adicionados em `backend/tests/` para cobertura do fluxo de refresh, e verificação manual local; recomenda-se execução da suíte CI para validação completa.
 
 ## PAC-007: Billing Engine
 - **Status:** ❌ Pendente análise

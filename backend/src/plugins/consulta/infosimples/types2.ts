@@ -5,6 +5,8 @@ export interface InfosimplesConfig {
   apiKey: string;
   baseUrl: string;
   timeout: number;
+  retries?: number;
+  retryDelayMs?: number;
   fallbackSources: string[];
 }
 

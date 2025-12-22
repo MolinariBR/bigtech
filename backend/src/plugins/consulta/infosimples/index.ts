@@ -6,7 +6,7 @@ import { InfosimplesConfig, InfosimplesRequest, InfosimplesResponse, NormalizedC
 import { defaultConfig, consultaCodes, legacyCodes } from './config';
 
 export class InfosimplesPlugin implements Plugin {
-  id = 'consulta-infosimples';
+  id = 'infosimples';
   type = 'consulta' as const;
   name = 'Infosimples';
   version = '1.0.0';
@@ -32,6 +32,45 @@ export class InfosimplesPlugin implements Plugin {
   async disable(tenantId: string): Promise<void> {
     // Desativar para tenant
     console.log(`Plugin Infosimples desabilitado para tenant ${tenantId}`);
+  }
+
+  // Novo método para listar serviços disponíveis
+  getAvailableServices(): any[] {
+    // Retornar lista de serviços disponíveis baseada nos códigos mapeados
+    const services = [];
+
+    // Crédito
+    services.push(
+      { id: 'cenprot_protestos_sp', name: 'CENPROT Protestos SP', description: 'Consulta de protestos em cartório no estado de São Paulo', price: 2.50, category: 'credito', active: true },
+      { id: 'serasa_score', name: 'Serasa Score', description: 'Consulta de score de crédito Serasa', price: 1.80, category: 'credito', active: true },
+      { id: 'boavista_credito', name: 'Boa Vista Crédito', description: 'Consulta de crédito na base Boa Vista', price: 2.20, category: 'credito', active: true },
+      { id: 'scpc_negativacao', name: 'SCPC Negativação', description: 'Consulta de negativações no SCPC', price: 1.50, category: 'credito', active: true }
+    );
+
+    // Cadastral
+    services.push(
+      { id: 'receita_federal_cpf', name: 'Receita Federal CPF', description: 'Consulta de dados cadastrais na Receita Federal', price: 1.00, category: 'cadastral', active: true },
+      { id: 'receita_federal_cnpj', name: 'Receita Federal CNPJ', description: 'Consulta de dados cadastrais de empresa', price: 1.20, category: 'cadastral', active: true },
+      { id: 'portal_transparencia_ceis', name: 'CEIS - CNPJ', description: 'Consulta no Cadastro de Empresas Inidôneas e Suspensas', price: 0.80, category: 'cadastral', active: true },
+      { id: 'portal_transparencia_cepim', name: 'CEPIM - CPF', description: 'Consulta no Cadastro de Entidades Privadas sem Fins Lucrativos', price: 0.80, category: 'cadastral', active: true },
+      { id: 'portal_transparencia_cnep', name: 'CNEP - CNPJ', description: 'Consulta no Cadastro Nacional de Empresas Punidas', price: 0.80, category: 'cadastral', active: true },
+      { id: 'tse_situacao_eleitoral', name: 'TSE Situação Eleitoral', description: 'Consulta de situação eleitoral do cidadão', price: 1.50, category: 'cadastral', active: true },
+      { id: 'cnis_pre_inscricao', name: 'CNIS Pré-Inscrição', description: 'Consulta no Cadastro Nacional de Informações Sociais', price: 2.00, category: 'cadastral', active: true },
+      { id: 'dataprev_qualificacao', name: 'Dataprev Qualificação', description: 'Consulta de qualificação previdenciária', price: 1.80, category: 'cadastral', active: true }
+    );
+
+    // Veicular
+    services.push(
+      { id: 'serpro_radar_veiculo', name: 'SERPRO Radar Veículo', description: 'Consulta de dados veiculares no SERPRO', price: 3.00, category: 'veicular', active: true },
+      { id: 'detran_rj_veiculo', name: 'DETRAN RJ Veículo', description: 'Consulta de veículo no DETRAN Rio de Janeiro', price: 4.50, category: 'veicular', active: true },
+      { id: 'detran_rs_veiculo', name: 'DETRAN RS Veículo', description: 'Consulta de veículo no DETRAN Rio Grande do Sul', price: 4.00, category: 'veicular', active: true },
+      { id: 'detran_sp_veiculo', name: 'ECRVSP SP', description: 'Consulta de veículo no DETRAN São Paulo', price: 5.00, category: 'veicular', active: true },
+      { id: 'detran_mg_veic_nao_licenciado', name: 'DETRAN MG Não Licenciado', description: 'Consulta de veículos não licenciados em Minas Gerais', price: 3.50, category: 'veicular', active: true },
+      { id: 'detran_mg_multas_extrato', name: 'DETRAN MG Multas', description: 'Consulta de multas no DETRAN Minas Gerais', price: 2.80, category: 'veicular', active: true },
+      { id: 'detran_mg_trlav', name: 'DETRAN MG TRLAV', description: 'Consulta de transferência de veículo em Minas Gerais', price: 3.20, category: 'veicular', active: true }
+    );
+
+    return services;
   }
 
   async execute(context: PluginContext): Promise<PluginResult> {
@@ -197,22 +236,62 @@ export class InfosimplesPlugin implements Plugin {
       if ((data as any).renavam) queryParams.append('renavam', (data as any).renavam);
     }
 
-    const finalUrl = `${url}?${queryParams.toString()}`;
+    const finalUrl = `${url}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
-    const response = await fetch(finalUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
-      },
-      signal: AbortSignal.timeout(this.config.timeout),
-    });
+    const retries = (this.config.retries ?? 0);
+    const baseDelay = (this.config.retryDelayMs ?? 200);
 
-    if (!response.ok) {
-      throw new Error(`Erro na API Infosimples: ${response.status} ${response.statusText}`);
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+      try {
+        const response = await fetch(finalUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.apiKey}`,
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const err = new Error(`Erro na API Infosimples: ${response.status} ${response.statusText}`);
+          lastError = err;
+          throw err;
+        }
+
+        return response.json() as Promise<InfosimplesResponse>;
+      } catch (err) {
+        clearTimeout(timeoutId);
+
+        const isAbort = err instanceof Error && (err.name === 'AbortError' || /aborted/i.test(err.message));
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        // If there are remaining attempts, wait exponential backoff then retry
+        if (attempt < retries) {
+          const backoff = Math.floor(baseDelay * Math.pow(2, attempt));
+          const jitter = Math.floor(Math.random() * Math.min(100, backoff));
+          const waitMs = backoff + jitter;
+          console.warn(`Infosimples request failed (attempt ${attempt + 1}/${retries + 1}): ${lastError.message}. Retrying in ${waitMs}ms`);
+          await this.sleep(waitMs);
+          continue;
+        }
+
+        // No more retries, rethrow
+        throw lastError;
+      }
     }
 
-    return response.json() as Promise<InfosimplesResponse>;
+    throw lastError ?? new Error('Erro desconhecido na chamada Infosimples');
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private normalizeResponse(type: string, input: ConsultaInputType, response: InfosimplesResponse): NormalizedConsulta {

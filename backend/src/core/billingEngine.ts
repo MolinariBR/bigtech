@@ -26,6 +26,40 @@ interface BillingResult {
 export class BillingEngine {
   private static instance: BillingEngine;
   private appwrite = AppwriteService.getInstance();
+  // Locks por usuário para evitar condições de corrida em atualizações de saldo
+  private userLocks: Map<string, Promise<any>> = new Map();
+
+  private async runWithUserLock<T>(userId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.userLocks.get(userId) || Promise.resolve();
+    let resultPromise: Promise<T> = prev.then(() => fn());
+    // Store a wrapper that swallows errors so the queue continues
+    this.userLocks.set(userId, resultPromise.then(() => undefined).catch(() => undefined));
+    try {
+      const res = await resultPromise;
+      return res;
+    } finally {
+      // cleanup if current promise is the stored one
+      const current = this.userLocks.get(userId);
+      if (current === resultPromise.then(() => undefined).catch(() => undefined)) {
+        this.userLocks.delete(userId);
+      }
+    }
+  }
+
+  // Normaliza valores monetários para duas casas decimais (evita erros de ponto-flutuante)
+  private normalizeAmount(value: number): number {
+    if (!isFinite(value)) return 0;
+    return Math.round(Number(value) * 100) / 100;
+  }
+
+  private getISOWeekKey(d: Date): string {
+    const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((date as any) - (yearStart as any)) / 86400000 + 1) / 7);
+    return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+  }
 
   private constructor() {
     this.setupEventListeners();
@@ -72,153 +106,161 @@ export class BillingEngine {
   }
 
   async debitCredits(transaction: BillingTransaction): Promise<BillingResult> {
-    try {
-      if (!transaction.userId) {
-        return { success: false, error: 'Missing userId for debit' };
-      }
-      // Verificar saldo do usuário
-      const user = await this.appwrite.databases.getDocument(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'users',
-        transaction.userId
-      );
+    if (!transaction.userId) {
+      return { success: false, error: 'Missing userId for debit' };
+    }
 
-      if (user.credits + transaction.amount < 0) {
+    const uid = transaction.userId!;
+    return this.runWithUserLock(uid, async () => {
+      try {
+        // Verificar saldo do usuário
+        const user = await this.appwrite.databases.getDocument(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'users',
+          uid
+        );
+
+        if ((user.credits || 0) + transaction.amount < 0) {
+          return {
+            success: false,
+            error: 'Saldo insuficiente'
+          };
+        }
+
+        // Criar transação
+        const billingData = {
+          tenantId: transaction.tenantId,
+          userId: uid,
+          type: transaction.type,
+          amount: this.normalizeAmount(transaction.amount),
+          currency: transaction.currency,
+          pluginId: transaction.pluginId || null,
+          consultaId: transaction.consultaId || null,
+          status: 'completed',
+          processedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+
+        const billingDoc = await this.appwrite.databases.createDocument(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'billings',
+          'unique()',
+          billingData
+        );
+
+        // Atualizar saldo do usuário
+        await this.appwrite.databases.updateDocument(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'users',
+          uid,
+          {
+            credits: this.normalizeAmount((user.credits || 0) + transaction.amount),
+            updatedAt: new Date().toISOString()
+          }
+        );
+
+        // Log de auditoria
+        await auditLogger.log({
+          tenantId: transaction.tenantId,
+          userId: uid,
+          action: 'billing_debit',
+          resource: `billing:${billingDoc.$id}`,
+          details: {
+            amount: transaction.amount,
+            type: transaction.type,
+            newBalance: (user.credits || 0) + transaction.amount
+          },
+          ipAddress: 'system'
+        });
+
+        return {
+          success: true,
+          transactionId: billingDoc.$id
+        };
+
+      } catch (error) {
+        console.error('Billing debit error:', error);
         return {
           success: false,
-          error: 'Saldo insuficiente'
+          error: 'Erro ao processar débito'
         };
       }
-
-      // Criar transação
-      const billingData = {
-        tenantId: transaction.tenantId,
-        userId: transaction.userId,
-        type: transaction.type,
-        amount: transaction.amount,
-        currency: transaction.currency,
-        pluginId: transaction.pluginId || null,
-        consultaId: transaction.consultaId || null,
-        status: 'completed',
-        processedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      };
-
-      const billingDoc = await this.appwrite.databases.createDocument(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'billings',
-        'unique()',
-        billingData
-      );
-
-      // Atualizar saldo do usuário
-      await this.appwrite.databases.updateDocument(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'users',
-        transaction.userId,
-        {
-          credits: user.credits + transaction.amount,
-          updatedAt: new Date().toISOString()
-        }
-      );
-
-      // Log de auditoria
-      await auditLogger.log({
-        tenantId: transaction.tenantId,
-        userId: transaction.userId,
-        action: 'billing_debit',
-        resource: `billing:${billingDoc.$id}`,
-        details: {
-          amount: transaction.amount,
-          type: transaction.type,
-          newBalance: user.credits + transaction.amount
-        },
-        ipAddress: 'system'
-      });
-
-      return {
-        success: true,
-        transactionId: billingDoc.$id
-      };
-
-    } catch (error) {
-      console.error('Billing debit error:', error);
-      return {
-        success: false,
-        error: 'Erro ao processar débito'
-      };
-    }
+    });
   }
 
   async creditPurchase(transaction: BillingTransaction): Promise<BillingResult> {
-    try {
-      if (!transaction.userId) {
-        return { success: false, error: 'Missing userId for credit purchase' };
-      }
-      // Criar transação
-      const billingData = {
-        tenantId: transaction.tenantId,
-        userId: transaction.userId,
-        type: transaction.type,
-        amount: transaction.amount,
-        currency: transaction.currency,
-        pluginId: transaction.pluginId || null,
-        consultaId: null,
-        status: 'completed',
-        processedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-      };
-
-      const billingDoc = await this.appwrite.databases.createDocument(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'billings',
-        'unique()',
-        billingData
-      );
-
-      // Atualizar saldo do usuário
-      const user = await this.appwrite.databases.getDocument(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'users',
-        transaction.userId
-      );
-
-      await this.appwrite.databases.updateDocument(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'users',
-        transaction.userId,
-        {
-          credits: user.credits + transaction.amount,
-          updatedAt: new Date().toISOString()
-        }
-      );
-
-      // Log de auditoria
-      await auditLogger.log({
-        tenantId: transaction.tenantId,
-        userId: transaction.userId,
-        action: 'billing_credit',
-        resource: `billing:${billingDoc.$id}`,
-        details: {
-          amount: transaction.amount,
-          type: transaction.type,
-          newBalance: user.credits + transaction.amount
-        },
-        ipAddress: 'system'
-      });
-
-      return {
-        success: true,
-        transactionId: billingDoc.$id
-      };
-
-    } catch (error) {
-      console.error('Billing credit error:', error);
-      return {
-        success: false,
-        error: 'Erro ao processar crédito'
-      };
+    if (!transaction.userId) {
+      return { success: false, error: 'Missing userId for credit purchase' };
     }
+
+    const uid = transaction.userId!;
+    return this.runWithUserLock(uid, async () => {
+      try {
+        // Criar transação
+        const billingData = {
+          tenantId: transaction.tenantId,
+          userId: uid,
+          type: transaction.type,
+          amount: this.normalizeAmount(transaction.amount),
+          currency: transaction.currency,
+          pluginId: transaction.pluginId || null,
+          consultaId: null,
+          status: 'completed',
+          processedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+
+        const billingDoc = await this.appwrite.databases.createDocument(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'billings',
+          'unique()',
+          billingData
+        );
+
+        // Atualizar saldo do usuário
+        const user = await this.appwrite.databases.getDocument(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'users',
+          uid
+        );
+
+        await this.appwrite.databases.updateDocument(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'users',
+          uid,
+          {
+            credits: this.normalizeAmount((user.credits || 0) + transaction.amount),
+            updatedAt: new Date().toISOString()
+          }
+        );
+
+        // Log de auditoria
+        await auditLogger.log({
+          tenantId: transaction.tenantId,
+          userId: uid,
+          action: 'billing_credit',
+          resource: `billing:${billingDoc.$id}`,
+          details: {
+            amount: transaction.amount,
+            type: transaction.type,
+            newBalance: (user.credits || 0) + transaction.amount
+          },
+          ipAddress: 'system'
+        });
+
+        return {
+          success: true,
+          transactionId: billingDoc.$id
+        };
+
+      } catch (error) {
+        console.error('Billing credit error:', error);
+        return {
+          success: false,
+          error: 'Erro ao processar crédito'
+        };
+      }
+    });
   }
 
   async getBalance(userId: string): Promise<number> {
@@ -298,8 +340,7 @@ export class BillingEngine {
         const d = new Date(it.createdAt);
         let key = d.toISOString().slice(0, 10); // day
         if (filters.granularity === 'week') {
-          const week = `${d.getUTCFullYear()}-W${Math.ceil((d.getUTCDate() - d.getUTCDay() + 1) / 7)}`;
-          key = week;
+            key = this.getISOWeekKey(d);
         } else if (filters.granularity === 'month') {
           key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
         }
@@ -365,18 +406,20 @@ export class BillingEngine {
 
       // Ajustar saldo do usuário (creditar de volta)
       if (original.userId) {
-        const user = await this.appwrite.databases.getDocument(
-          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-          'users',
-          original.userId
-        );
+        await this.runWithUserLock(original.userId, async () => {
+          const user = await this.appwrite.databases.getDocument(
+            process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+            'users',
+            original.userId
+          );
 
-        await this.appwrite.databases.updateDocument(
-          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-          'users',
-          original.userId,
-          { credits: (user.credits || 0) + Math.abs(Number(refundAmount)), updatedAt: new Date().toISOString() }
-        );
+          await this.appwrite.databases.updateDocument(
+            process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+            'users',
+            original.userId,
+            { credits: this.normalizeAmount((user.credits || 0) + Math.abs(Number(refundAmount))), updatedAt: new Date().toISOString() }
+          );
+        });
       }
 
       // Audit

@@ -34,6 +34,7 @@ interface AuthResponse {
   token?: string;
   user?: any;
   message?: string;
+  refreshToken?: string;
 }
 
 // Utilitários de validação
@@ -122,6 +123,8 @@ export class AuthValidators {
 export class AuthService {
   private static readonly JWT_SECRET: string = process.env.JWT_SECRET || 'bigtech-secret-key';
   private static readonly JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '24h';
+  private static readonly REFRESH_SECRET: string = process.env.REFRESH_SECRET || 'bigtech-refresh-secret';
+  private static readonly REFRESH_EXPIRES_IN: string = process.env.REFRESH_EXPIRES_IN || '7d';
   private static readonly BCRYPT_ROUNDS: number = parseInt(process.env.BCRYPT_ROUNDS || '12');
 
   // Login de usuário
@@ -152,6 +155,8 @@ export class AuthService {
 
         // Gerar token JWT
         const token = this.generateToken(newUser);
+        // Gerar refresh token e salvar no usuário
+        const refreshToken = await this.generateRefreshToken(newUser);
 
         // Log de auditoria
         await auditLogger.log({
@@ -166,6 +171,7 @@ export class AuthService {
         return {
           success: true,
           token,
+          refreshToken,
           user: {
             id: newUser.$id,
             identifier: AuthValidators.formatIdentifier(identifier),
@@ -189,6 +195,9 @@ export class AuthService {
       // Gerar token JWT
       const token = this.generateToken(user);
 
+      // Gerar refresh token e salvar no usuário
+      const refreshToken = await this.generateRefreshToken(user);
+
       // Log de auditoria
       await auditLogger.log({
         tenantId,
@@ -202,6 +211,7 @@ export class AuthService {
       return {
         success: true,
         token,
+        refreshToken,
         user: {
           id: user.$id,
           identifier: AuthValidators.formatIdentifier(user.identifier),
@@ -243,7 +253,7 @@ export class AuthService {
   }
 
   // Gerar token JWT
-  private static generateToken(user: any): string {
+  static generateToken(user: any): string {
     const payload = {
       userId: user.$id,
       tenantId: user.tenantId,
@@ -259,6 +269,35 @@ export class AuthService {
     };
 
     return jwt.sign(payload, secret, options);
+  }
+
+  // Gerar refresh token e armazenar no documento do usuário
+  static async generateRefreshToken(user: any): Promise<string> {
+    const payload = {
+      userId: user.$id,
+      tenantId: user.tenantId,
+      iat: Math.floor(Date.now() / 1000)
+    };
+
+    const options: jwt.SignOptions = {
+      expiresIn: this.REFRESH_EXPIRES_IN as jwt.SignOptions['expiresIn']
+    };
+
+    const refreshToken = jwt.sign(payload, this.REFRESH_SECRET, options);
+
+    try {
+      // Armazenar refresh token no documento do usuário (substitui token anterior)
+      await appwrite.databases.updateDocument(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'users',
+        user.$id,
+        { refreshToken }
+      );
+    } catch (error) {
+      console.error('Erro ao salvar refresh token:', error);
+    }
+
+    return refreshToken;
   }
 
   // Verificar token JWT
@@ -283,8 +322,40 @@ export class AuthService {
     }
   }
 
+  // Verificar refresh token: valida assinatura e checa se bate com o armazenado
+  static async verifyRefreshToken(token: string): Promise<any | null> {
+    try {
+      const decoded = jwt.verify(token, this.REFRESH_SECRET) as any;
+
+      // Buscar usuário e comparar token salvo
+      const user = await appwrite.databases.getDocument(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'users',
+        decoded.userId
+      );
+
+      if (!user || user.refreshToken !== token) return null;
+
+      return decoded;
+    } catch (error) {
+      return null;
+    }
+  }
+
   // Logout (apenas log de auditoria)
   static async logout(userId: string, tenantId: string): Promise<void> {
+    // Limpar refresh token armazenado
+    try {
+      await appwrite.databases.updateDocument(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'users',
+        userId,
+        { refreshToken: null }
+      );
+    } catch (err) {
+      console.error('Erro ao limpar refresh token no logout:', err);
+    }
+
     await auditLogger.log({
       tenantId,
       userId,
@@ -485,6 +556,20 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 
   const result = await AuthService.login(identifier, tenantId);
+
+  // Se houver refreshToken, enviar como cookie HttpOnly e não expor no body
+  if (result.success && result.refreshToken) {
+    const refreshMaxAge = parseInt(process.env.REFRESH_EXPIRES_MS || String(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: refreshMaxAge
+    });
+    // Remover do body
+    delete (result as any).refreshToken;
+  }
+
   res.json(result);
 });
 
@@ -503,8 +588,54 @@ router.post('/admin/login', async (req: Request, res: Response) => {
   res.json(result);
 });
 
+// Rota para renovar access token usando refresh token
+router.post('/refresh', async (req: Request, res: Response) => {
+  const { refreshToken } = req.body as { refreshToken?: string };
+
+  if (!refreshToken) {
+    return res.status(400).json({ success: false, message: 'refreshToken é obrigatório' });
+  }
+
+  const decoded = await AuthService.verifyRefreshToken(refreshToken);
+
+  if (!decoded) {
+    return res.status(401).json({ success: false, message: 'Refresh token inválido ou expirado' });
+  }
+
+  try {
+    // Buscar usuário e gerar novos tokens
+    const user = await appwrite.databases.getDocument(
+      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+      'users',
+      decoded.userId
+    );
+
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({ success: false, message: 'Usuário inválido' });
+    }
+
+    const token = AuthService.generateToken(user);
+    const newRefresh = await AuthService.generateRefreshToken(user);
+
+    const refreshMaxAge = parseInt(process.env.REFRESH_EXPIRES_MS || String(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', newRefresh, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: refreshMaxAge
+    });
+
+    return res.json({ success: true, token });
+  } catch (error) {
+    console.error('Erro no refresh token:', error);
+    return res.status(500).json({ success: false, message: 'Erro interno' });
+  }
+});
+
 router.post('/logout', authenticateMiddleware, async (req: Request, res: Response) => {
   await AuthService.logout(req.userId!, req.tenantId!);
+  // Limpar cookie de refresh token no cliente
+  res.clearCookie('refreshToken');
   res.json({ success: true, message: 'Logout realizado com sucesso' });
 });
 

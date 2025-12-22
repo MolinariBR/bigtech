@@ -88,8 +88,8 @@ router.get('/active', validateExecutionContext, async (req, res) => {
         });
     }
 });
-// GET /api/plugins/:pluginId/status - Verificar se plugin está ativo para o tenant
-router.get('/:pluginId/status', validateExecutionContext, async (req, res) => {
+// GET /api/plugins/:pluginId/services - Listar serviços disponíveis do plugin
+router.get('/:pluginId/services', validateExecutionContext, async (req, res) => {
     try {
         const { pluginId } = req.params;
         const { tenantId } = req;
@@ -101,16 +101,39 @@ router.get('/:pluginId/status', validateExecutionContext, async (req, res) => {
         }
         // Verificar se plugin está ativo para o tenant
         const isActive = pluginLoader_1.pluginLoader.isPluginActiveForTenant(pluginId, tenantId);
+        if (!isActive) {
+            return res.status(403).json({
+                error: 'Plugin not active',
+                message: 'This plugin is not active for your tenant'
+            });
+        }
+        // Obter plugin e listar serviços disponíveis
+        const plugin = pluginLoader_1.pluginLoader.getPlugin(pluginId);
+        if (!plugin) {
+            return res.status(404).json({
+                error: 'Plugin not found',
+                message: 'The specified plugin does not exist'
+            });
+        }
+        // Verificar se o plugin tem método getAvailableServices
+        if (typeof plugin.getAvailableServices !== 'function') {
+            return res.status(404).json({
+                error: 'Services not available',
+                message: 'This plugin does not provide a services list'
+            });
+        }
+        const services = plugin.getAvailableServices();
         res.json({
             pluginId,
             tenantId,
-            isActive
+            services,
+            count: services.length
         });
     }
     catch (error) {
-        console.error('Error checking plugin status:', error);
+        console.error('Error getting plugin services:', error);
         res.status(500).json({
-            error: 'Failed to check plugin status',
+            error: 'Failed to get plugin services',
             details: error instanceof Error ? error.message : 'Unknown error'
         });
     }
