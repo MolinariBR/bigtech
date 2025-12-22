@@ -2,8 +2,8 @@
 # Arquivo de configuração para deploy na plataforma Square Cloud
 # Documentação: https://docs.squarecloud.app/en/getting-started/config-file
 
-# Arquivo principal da aplicação Next.js
-MAIN=frontend-app/next.config.js
+# Arquivo principal da aplicação Next.js (static export)
+MAIN=frontend-app/out/index.html
 
 # Versão do Node.js recomendada
 VERSION=recommended
@@ -15,16 +15,13 @@ MEMORY=1024
 DISPLAY_NAME=BigTech Frontend App
 
 # Descrição da aplicação
-DESCRIPTION=Aplicação frontend Next.js do sistema BigTech
+DESCRIPTION=Aplicação frontend Next.js do sistema BigTech (static export)
 
-# Comando customizado para iniciar (build + start para Next.js)
-START=npm run build && npm run start --workspace=frontend-app
+# Runtime para sites estáticos
+RUNTIME=static
 
-# Reinício automático em caso de falha
-AUTORESTART=true
+# Reinício automático em caso de falha (não aplicável para static)
+AUTORESTART=false
 
 # Subdomínio para acesso web
 SUBDOMAIN=bigtech-app
-
-# Runtime (Next.js é Node.js/TypeScript)
-RUNTIME=nodejs
