@@ -26,6 +26,14 @@ interface AlertItem {
 }
 
 export default function AdminDashboard() {
+  const [metrics, setMetrics] = useState<Metrics>({
+    activeTenants: 0,
+    totalConsumption: 0,
+    totalUsers: 0,
+    totalQueries: 0,
+  });
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [chartData, setChartData] = useState([]);
   const router = useRouter();
   const [authChecking, setAuthChecking] = useState(true);
 
@@ -42,14 +50,6 @@ export default function AdminDashboard() {
   if (authChecking) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
-  const [metrics, setMetrics] = useState<Metrics>({
-    activeTenants: 0,
-    totalConsumption: 0,
-    totalUsers: 0,
-    totalQueries: 0,
-  });
-  const [alerts, setAlerts] = useState<AlertItem[]>([]);
-  const [chartData, setChartData] = useState([]);
 
   // Mock data para MVP - substituir por Appwrite queries reais
   useEffect(() => {
