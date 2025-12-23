@@ -9,7 +9,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     // Tentar renovar access token ao iniciar (envia cookie HttpOnly)
-    fetch('/auth/refresh', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+    fetch('/api/auth/refresh', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } })
       .then((r) => r.json())
       .then((data) => {
         if (data && data.success && data.token) {
@@ -20,6 +20,17 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         // silent
       });
   }, []);
+
+  const noLayout = (Component as any).noLayout;
+
+  // If the page opts out of the default layout (login), render minimal wrapper.
+  if (noLayout) {
+    return (
+      <div className="dark min-h-screen bg-background">
+        <Component {...pageProps} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
