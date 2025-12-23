@@ -33,8 +33,24 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const isActive = (href: string) => router.pathname === href;
 
   const handleLogout = () => {
-    // TODO: Implementar logout
-    console.log('Logout');
+    (async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
+      } catch (e) {
+        // ignore
+      }
+      try {
+        localStorage.removeItem('accessToken');
+      } catch (e) {}
+      router.replace('/login');
+    })();
   };
 
   return (

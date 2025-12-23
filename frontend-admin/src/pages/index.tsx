@@ -4,6 +4,7 @@
 // Relacionado: 2.Architecture.md (Appwrite para dados), 9.DesignSystem.md (componentes)
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,6 +26,22 @@ interface AlertItem {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [authChecking, setAuthChecking] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+    setAuthChecking(false);
+  }, [router]);
+
+  if (authChecking) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
   const [metrics, setMetrics] = useState<Metrics>({
     activeTenants: 0,
     totalConsumption: 0,
