@@ -1,0 +1,10 @@
+# Node
+node_modules/
+# Next build
+.next/
+# Logs
+logs/
+# Zips and build artifacts
+*.zip
+dist/
+.env
