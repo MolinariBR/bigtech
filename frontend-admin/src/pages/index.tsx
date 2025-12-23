@@ -34,29 +34,12 @@ export default function AdminDashboard() {
   });
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [chartData, setChartData] = useState([]);
-  const router = useRouter();
-  const [authChecking, setAuthChecking] = useState(true);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
-    setAuthChecking(false);
-  }, [router]);
-
-  if (authChecking) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  }
-
   // Mock data para MVP - substituir por Appwrite queries reais
   useEffect(() => {
     // Simular agregação de dados (4.5)
     setMetrics({
       activeTenants: 15,
-      totalConsumption: 1250.50,
+      totalConsumption: 1250.5,
       totalUsers: 120,
       totalQueries: 450,
     });
@@ -83,6 +66,25 @@ export default function AdminDashboard() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const router = useRouter();
+  const [authChecking, setAuthChecking] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+    setAuthChecking(false);
+  }, [router]);
+
+  if (authChecking) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+
+  
 
   return (
     <div className="space-y-6">
