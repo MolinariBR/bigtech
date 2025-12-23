@@ -49,7 +49,7 @@ export default function BillingPage() {
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Monitoramento de Billing</h1>
       <div className="mb-4">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={handleExport} disabled={loading}>
+        <button className="px-4 py-2 bg-primary text-primary-foreground rounded" onClick={handleExport} disabled={loading}>
           Exportar
         </button>
       </div>
@@ -78,7 +78,7 @@ export default function BillingPage() {
                 <td>{it.amount}</td>
                 <td>{it.status}</td>
                 <td>
-                  <button className="px-2 py-1 bg-red-600 text-white rounded" onClick={() => handleRefund(it.$id)}>
+                  <button className="px-2 py-1 bg-error text-error-foreground rounded" onClick={() => handleRefund(it.$id)}>
                     Reembolsar
                   </button>
                 </td>
@@ -88,10 +88,10 @@ export default function BillingPage() {
         </table>
       )}
       <div className="mt-4">
-        <button className="px-3 py-1 mr-2 bg-gray-200" onClick={() => setPage((p) => Math.max(1, p - 1))}>
+        <button className="px-3 py-1 mr-2 bg-secondary text-secondary-foreground" onClick={() => setPage((p) => Math.max(1, p - 1))}>
           Anterior
         </button>
-        <button className="px-3 py-1 bg-gray-200" onClick={() => setPage((p) => p + 1)}>
+        <button className="px-3 py-1 bg-secondary text-secondary-foreground" onClick={() => setPage((p) => p + 1)}>
           Próxima
         </button>
       </div>

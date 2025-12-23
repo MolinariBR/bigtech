@@ -1,0 +1,16 @@
+
+> frontend-admin@1.0.0 dev
+> next dev -p 3001
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3.9s
+ ○ Compiling /login ...
+ ✓ Compiled /login in 13.3s (412 modules)
+ GET /login 200 in 13519ms
+ GET /_next/static/webpack/7a4d93797aeb3e61.webpack.hot-update.json 404 in 13590ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 21ms

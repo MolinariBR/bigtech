@@ -710,7 +710,7 @@ router.post('/admin/login', async (req: Request, res: Response) => {
       let resp: any;
       try {
         resp = await axios.post(
-          `${endpoint}/account/sessions`,
+          `${endpoint}/v1/account/sessions`,
           { email, password },
           {
             headers: {

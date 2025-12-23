@@ -102,20 +102,40 @@ async function initAppwrite() {
     await createAttribute('audits', 'ipAddress', 'string', 45, true);
     await createAttribute('audits', 'timestamp', 'datetime', null, true);
 
-    // Collection: plugins
-    await createCollectionIfNotExists('plugins', 'Plugins', [
+    // Collection: users
+    await createCollectionIfNotExists('users', 'Users', [
       'read("role:admin")',
       'create("role:admin")',
       'update("role:admin")',
       'delete("role:admin")'
     ]);
 
-    await createAttribute('plugins', 'tenantId', 'string', 255, true);
-    await createAttribute('plugins', 'pluginId', 'string', 255, true);
-    await createAttribute('plugins', 'type', 'string', 50, true);
-    await createAttribute('plugins', 'version', 'string', 20, true);
-    await createAttribute('plugins', 'status', 'string', 50, false, 'disabled');
-    await createAttribute('plugins', 'config', 'string', 2000, false, '{}');
+    await createAttribute('users', 'tenantId', 'string', 255, true);
+    await createAttribute('users', 'identifier', 'string', 20, true);
+    await createAttribute('users', 'type', 'string', 50, false, 'user');
+    await createAttribute('users', 'email', 'string', 255, false);
+    await createAttribute('users', 'role', 'string', 50, false, 'viewer');
+    await createAttribute('users', 'status', 'string', 50, false, 'active');
+    await createAttribute('users', 'credits', 'string', 50, false, '0');
+    await createAttribute('users', 'refreshToken', 'string', 500, false);
+
+    // Collection: admins
+    await createCollectionIfNotExists('admins', 'Admins', [
+      'read("role:admin")',
+      'create("role:admin")',
+      'update("role:admin")',
+      'delete("role:admin")'
+    ]);
+
+    await createAttribute('admins', 'email', 'string', 255, true);
+    await createAttribute('admins', 'accountId', 'string', 255, true);
+    await createAttribute('admins', 'identifier', 'string', 20, false);
+    await createAttribute('admins', 'type', 'string', 50, false, 'admin');
+    await createAttribute('admins', 'role', 'string', 50, false, 'admin');
+    await createAttribute('admins', 'status', 'string', 50, false, 'active');
+    await createAttribute('admins', 'credits', 'string', 50, false, '0');
+    await createAttribute('admins', 'createdAt', 'datetime', null, true);
+    await createAttribute('admins', 'updatedAt', 'datetime', null, true);
 
     console.log('🎉 Appwrite inicializado com sucesso!');
 

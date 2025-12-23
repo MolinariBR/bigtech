@@ -1,0 +1,17 @@
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/dist/plugins/consulta/infosimples/index.ts
+❌ Plugin index.ts not found: /home/mau/projeto/consulta/backend/dist/plugins/consulta/infosimples/index.ts
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/dist/plugins/pagamentos/asaas/index.ts
+❌ Plugin index.ts not found: /home/mau/projeto/consulta/backend/dist/plugins/pagamentos/asaas/index.ts
+[DEV] Skipping active plugins load from database
+✅ Plugin infosimples ativado por padrão para tenant default
+📡 Event Bus initialized
+💰 Billing Engine initialized
+Audit collection not found - audit logs will be skipped
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health

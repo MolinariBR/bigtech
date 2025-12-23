@@ -22,6 +22,12 @@ export const multiTenantMiddleware = async (
   next: NextFunction
 ) => {
   try {
+    // Para rotas admin, não exigir tenant (admin é global)
+    if (req.path.includes('/admin/')) {
+      req.tenantId = 'admin';
+      return next();
+    }
+
     // Extrair tenantId do header, query param ou subdomain
     let tenantId = req.headers['x-tenant-id'] as string ||
                    req.query.tenantId as string;
