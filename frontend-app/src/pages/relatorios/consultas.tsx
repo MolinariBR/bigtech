@@ -2,8 +2,7 @@
 // TASK-009: Desenvolver Relatório de Consultas
 // Entidades: Consulta
 // Componentes: Table, Button
-
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/Button'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
@@ -276,8 +275,8 @@ export default function RelatorioConsultas() {
                   </thead>
                   <tbody className="bg-card divide-y divide-border">
                     {filteredConsultas.map((consulta) => (
-                      <>
-                        <tr key={consulta.id} className="hover:bg-muted">
+                      <React.Fragment key={consulta.id}>
+                        <tr className="hover:bg-muted">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                             {formatType(consulta.type)}
                           </td>
@@ -326,7 +325,7 @@ export default function RelatorioConsultas() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>

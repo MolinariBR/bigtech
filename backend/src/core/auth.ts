@@ -399,6 +399,17 @@ export class AuthService {
         decoded.userId
       );
 
+      if (process.env.NODE_ENV !== 'production') {
+        try {
+          console.log('[auth.verifyRefreshToken] decoded:', { userId: decoded.userId, iat: decoded.iat, exp: decoded.exp })
+          console.log('[auth.verifyRefreshToken] fetched user id:', user.$id)
+          console.log('[auth.verifyRefreshToken] user.refreshToken present:', !!user.refreshToken)
+          console.log('[auth.verifyRefreshToken] token equality:', user.refreshToken === token)
+        } catch (e) {
+          // ignora erros de logging
+        }
+      }
+
       if (!user || user.refreshToken !== token) return null;
 
       return decoded;
@@ -631,6 +642,9 @@ router.post('/login', async (req: Request, res: Response) => {
       sameSite: 'lax',
       maxAge: refreshMaxAge
     });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[auth.login] set refresh cookie for user:', (result.user && result.user.id) || '<unknown>')
+    }
     // Remover do body
     delete (result as any).refreshToken;
   }
@@ -655,7 +669,27 @@ router.post('/admin/login', async (req: Request, res: Response) => {
 
 // Rota para renovar access token usando refresh token
 router.post('/refresh', async (req: Request, res: Response) => {
-  const { refreshToken } = req.body as { refreshToken?: string };
+  // O refresh token pode ser enviado no body (testes) ou como cookie HttpOnly (navegador).
+  let { refreshToken } = req.body as { refreshToken?: string };
+  // Log de debug para verificar se o cookie está chegando ao backend (apenas em dev)
+  try {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[auth.refresh] incoming cookies:', req.headers.cookie || '<no-cookie-header>')
+    }
+  } catch (e) {
+    // não falhar por causa do log
+  }
+  // Se não veio no body, tentar extrair do header `cookie` (sem depender de cookie-parser)
+  if (!refreshToken && req.headers && req.headers.cookie) {
+    const cookies = req.headers.cookie.split(';').map(c => c.trim());
+    for (const c of cookies) {
+      const [k, v] = c.split('=');
+      if (k === 'refreshToken') {
+        refreshToken = decodeURIComponent(v || '');
+        break;
+      }
+    }
+  }
 
   if (!refreshToken) {
     return res.status(400).json({ success: false, message: 'refreshToken é obrigatório' });

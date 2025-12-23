@@ -1,12 +1,12 @@
 // Baseado em: 5.Pages.md, 8.DesignSystem.md
 // Componente Sidebar - menu lateral de navegação
 
-import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { Button } from './Button'
 import { Modal } from './Modal'
 import { Home, Search, BarChart3, DollarSign, Shield, ChevronDown, ChevronUp } from 'lucide-react'
+import { NavigationContext } from '@/pages/_app'
 
 interface SidebarProps {
   isOpen?: boolean
@@ -15,12 +15,13 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const router = useRouter()
+  const { isNavigating } = useContext(NavigationContext)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>(['Consultas', 'Financeiro']) // Iniciar abertos
   const [lgpdModalOpen, setLgpdModalOpen] = useState(false)
 
   const navigationItems = [
     { name: 'Principal', href: '/', icon: Home },
-    { name: 'Consultas', href: '/consultas', icon: Search, children: [
+    { name: 'Consultas', icon: Search, children: [
       { name: 'Crédito', href: '/consulta/credito' },
       { name: 'Cadastral', href: '/consulta/cadastral' },
       { name: 'Veicular', href: '/consulta/veicular' },
@@ -79,19 +80,29 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                         <ChevronDown className="ml-auto h-4 w-4" />
                       )}
                     </div>
-                    {openDropdowns.includes(item.name) && item.children.map((child) => (
-                      <Link key={child.href} href={child.href}>
-                        <div className={`
-                          flex items-center px-6 py-2 text-sm rounded-md transition-colors cursor-pointer
-                          ${isActive(child.href)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                          }
-                        `}>
-                          {child.name}
-                        </div>
-                      </Link>
-                    ))}
+                                    {openDropdowns.includes(item.name) && item.children.map((child) => (
+                                      <div
+                                        key={child.href}
+                                        onClick={() => {
+                                          console.log('[sidebar] click', child.href, 'isNavigating:', isNavigating)
+                                          if (isNavigating) {
+                                            console.log('[sidebar] navigation blocked - already navigating')
+                                            return
+                                          }
+                                          console.log('[sidebar] calling router.push', child.href)
+                                          router.push(child.href)
+                                        }}
+                                        className={`
+                                          flex items-center px-6 py-2 text-sm rounded-md transition-colors cursor-pointer
+                                          ${isActive(child.href)
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                          }
+                                        `}
+                                      >
+                                        {child.name}
+                                      </div>
+                                    ))}
                   </div>
                 ) : item.onClick ? (
                   <div
@@ -105,18 +116,23 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     {item.name}
                   </div>
                 ) : (
-                  <Link href={item.href}>
-                    <div className={`
+                  <div
+                    onClick={() => {
+                      if (isNavigating) return
+                      console.log('[sidebar] click', item.href)
+                      router.push(item.href)
+                    }}
+                    className={`
                       flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer
                       ${isActive(item.href)
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }
-                    `}>
-                      <item.icon className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </div>
-                  </Link>
+                    `}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </div>
                 )}
               </div>
             ))}
@@ -128,9 +144,30 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => {
-                // TODO: Implementar logout
-                console.log('Logout')
+              onClick={async () => {
+                if (isNavigating) return
+                try {
+                  const token = localStorage.getItem('accessToken')
+                  const headers: HeadersInit = {
+                    'Content-Type': 'application/json'
+                  }
+                  if (token) headers['Authorization'] = `Bearer ${token}`
+
+                  // Tentar notificar backend para limpar cookie de refresh
+                  await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers,
+                    credentials: 'include'
+                  }).catch(() => {})
+
+                  // Limpar estado local e redirecionar para login
+                  localStorage.removeItem('accessToken')
+                  router.push('/login')
+                } catch (e) {
+                  console.error('Logout failed', e)
+                  localStorage.removeItem('accessToken')
+                  router.push('/login')
+                }
               }}
             >
               Sair

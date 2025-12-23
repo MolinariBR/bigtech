@@ -4,6 +4,7 @@
 // Componentes: Card, Button, Input, Modal
 
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/Card'
 import { Button } from '../components/Button'
 import { Input } from '../components'
@@ -23,7 +24,7 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const response = await fetch('/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,8 +45,8 @@ export default function LoginPage() {
           setTenantCreated(true)
           setShowTenantModal(true)
         } else {
-          // Redirecionar para dashboard
-          window.location.href = '/'
+          // Redirecionar para dashboard via router para evitar problemas de HMR/navegação
+          router.replace('/')
         }
       } else {
         setError(data.message || 'Erro no login')
@@ -60,7 +61,7 @@ export default function LoginPage() {
   const handleTenantConfirm = () => {
     setShowTenantModal(false)
     // Redirecionar para dashboard após confirmação
-    window.location.href = '/'
+    router.replace('/')
   }
 
   return (

@@ -6,6 +6,7 @@ import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import Footer from '@/components/Footer'
 import { useDynamicValidation, InitialFormField } from '@/hooks/useDynamicValidation'
+import { apiCall, API_CONFIG } from '@/lib/api'
 
 interface CreditQuery {
   id: string
@@ -52,19 +53,13 @@ export default function ConsultaCredito() {
         setLoadingServices(true)
 
         // Buscar serviços do plugin infosimples via API REST
-        const response = await fetch('/api/plugins/infosimples/services', {
+        // `apiCall` já retorna o JSON parseado ou lança erro em caso de HTTP não-ok
+        const data = await apiCall(API_CONFIG.endpoints.plugins.services('infosimples'), {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            // TODO: Adicionar autenticação se necessário
+            'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
           }
         })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
 
         if (data.services) {
           // Filtrar apenas serviços de crédito
@@ -121,10 +116,9 @@ export default function ConsultaCredito() {
 
     try {
       // Executar consulta via plugin
-      const response = await fetch('/api/plugins/infosimples/execute', {
+      const data = await apiCall(API_CONFIG.endpoints.plugins.execute('infosimples'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
         },
         body: JSON.stringify({
@@ -137,12 +131,6 @@ export default function ConsultaCredito() {
           }
         })
       })
-
-      if (!response.ok) {
-        throw new Error(`Erro na consulta: ${response.status}`)
-      }
-
-      const data = await response.json()
 
       if (data.success) {
         // Extrair dados reais da resposta normalizada
