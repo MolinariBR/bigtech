@@ -7,16 +7,10 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 2.6s
- ○ Compiling /_error ...
- ✓ Compiled /_error in 586ms (404 modules)
- GET /_next/static/webpack/d5bebce187282a9c.webpack.hot-update.json 404 in 806ms
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Ready in 3.4s
  ○ Compiling / ...
- ✓ Compiled / in 1439ms (1034 modules)
- GET /_next/static/webpack/d5bebce187282a9c.webpack.hot-update.json 404 in 756ms
+ ✓ Compiled / in 3.8s (1034 modules)
+ GET /_next/static/webpack/10f0b361828f4ce5.webpack.hot-update.json 404 in 4437ms
  ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- GET / 200 in 1963ms
- GET / 200 in 39ms
- ✓ Compiled in 1275ms (781 modules)
- ✓ Compiled in 264ms (781 modules)
+ GET / 200 in 4441ms
+ GET / 200 in 14ms

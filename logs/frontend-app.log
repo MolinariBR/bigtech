@@ -10,8 +10,14 @@
 
 npm error code ENOWORKSPACES
 npm error This command does not support workspaces.
-npm error A complete log of this run can be found in: /home/mau/.npm/_logs/2025-12-23T18_13_13_264Z-debug-0.log
- ✓ Ready in 2.8s
- ○ Compiling /login ...
- ✓ Compiled /login in 2.5s (298 modules)
+npm error A complete log of this run can be found in: /home/mau/.npm/_logs/2025-12-23T20_28_40_300Z-debug-0.log
+ ✓ Ready in 2.4s
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1634ms (275 modules)
  ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ○ Compiling /login ...
+ ✓ Compiled /login in 3.7s (298 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled / in 210ms (302 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 906ms (357 modules)

@@ -11,62 +11,70 @@
 ✅ Plugin infosimples ativado por padrão para tenant default
 📡 Event Bus initialized
 💰 Billing Engine initialized
-Audit collection not found - audit logs will be skipped
 ✅ CORE initialized successfully
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health
-[auth.admin.login] Appwrite response error status: 401
-[auth.admin.login] Appwrite response error data: {"message":"Invalid credentials. Please check the email and password.","code":401,"type":"user_invalid_credentials","version":"1.8.0"}
-[DEV] Allowing tenant default for path /api/auth/refresh
-[auth.refresh] incoming cookies: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ5ZWYzMzM5Y2IzY2ZmMjIwMCIsInRlbmFudElkIjoiZGVmYXVsdCIsImlhdCI6MTc2NjUxMzA1MiwiZXhwIjoxNzY3MTE3ODUyfQ.BPXpLvCMvOqDY12Ll6GJTzfemIvH2o_NZTEtQu4Y5vw
-[DEV] Allowing tenant default for path /api/auth/refresh
-[auth.refresh] incoming cookies: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ5ZWYzMzM5Y2IzY2ZmMjIwMCIsInRlbmFudElkIjoiZGVmYXVsdCIsImlhdCI6MTc2NjUxMzA1MiwiZXhwIjoxNzY3MTE3ODUyfQ.BPXpLvCMvOqDY12Ll6GJTzfemIvH2o_NZTEtQu4Y5vw
-[auth.admin.login] Appwrite /account/sessions response status: 201
-[auth.admin.login] Appwrite response data keys: [
-  '$id',
-  '$createdAt',
-  '$updatedAt',
-  'userId',
-  'expire',
-  'provider',
-  'providerUid',
-  'providerAccessToken',
-  'providerAccessTokenExpiry',
-  'providerRefreshToken',
-  'ip',
-  'osCode',
-  'osName',
-  'osVersion',
-  'clientType',
-  'clientCode',
-  'clientName',
-  'clientVersion',
-  'clientEngine',
-  'clientEngineVersion',
-  'deviceName',
-  'deviceBrand',
-  'deviceModel',
-  'countryCode',
-  'countryName',
-  'current',
-  'factors',
-  'secret',
-  'mfaUpdatedAt'
-]
-[auth.admin.login] Admin document found id: 694adc670024fe90c91b email: admin@bigtech.com
+[DEV] Allowing tenant default for path /api/auth/login
+[auth.login] Novo usuário criado: 694afb83001da8dae2b4
 AuditLogger: created audit document {
-  tenantId: 'admin',
-  userId: '694adc670024fe90c91b',
-  action: 'admin_login',
-  resource: 'admin:694adc670024fe90c91b',
-  details: '{"email":"admin@bigtech.com"}',
+  tenantId: 'default',
+  userId: '694afb83001da8dae2b4',
+  action: 'user_login',
+  resource: 'user:694afb83001da8dae2b4',
+  details: '{"email":"user@bigtech.com"}',
   ipAddress: 'system',
-  timestamp: '2025-12-23T18:16:22.467+00:00',
-  '$id': '694adc76a288daf3634a',
+  timestamp: '2025-12-23T20:28:51.846+00:00',
+  '$id': '694afb84129f7b2f6dde',
   '$permissions': [],
-  '$createdAt': '2025-12-23T18:16:22.668+00:00',
-  '$updatedAt': '2025-12-23T18:16:22.668+00:00',
-  '$sequence': 1,
+  '$createdAt': '2025-12-23T20:28:52.076+00:00',
+  '$updatedAt': '2025-12-23T20:28:52.076+00:00',
+  '$sequence': 14,
+  '$databaseId': 'bigtechdb',
+  '$collectionId': 'audits'
+}
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/login
+AuditLogger: created audit document {
+  tenantId: 'default',
+  userId: '694afb83001da8dae2b4',
+  action: 'user_login',
+  resource: 'user:694afb83001da8dae2b4',
+  details: '{"email":"user@bigtech.com"}',
+  ipAddress: 'system',
+  timestamp: '2025-12-23T20:29:03.297+00:00',
+  '$id': '694afb8f806e31ffa5c9',
+  '$permissions': [],
+  '$createdAt': '2025-12-23T20:29:03.526+00:00',
+  '$updatedAt': '2025-12-23T20:29:03.526+00:00',
+  '$sequence': 15,
+  '$databaseId': 'bigtechdb',
+  '$collectionId': 'audits'
+}
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/login
+AuditLogger: created audit document {
+  tenantId: 'default',
+  userId: '694afb83001da8dae2b4',
+  action: 'user_login',
+  resource: 'user:694afb83001da8dae2b4',
+  details: '{"email":"user@bigtech.com"}',
+  ipAddress: 'system',
+  timestamp: '2025-12-23T20:29:58.541+00:00',
+  '$id': '694afbc6b9cea30fe6ad',
+  '$permissions': [],
+  '$createdAt': '2025-12-23T20:29:58.761+00:00',
+  '$updatedAt': '2025-12-23T20:29:58.761+00:00',
+  '$sequence': 16,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }

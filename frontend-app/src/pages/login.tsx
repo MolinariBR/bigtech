@@ -11,12 +11,12 @@ import { Input } from '../components'
 import { Modal } from '../components/Modal'
 
 export default function LoginPage() {
-  const [identifier, setIdentifier] = useState('')
-  const [tenantId, setTenantId] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showTenantModal, setShowTenantModal] = useState(false)
-  const [tenantCreated, setTenantCreated] = useState(false)
+  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,9 +28,9 @@ export default function LoginPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-Id': tenantId || 'default'
+          'X-Tenant-Id': 'default'
         },
-        body: JSON.stringify({ identifier }),
+        body: JSON.stringify({ email, password }),
         credentials: 'include'
       })
 
@@ -70,35 +70,38 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">BigTech Login</CardTitle>
           <CardDescription>
-            Entre com seu CPF/CNPJ para acessar o sistema
+            Entre com seu email e senha para acessar o sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="identifier" className="block text-sm font-medium mb-1">
-                CPF/CNPJ
+              <label htmlFor="email" className="block text-sm font-medium mb-1">
+                Email
               </label>
               <Input
-                id="identifier"
-                type="text"
-                value={identifier}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIdentifier(e.target.value)}
-                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                placeholder="seu@exemplo.com"
+                className="text-black"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="tenantId" className="block text-sm font-medium mb-1">
-                Tenant ID (opcional)
+              <label htmlFor="password" className="block text-sm font-medium mb-1">
+                Senha
               </label>
               <Input
-                id="tenantId"
-                type="text"
-                value={tenantId}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTenantId(e.target.value)}
-                placeholder="Deixe vazio para tenant padrão"
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                placeholder="********"
+                className="text-black"
+                required
               />
             </div>
 
@@ -123,7 +126,7 @@ export default function LoginPage() {
       >
         <div className="space-y-4">
           <p>
-            Um novo tenant foi criado automaticamente para você: <strong>{tenantId || 'default'}</strong>
+            Um novo tenant foi criado automaticamente para você: <strong>default</strong>
           </p>
           <p className="text-sm text-muted-foreground">
             O tenant está em status &quot;pendente&quot; e aguarda aprovação do administrador.

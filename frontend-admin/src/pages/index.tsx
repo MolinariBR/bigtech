@@ -90,6 +90,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
+        <Button onClick={() => { localStorage.removeItem('accessToken'); router.replace('/login'); }}>Logout</Button>
       </div>
 
       {/* Métricas Globais */}

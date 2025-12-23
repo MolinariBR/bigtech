@@ -445,6 +445,40 @@ class AuthService {
             return { success: false, message: 'Erro interno do servidor' };
         }
     }
+    // Gerar token e resposta a partir de um documento de usuário (usado após validação pela Appwrite Accounts)
+    static async userLoginWithUserDoc(user) {
+        try {
+            // Verificar status
+            if (user.status && user.status !== 'active') {
+                return { success: false, message: 'Usuário inativo' };
+            }
+            const token = this.generateToken(user);
+            // Log de auditoria
+            await audit_1.auditLogger.log({
+                tenantId: user.tenantId || 'default',
+                userId: user.$id,
+                action: 'user_login',
+                resource: `user:${user.$id}`,
+                details: { email: user.email },
+                ipAddress: 'system'
+            });
+            return {
+                success: true,
+                token,
+                user: {
+                    id: user.$id,
+                    identifier: user.identifier ? AuthValidators.formatIdentifier(user.identifier) : user.email,
+                    type: user.type || 'user',
+                    role: user.role || 'viewer',
+                    credits: user.credits || 0
+                }
+            };
+        }
+        catch (error) {
+            console.error('userLoginWithUserDoc error:', error);
+            return { success: false, message: 'Erro interno do servidor' };
+        }
+    }
     // Gerar token JWT para administrador (isolamento global)
     static generateAdminToken(admin) {
         const payload = {
@@ -532,34 +566,6 @@ const authenticateAdminMiddleware = async (req, res, next) => {
     }
 };
 exports.authenticateAdminMiddleware = authenticateAdminMiddleware;
-// Rotas de autenticação
-router.post('/login', async (req, res) => {
-    const { identifier } = req.body;
-    const tenantId = req.tenantId || req.headers['x-tenant-id'] || 'default';
-    if (!identifier) {
-        return res.status(400).json({
-            success: false,
-            message: 'CPF/CNPJ é obrigatório'
-        });
-    }
-    const result = await AuthService.login(identifier, tenantId);
-    // Se houver refreshToken, enviar como cookie HttpOnly e não expor no body
-    if (result.success && result.refreshToken) {
-        const refreshMaxAge = parseInt(process.env.REFRESH_EXPIRES_MS || String(7 * 24 * 60 * 60 * 1000));
-        res.cookie('refreshToken', result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: refreshMaxAge
-        });
-        if (process.env.NODE_ENV !== 'production') {
-            console.log('[auth.login] set refresh cookie for user:', (result.user && result.user.id) || '<unknown>');
-        }
-        // Remover do body
-        delete result.refreshToken;
-    }
-    res.json(result);
-});
 // Rota de login para administradores
 // Admin login: now uses Appwrite Accounts (email + password)
 router.post('/admin/login', async (req, res) => {
@@ -640,6 +646,80 @@ router.post('/admin/login', async (req, res) => {
         }
         console.error('Erro no admin login:', err && err.stack ? err.stack : err);
         return res.status(500).json({ success: false, message: 'Erro interno no login de administrador' });
+    }
+});
+// Rota de login para usuários
+// User login: uses Appwrite Accounts (email + password)
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
+    }
+    try {
+        // Tentar criar sessão na Appwrite via REST
+        const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
+        const trimmed = rawEndpoint.replace(/\/$/, '');
+        const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+        const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
+        let resp;
+        try {
+            resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': project
+                },
+                timeout: 5000
+            });
+        }
+        catch (axiosErr) {
+            if (axiosErr && axiosErr.response) {
+                const status = axiosErr.response.status;
+                if (status === 401) {
+                    return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+                }
+            }
+            console.error('[auth.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
+            return res.status(500).json({ success: false, message: 'Erro ao validar credenciais' });
+        }
+        // Encontrar usuário na coleção `users` por email
+        let users;
+        try {
+            users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [node_appwrite_1.Query.equal('email', email), node_appwrite_1.Query.equal('status', 'active')]);
+        }
+        catch (userErr) {
+            console.error('[auth.login] Erro ao buscar coleção `users`:', userErr);
+            return res.status(500).json({ success: false, message: 'Erro ao verificar usuário' });
+        }
+        if (!users || users.documents.length === 0) {
+            // Auto-onboarding: criar usuário se não existir
+            try {
+                const userId = node_appwrite_1.ID.unique();
+                const userData = {
+                    email,
+                    identifier: email,
+                    tenantId: 'default',
+                    status: 'active',
+                    credits: '100'
+                };
+                const newUser = await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', userId, userData);
+                console.log('[auth.login] Novo usuário criado:', newUser.$id);
+                // Gerar token para o novo usuário
+                const result = await AuthService.userLoginWithUserDoc(newUser);
+                return res.json({ ...result, tenantCreated: true });
+            }
+            catch (createErr) {
+                console.error('[auth.login] Erro ao criar novo usuário:', createErr);
+                return res.status(500).json({ success: false, message: 'Erro ao criar conta' });
+            }
+        }
+        const user = users.documents[0];
+        // Gerar token JWT para usuário
+        const result = await AuthService.userLoginWithUserDoc(user);
+        res.json(result);
+    }
+    catch (err) {
+        console.error('Erro no user login:', err);
+        return res.status(500).json({ success: false, message: 'Erro interno no login' });
     }
 });
 // Rota para renovar access token usando refresh token

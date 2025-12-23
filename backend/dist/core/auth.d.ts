@@ -40,6 +40,7 @@ export declare class AuthService {
     static logout(userId: string, tenantId: string): Promise<void>;
     static adminLogin(identifier: string): Promise<AuthResponse>;
     static adminLoginWithAdminDoc(admin: any): Promise<AuthResponse>;
+    static userLoginWithUserDoc(user: any): Promise<AuthResponse>;
     private static generateAdminToken;
 }
 export declare const authenticateMiddleware: (req: Request, res: Response, next: any) => Promise<Response<any, Record<string, any>> | undefined>;

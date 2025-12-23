@@ -17,7 +17,7 @@ function AdminLoginPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/admin/login', {
+      const res = await fetch('http://localhost:8080/api/auth/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -55,6 +55,7 @@ function AdminLoginPage() {
                 value={email}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 placeholder="seu@exemplo.com"
+                className="text-black"
                 required
               />
             </div>
@@ -67,6 +68,7 @@ function AdminLoginPage() {
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 placeholder="********"
+                className="text-black"
                 required
               />
             </div>
