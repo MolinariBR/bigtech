@@ -77,22 +77,14 @@ async function initAppwrite() {
     }
 
     // Collection: tenants
-    await createCollectionIfNotExists('tenants', 'Tenants', [
-      'read("role:admin")',
-      'create("role:admin")',
-      'update("role:admin")',
-      'delete("role:admin")'
-    ]);
+    await createCollectionIfNotExists('tenants', 'Tenants', []);
 
     await createAttribute('tenants', 'name', 'string', 255, true);
     await createAttribute('tenants', 'status', 'string', 50, false, 'active');
     await createAttribute('tenants', 'plugins', 'string', 1000, false, '[]');
 
     // Collection: audits
-    await createCollectionIfNotExists('audits', 'Audit Logs', [
-      'read("role:admin")',
-      'create("role:admin")'
-    ]);
+    await createCollectionIfNotExists('audits', 'Audit Logs', []);
 
     await createAttribute('audits', 'tenantId', 'string', 255, true);
     await createAttribute('audits', 'userId', 'string', 255, false);
@@ -103,12 +95,7 @@ async function initAppwrite() {
     await createAttribute('audits', 'timestamp', 'datetime', null, true);
 
     // Collection: users
-    await createCollectionIfNotExists('users', 'Users', [
-      'read("role:admin")',
-      'create("role:admin")',
-      'update("role:admin")',
-      'delete("role:admin")'
-    ]);
+    await createCollectionIfNotExists('users', 'Users', []);
 
     await createAttribute('users', 'tenantId', 'string', 255, true);
     await createAttribute('users', 'identifier', 'string', 20, true);
@@ -120,12 +107,7 @@ async function initAppwrite() {
     await createAttribute('users', 'refreshToken', 'string', 500, false);
 
     // Collection: admins
-    await createCollectionIfNotExists('admins', 'Admins', [
-      'read("role:admin")',
-      'create("role:admin")',
-      'update("role:admin")',
-      'delete("role:admin")'
-    ]);
+    await createCollectionIfNotExists('admins', 'Admins', []);
 
     await createAttribute('admins', 'email', 'string', 255, true);
     await createAttribute('admins', 'accountId', 'string', 255, true);

@@ -124,7 +124,7 @@ start_backend() {
         warn "Arquivo dist/index.js não encontrado. Compilando..."
         npm run build
     fi
-    NODE_ENV=production PORT=8080 node dist/index.js > ../logs/backend.log 2>&1 &
+    NODE_ENV=development PORT=8080 node dist/index.js > ../logs/backend.log 2>&1 &
     local pid=$!
     echo $pid > ../logs/backend.pid
     cd ..

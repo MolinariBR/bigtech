@@ -27,6 +27,12 @@ const tenants_1 = require("./controllers/admin/tenants");
 const plugins_2 = require("./controllers/plugins");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
+// Se o app estiver atrás de um proxy (Next.js rewrites, nginx, etc.),
+// habilitar `trust proxy` para que express-rate-limit possa usar
+// corretamente o cabeçalho `X-Forwarded-For` para identificação de IP.
+// NÃO usar `true` em produção pois é permissivo; para desenvolvimento
+// especificamos 'loopback' (endereços locais) para manter a proteção.
+app.set('trust proxy', 'loopback');
 // Middleware de segurança
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({

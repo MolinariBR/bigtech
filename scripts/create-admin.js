@@ -20,7 +20,7 @@ async function createAdmin() {
     console.log('🚀 Criando usuário admin...');
 
     // Dados do admin
-    const email = 'admin2@bigtech.com';
+    const email = 'admin@bigtech.com';
     const password = 'admin123';
     const name = 'Admin BigTech';
 

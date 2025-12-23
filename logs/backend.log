@@ -15,3 +15,58 @@ Audit collection not found - audit logs will be skipped
 ✅ CORE initialized successfully
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health
+[auth.admin.login] Appwrite response error status: 401
+[auth.admin.login] Appwrite response error data: {"message":"Invalid credentials. Please check the email and password.","code":401,"type":"user_invalid_credentials","version":"1.8.0"}
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ5ZWYzMzM5Y2IzY2ZmMjIwMCIsInRlbmFudElkIjoiZGVmYXVsdCIsImlhdCI6MTc2NjUxMzA1MiwiZXhwIjoxNzY3MTE3ODUyfQ.BPXpLvCMvOqDY12Ll6GJTzfemIvH2o_NZTEtQu4Y5vw
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ5ZWYzMzM5Y2IzY2ZmMjIwMCIsInRlbmFudElkIjoiZGVmYXVsdCIsImlhdCI6MTc2NjUxMzA1MiwiZXhwIjoxNzY3MTE3ODUyfQ.BPXpLvCMvOqDY12Ll6GJTzfemIvH2o_NZTEtQu4Y5vw
+[auth.admin.login] Appwrite /account/sessions response status: 201
+[auth.admin.login] Appwrite response data keys: [
+  '$id',
+  '$createdAt',
+  '$updatedAt',
+  'userId',
+  'expire',
+  'provider',
+  'providerUid',
+  'providerAccessToken',
+  'providerAccessTokenExpiry',
+  'providerRefreshToken',
+  'ip',
+  'osCode',
+  'osName',
+  'osVersion',
+  'clientType',
+  'clientCode',
+  'clientName',
+  'clientVersion',
+  'clientEngine',
+  'clientEngineVersion',
+  'deviceName',
+  'deviceBrand',
+  'deviceModel',
+  'countryCode',
+  'countryName',
+  'current',
+  'factors',
+  'secret',
+  'mfaUpdatedAt'
+]
+[auth.admin.login] Admin document found id: 694adc670024fe90c91b email: admin@bigtech.com
+AuditLogger: created audit document {
+  tenantId: 'admin',
+  userId: '694adc670024fe90c91b',
+  action: 'admin_login',
+  resource: 'admin:694adc670024fe90c91b',
+  details: '{"email":"admin@bigtech.com"}',
+  ipAddress: 'system',
+  timestamp: '2025-12-23T18:16:22.467+00:00',
+  '$id': '694adc76a288daf3634a',
+  '$permissions': [],
+  '$createdAt': '2025-12-23T18:16:22.668+00:00',
+  '$updatedAt': '2025-12-23T18:16:22.668+00:00',
+  '$sequence': 1,
+  '$databaseId': 'bigtechdb',
+  '$collectionId': 'audits'
+}

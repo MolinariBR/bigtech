@@ -7,10 +7,16 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 3.9s
- ○ Compiling /login ...
- ✓ Compiled /login in 13.3s (412 modules)
- GET /login 200 in 13519ms
- GET /_next/static/webpack/7a4d93797aeb3e61.webpack.hot-update.json 404 in 13590ms
+ ✓ Ready in 2.6s
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 586ms (404 modules)
+ GET /_next/static/webpack/d5bebce187282a9c.webpack.hot-update.json 404 in 806ms
  ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 21ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1439ms (1034 modules)
+ GET /_next/static/webpack/d5bebce187282a9c.webpack.hot-update.json 404 in 756ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET / 200 in 1963ms
+ GET / 200 in 39ms
+ ✓ Compiled in 1275ms (781 modules)
+ ✓ Compiled in 264ms (781 modules)

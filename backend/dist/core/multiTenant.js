@@ -7,6 +7,11 @@ exports.multiTenantMiddleware = void 0;
 const appwrite_1 = require("../lib/appwrite");
 const multiTenantMiddleware = async (req, res, next) => {
     try {
+        // Para rotas admin, não exigir tenant (admin é global)
+        if (req.path.includes('/admin/')) {
+            req.tenantId = 'admin';
+            return next();
+        }
         // Extrair tenantId do header, query param ou subdomain
         let tenantId = req.headers['x-tenant-id'] ||
             req.query.tenantId;

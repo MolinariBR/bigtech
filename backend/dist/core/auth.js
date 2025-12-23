@@ -10,6 +10,7 @@ exports.authRouter = exports.authenticateAdminMiddleware = exports.authenticateM
 const express_1 = require("express");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const appwrite_1 = require("../lib/appwrite");
+const axios_1 = __importDefault(require("axios"));
 const node_appwrite_1 = require("node-appwrite");
 const audit_1 = require("./audit");
 const router = (0, express_1.Router)();
@@ -313,6 +314,17 @@ class AuthService {
             const decoded = jsonwebtoken_1.default.verify(token, this.REFRESH_SECRET);
             // Buscar usuário e comparar token salvo
             const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', decoded.userId);
+            if (process.env.NODE_ENV !== 'production') {
+                try {
+                    console.log('[auth.verifyRefreshToken] decoded:', { userId: decoded.userId, iat: decoded.iat, exp: decoded.exp });
+                    console.log('[auth.verifyRefreshToken] fetched user id:', user.$id);
+                    console.log('[auth.verifyRefreshToken] user.refreshToken present:', !!user.refreshToken);
+                    console.log('[auth.verifyRefreshToken] token equality:', user.refreshToken === token);
+                }
+                catch (e) {
+                    // ignora erros de logging
+                }
+            }
             if (!user || user.refreshToken !== token)
                 return null;
             return decoded;
@@ -398,6 +410,39 @@ class AuthService {
                 success: false,
                 message: 'Erro interno do servidor'
             };
+        }
+    }
+    // Gerar token e resposta a partir de um documento de admin (usado após validação pela Appwrite Accounts)
+    static async adminLoginWithAdminDoc(admin) {
+        try {
+            // Verificar status
+            if (admin.status && admin.status !== 'active') {
+                return { success: false, message: 'Administrador inativo' };
+            }
+            const token = this.generateAdminToken(admin);
+            // Log de auditoria
+            await audit_1.auditLogger.log({
+                tenantId: 'admin',
+                userId: admin.$id,
+                action: 'admin_login',
+                resource: `admin:${admin.$id}`,
+                details: { email: admin.email },
+                ipAddress: 'system'
+            });
+            return {
+                success: true,
+                token,
+                user: {
+                    id: admin.$id,
+                    identifier: admin.identifier ? AuthValidators.formatIdentifier(admin.identifier) : undefined,
+                    type: admin.type || 'admin',
+                    role: admin.role || 'admin'
+                }
+            };
+        }
+        catch (error) {
+            console.error('adminLoginWithAdminDoc error:', error);
+            return { success: false, message: 'Erro interno do servidor' };
         }
     }
     // Gerar token JWT para administrador (isolamento global)
@@ -507,26 +552,120 @@ router.post('/login', async (req, res) => {
             sameSite: 'lax',
             maxAge: refreshMaxAge
         });
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('[auth.login] set refresh cookie for user:', (result.user && result.user.id) || '<unknown>');
+        }
         // Remover do body
         delete result.refreshToken;
     }
     res.json(result);
 });
 // Rota de login para administradores
+// Admin login: now uses Appwrite Accounts (email + password)
 router.post('/admin/login', async (req, res) => {
-    const { identifier } = req.body;
-    if (!identifier) {
-        return res.status(400).json({
-            success: false,
-            message: 'CPF/CNPJ é obrigatório'
-        });
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
     }
-    const result = await AuthService.adminLogin(identifier);
-    res.json(result);
+    try {
+        // Tentar criar sessão na Appwrite via REST (evita incompatibilidades do SDK)
+        const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
+        const trimmed = rawEndpoint.replace(/\/$/, '');
+        // Garantir que temos o path /v1 apenas uma vez
+        const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+        const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
+        let resp;
+        try {
+            resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Appwrite-Project': project
+                },
+                timeout: 5000
+            });
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('[auth.admin.login] Appwrite /account/sessions response status:', resp.status);
+                try {
+                    console.log('[auth.admin.login] Appwrite response data keys:', Object.keys(resp.data || {}));
+                }
+                catch (e) {
+                    // ignore
+                }
+            }
+        }
+        catch (axiosErr) {
+            // Captura detalhes da resposta do Appwrite (401, 400, 500 etc.)
+            if (axiosErr && axiosErr.response) {
+                console.error('[auth.admin.login] Appwrite response error status:', axiosErr.response.status);
+                try {
+                    console.error('[auth.admin.login] Appwrite response error data:', JSON.stringify(axiosErr.response.data));
+                }
+                catch (e) {
+                    console.error('[auth.admin.login] Appwrite response error data (non-serializable)');
+                }
+                // Repassar erro equivalente para tratamento abaixo
+                const status = axiosErr.response.status;
+                if (status === 401) {
+                    return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+                }
+            }
+            console.error('[auth.admin.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
+            return res.status(500).json({ success: false, message: 'Erro ao validar credenciais com Appwrite' });
+        }
+        // Encontrar admin na coleção `admins` por email
+        let admins;
+        try {
+            admins = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'admins', [node_appwrite_1.Query.equal('email', email), node_appwrite_1.Query.equal('status', 'active')]);
+        }
+        catch (adminErr) {
+            console.error('[auth.admin.login] Erro ao buscar coleção `admins` no Appwrite:', adminErr);
+            return res.status(500).json({ success: false, message: 'Erro ao verificar permissões do administrador' });
+        }
+        if (!admins || admins.documents.length === 0) {
+            console.warn('[auth.admin.login] Admin não encontrado na coleção `admins` para o email:', email);
+            return res.status(403).json({ success: false, message: 'Administrador não encontrado ou sem acesso' });
+        }
+        const admin = admins.documents[0];
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('[auth.admin.login] Admin document found id:', admin.$id, 'email:', admin.email || '<no-email>');
+        }
+        // Gerar token JWT para admin
+        const result = await AuthService.adminLoginWithAdminDoc(admin);
+        res.json(result);
+    }
+    catch (err) {
+        // Erro geral
+        if (err && err.response && err.response.status === 401) {
+            return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+        }
+        console.error('Erro no admin login:', err && err.stack ? err.stack : err);
+        return res.status(500).json({ success: false, message: 'Erro interno no login de administrador' });
+    }
 });
 // Rota para renovar access token usando refresh token
 router.post('/refresh', async (req, res) => {
-    const { refreshToken } = req.body;
+    // O refresh token pode ser enviado no body (testes) ou como cookie HttpOnly (navegador).
+    let { refreshToken } = req.body;
+    // Log de debug para verificar se o cookie está chegando ao backend (apenas em dev)
+    try {
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('[auth.refresh] incoming cookies:', req.headers.cookie || '<no-cookie-header>');
+        }
+    }
+    catch (e) {
+        // não falhar por causa do log
+    }
+    // Se não veio no body, tentar extrair do header `cookie` (sem depender de cookie-parser)
+    if (!refreshToken && req.headers && req.headers.cookie) {
+        const cookies = req.headers.cookie.split(';').map(c => c.trim());
+        for (const c of cookies) {
+            const [k, v] = c.split('=');
+            if (k === 'refreshToken') {
+                refreshToken = decodeURIComponent(v || '');
+                break;
+            }
+        }
+    }
     if (!refreshToken) {
         return res.status(400).json({ success: false, message: 'refreshToken é obrigatório' });
     }

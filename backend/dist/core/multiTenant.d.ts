@@ -8,5 +8,5 @@ declare global {
         }
     }
 }
-export declare const multiTenantMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const multiTenantMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;
 //# sourceMappingURL=multiTenant.d.ts.map

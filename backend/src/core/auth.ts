@@ -705,12 +705,15 @@ router.post('/admin/login', async (req: Request, res: Response) => {
 
     try {
       // Tentar criar sessão na Appwrite via REST (evita incompatibilidades do SDK)
-      const endpoint = (process.env.APPWRITE_ENDPOINT || 'http://localhost/v1').replace(/\/$/, '');
+      const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
+      const trimmed = rawEndpoint.replace(/\/$/, '');
+      // Garantir que temos o path /v1 apenas uma vez
+      const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
       const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
       let resp: any;
       try {
         resp = await axios.post(
-          `${endpoint}/v1/account/sessions`,
+          `${apiBase}/account/sessions`,
           { email, password },
           {
             headers: {
@@ -748,11 +751,17 @@ router.post('/admin/login', async (req: Request, res: Response) => {
       }
 
       // Encontrar admin na coleção `admins` por email
-      const admins = await appwrite.databases.listDocuments(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'admins',
-        [Query.equal('email', email), Query.equal('status', 'active')]
-      );
+      let admins: any;
+      try {
+        admins = await appwrite.databases.listDocuments(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'admins',
+          [Query.equal('email', email), Query.equal('status', 'active')]
+        );
+      } catch (adminErr) {
+        console.error('[auth.admin.login] Erro ao buscar coleção `admins` no Appwrite:', adminErr);
+        return res.status(500).json({ success: false, message: 'Erro ao verificar permissões do administrador' });
+      }
 
       if (!admins || admins.documents.length === 0) {
         console.warn('[auth.admin.login] Admin não encontrado na coleção `admins` para o email:', email);
