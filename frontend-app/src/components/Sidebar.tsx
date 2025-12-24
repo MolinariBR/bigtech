@@ -45,8 +45,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         { name: 'Boletos', href: '/financeiro/boletos' }
       ]
     },
-    { name: 'LGPD', href: '/lgpd', icon: Shield },
-    { name: 'Minha Conta', href: '/minha-conta', icon: Home }
+    { name: 'LGPD', href: '/lgpd', icon: Shield }
   ]
 
   const isActive = (href: string) => {
@@ -74,38 +73,38 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
       {/* Sidebar - Fixado no topo e lateral */}
       <aside className={`
-        fixed left-0 top-[64px] bottom-0 z-45 w-64 bg-card border-r border-border
+        fixed left-0 top-[64px] bottom-0 z-45 w-64 bg-card/95 backdrop-blur-sm border-r border-border shadow-sm
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:z-45
       `}>
         <div className="flex flex-col h-full overflow-y-auto">
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-3 py-6 space-y-2">
             {navigationItems.map((item) => (
               <div key={item.name}>
                 {item.children ? (
                   <div className="space-y-1">
                     <button
-                      className="w-full flex items-center px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-md"
+                      className="w-full flex items-center px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors"
                       onClick={() => toggleDropdown(item.name)}
                       data-cy={`sidebar-${item.name.toLowerCase()}-dropdown`}
                     >
-                      <item.icon className="mr-3 h-5 w-5" />
+                      <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                       <span className="flex-1 text-left">{item.name}</span>
                       {openDropdowns.includes(item.name) ? (
-                        <ChevronUp className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4 flex-shrink-0" />
                       ) : (
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4 flex-shrink-0" />
                       )}
                     </button>
 
                     {openDropdowns.includes(item.name) && (
-                      <div className="space-y-1 ml-4 border-l border-border pl-2 mt-1">
+                      <div className="space-y-1 ml-4 border-l border-border/50 pl-3 mt-1">
                         {item.children.map((child) => (
                           <Link
                             key={child.href}
                             href={child.href}
                             className={`
-                              flex items-center px-4 py-2 text-sm rounded-md
+                              flex items-center px-4 py-2 text-sm rounded-md transition-colors
                               ${isActive(child.href)
                                 ? 'bg-primary text-primary-foreground font-semibold'
                                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -123,7 +122,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   <Link
                     href={item.href || '#'}
                     className={`
-                      flex items-center px-3 py-2 text-sm font-medium rounded-md
+                      flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
                       ${isActive(item.href || '#')
                         ? 'bg-primary text-primary-foreground font-semibold'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -131,29 +130,13 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     `}
                     data-cy={`sidebar-${item.name.toLowerCase().replace(' ', '-')}`}
                   >
-                    <item.icon className="mr-3 h-5 w-5" />
+                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                     <span>{item.name}</span>
                   </Link>
                 )}
               </div>
             ))}
           </nav>
-
-          <div className="p-4 border-t border-border mt-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-muted-foreground hover:text-destructive"
-              onClick={async () => {
-                localStorage.removeItem('accessToken')
-                router.push('/login')
-              }}
-              data-cy="sidebar-sair"
-            >
-              <Shield className="mr-3 h-5 w-5" />
-              Sair da Conta
-            </Button>
-          </div>
         </div>
       </aside>
     </>

@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
       id: doc.$id,
       name: doc.name,
       status: doc.status,
-      plugins: doc.plugins || [],
+      plugins: Array.isArray(doc.plugins) ? doc.plugins : (typeof doc.plugins === 'string' ? JSON.parse(doc.plugins) : []),
       createdAt: doc.$createdAt,
       updatedAt: doc.$updatedAt,
     }));
@@ -66,10 +66,7 @@ router.post('/', async (req, res) => {
       {
         name,
         status,
-        plugins,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: (req as any).userId,
+        plugins: JSON.stringify(plugins),
       }
     );
 
@@ -93,7 +90,7 @@ router.post('/', async (req, res) => {
       id: tenantDoc.$id,
       name: tenantDoc.name,
       status: tenantDoc.status,
-      plugins: tenantDoc.plugins || [],
+      plugins: Array.isArray(tenantDoc.plugins) ? tenantDoc.plugins : (typeof tenantDoc.plugins === 'string' ? JSON.parse(tenantDoc.plugins) : []),
       createdAt: tenantDoc.$createdAt,
       updatedAt: tenantDoc.$updatedAt,
     };
@@ -139,7 +136,7 @@ router.put('/:id', async (req, res) => {
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (status !== undefined) updateData.status = status;
-    if (plugins !== undefined) updateData.plugins = plugins;
+    if (plugins !== undefined) updateData.plugins = Array.isArray(plugins) ? JSON.stringify(plugins) : plugins;
 
     const updatedDoc = await appwrite.databases.updateDocument(
       process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
@@ -162,7 +159,7 @@ router.put('/:id', async (req, res) => {
       id: updatedDoc.$id,
       name: updatedDoc.name,
       status: updatedDoc.status,
-      plugins: updatedDoc.plugins || [],
+      plugins: Array.isArray(updatedDoc.plugins) ? updatedDoc.plugins : (typeof updatedDoc.plugins === 'string' ? JSON.parse(updatedDoc.plugins) : []),
       createdAt: updatedDoc.$createdAt,
       updatedAt: updatedDoc.$updatedAt,
     };

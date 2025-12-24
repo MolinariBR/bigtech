@@ -1,162 +1,541 @@
 // Baseado em: 5.Pages.md v1.4, 8.DesignSystem.md v1.2
 // Precedência: 1.Project → 2.Architecture → 4.Entities → 5.Pages → 8.DesignSystem
-// Decisão: Página de auditoria para compliance (conforme US-012, TASK-015)
+// Decisão: Página de auditoria melhorada para compliance (conforme US-012, TASK-015)
 
-import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import Modal from '@/components/ui/modal';
-import { databases } from '@/lib/appwrite';
-import { Query } from 'appwrite';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Shield,
+  Search,
+  Download,
+  RefreshCw,
+  Eye,
+  Calendar,
+  User,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  MoreHorizontal,
+  Filter
+} from 'lucide-react';
+import { toast } from 'sonner';
+import * as api from '@/lib/api/audit';
 
 interface AuditLog {
-  id: string;
+  $id: string;
   tenantId: string;
   userId?: string;
   action: string;
   resource: string;
-  details: string;
+  details: any;
   ipAddress: string;
   timestamp: string;
+  createdAt: string;
 }
 
+interface AuditStats {
+  totalLogs: number;
+  todayLogs: number;
+  criticalActions: number;
+  uniqueUsers: number;
+  topActions: { action: string; count: number }[];
+}
+
+// Página de auditoria melhorada (TASK-015)
 export default function AuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [stats, setStats] = useState<AuditStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
-  const [filters, setFilters] = useState({
-    tenantId: '',
-    userId: '',
-    action: '',
-    resource: '',
-    startDate: null,
-    endDate: null,
-  });
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tenantFilter, setTenantFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
-    fetchLogs();
-  }, [filters]);
+    loadStats();
+    loadAuditLogs();
+  }, []);
 
-  const fetchLogs = async () => {
+  useEffect(() => {
+    loadAuditLogs();
+  }, [page, tenantFilter, userFilter, actionFilter, startDate, endDate]);
+
+  const loadStats = async () => {
+    try {
+      const statsData = await api.getAuditStats();
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      toast.error('Erro ao carregar estatísticas');
+    }
+  };
+
+  const loadAuditLogs = async () => {
     setLoading(true);
     try {
-      const queries = [];
-      if (filters.tenantId) queries.push(Query.equal('tenantId', filters.tenantId));
-      if (filters.userId) queries.push(Query.equal('userId', filters.userId));
-      if (filters.action) queries.push(Query.equal('action', filters.action));
-      if (filters.resource) queries.push(Query.equal('resource', filters.resource));
-      if (filters.startDate) queries.push(Query.greaterThanEqual('timestamp', filters.startDate.toISOString()));
-      if (filters.endDate) queries.push(Query.lessThanEqual('timestamp', filters.endDate.toISOString()));
+      const filters: any = {};
+      if (tenantFilter.trim()) filters.tenantId = tenantFilter.trim();
+      if (userFilter.trim()) filters.userId = userFilter.trim();
+      if (actionFilter !== 'all') filters.action = actionFilter;
+      if (searchTerm.trim()) filters.search = searchTerm.trim();
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
 
-      const result = await databases.listDocuments(
-        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'bigtechdb',
-        'audits',
-        queries
-      );
-      setLogs(result.documents as unknown as AuditLog[]);
+      const response = await api.listAuditLogs(page, 20, filters);
+      setLogs(response.items || []);
+      setTotalPages(Math.ceil((response.total || 0) / 20));
     } catch (error) {
-      console.error('Failed to fetch audit logs:', error);
+      console.error('Error loading audit logs:', error);
+      toast.error('Erro ao carregar logs de auditoria');
     } finally {
       setLoading(false);
     }
   };
 
   const handleExport = async () => {
-    // Implementar exportação CSV/JSON
-    const csv = logs.map(log => `${log.timestamp},${log.action},${log.resource},${log.ipAddress}`).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'audit-logs.csv';
-    a.click();
+    setExporting(true);
+    try {
+      const filters: any = {};
+      if (tenantFilter.trim()) filters.tenantId = tenantFilter.trim();
+      if (userFilter.trim()) filters.userId = userFilter.trim();
+      if (actionFilter !== 'all') filters.action = actionFilter;
+      if (searchTerm.trim()) filters.search = searchTerm.trim();
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+
+      const result = await api.exportAuditLogs(filters);
+      toast.success(`Exportação iniciada: ${result.jobId}`);
+    } catch (error) {
+      console.error('Error exporting:', error);
+      toast.error('Erro ao exportar logs');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleViewDetails = (log: AuditLog) => {
+    setSelectedLog(log);
+    setIsDetailsOpen(true);
+  };
+
+  const handleSearch = () => {
+    setPage(1);
+    loadAuditLogs();
+  };
+
+  const getActionBadge = (action: string) => {
+    const actionColors: Record<string, string> = {
+      'user_login': 'bg-green-100 text-green-800',
+      'user_logout': 'bg-gray-100 text-gray-800',
+      'billing_credit': 'bg-blue-100 text-blue-800',
+      'billing_debit': 'bg-red-100 text-red-800',
+      'plugin_enabled': 'bg-purple-100 text-purple-800',
+      'plugin_disabled': 'bg-orange-100 text-orange-800',
+      'tenant_created': 'bg-indigo-100 text-indigo-800',
+      'tenant_updated': 'bg-yellow-100 text-yellow-800',
+      'consulta_executada': 'bg-cyan-100 text-cyan-800',
+      'admin_action': 'bg-red-100 text-red-800'
+    };
+
+    return (
+      <Badge variant="secondary" className={actionColors[action] || 'bg-gray-100 text-gray-800'}>
+        {action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+      </Badge>
+    );
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const isCriticalAction = (action: string) => {
+    const criticalActions = ['admin_action', 'billing_debit', 'tenant_deleted', 'user_deleted'];
+    return criticalActions.includes(action);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto py-8 px-4 space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Auditoria de Sistema</h2>
+          <p className="text-muted-foreground mt-1">
+            Monitoramento e rastreamento de todas as ações do sistema
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              loadStats();
+              loadAuditLogs();
+            }}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button onClick={handleExport} disabled={exporting}>
+            {exporting ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Exportar
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Logs</CardTitle>
+              <Shield className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalLogs.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Logs Hoje</CardTitle>
+              <Calendar className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.todayLogs}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ações Críticas</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.criticalActions}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Usuários Únicos</CardTitle>
+              <User className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.uniqueUsers}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ação Mais Comum</CardTitle>
+              <Activity className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm font-medium">
+                {stats.topActions[0]?.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {stats.topActions[0]?.count || 0} ocorrências
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filters Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Auditoria de Ações</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtros e Busca
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 mb-4">
-            <Input
-              placeholder="Tenant ID"
-              value={filters.tenantId}
-              onChange={(e) => setFilters({ ...filters, tenantId: e.target.value })}
-            />
-            <Input
-              placeholder="User ID"
-              value={filters.userId}
-              onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
-            />
-            <Select
-              value={filters.action || "all"}
-              onValueChange={(value) => setFilters({ ...filters, action: value === "all" ? "" : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todas as ações" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as ações</SelectItem>
-                <SelectItem value="consulta_executada">Consulta Executada</SelectItem>
-                <SelectItem value="plugin_enabled">Plugin Habilitado</SelectItem>
-                {/* Adicionar mais ações conforme necessário */}
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              value={filters.startDate ? filters.startDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value ? new Date(e.target.value) : null })}
-              placeholder="Data inicial"
-            />
-            <Input
-              type="date"
-              value={filters.endDate ? filters.endDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value ? new Date(e.target.value) : null })}
-              placeholder="Data final"
-            />
-            <Button onClick={handleExport}>Exportar</Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="search">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search"
+                  placeholder="ID, ação ou recurso..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tenant-filter">Tenant ID</Label>
+              <Input
+                id="tenant-filter"
+                placeholder="Filtrar por tenant"
+                value={tenantFilter}
+                onChange={(e) => setTenantFilter(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-filter">User ID</Label>
+              <Input
+                id="user-filter"
+                placeholder="Filtrar por usuário"
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="action-filter">Ação</Label>
+              <Select value={actionFilter} onValueChange={setActionFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as ações" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as ações</SelectItem>
+                  <SelectItem value="user_login">Login</SelectItem>
+                  <SelectItem value="user_logout">Logout</SelectItem>
+                  <SelectItem value="billing_credit">Crédito</SelectItem>
+                  <SelectItem value="billing_debit">Débito</SelectItem>
+                  <SelectItem value="plugin_enabled">Plugin Habilitado</SelectItem>
+                  <SelectItem value="plugin_disabled">Plugin Desabilitado</SelectItem>
+                  <SelectItem value="tenant_created">Tenant Criado</SelectItem>
+                  <SelectItem value="consulta_executada">Consulta Executada</SelectItem>
+                  <SelectItem value="admin_action">Ação Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="start-date">Data Inicial</Label>
+              <Input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="end-date">Data Final</Label>
+              <Input
+                id="end-date"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={handleSearch} className="w-full">
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell>Timestamp</TableCell>
-                <TableCell>Tenant</TableCell>
-                <TableCell>User</TableCell>
-                <TableCell>Action</TableCell>
-                <TableCell>Resource</TableCell>
-                <TableCell>IP</TableCell>
-                <TableCell>Ações</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                  <TableCell>{log.tenantId}</TableCell>
-                  <TableCell>{log.userId || '-'}</TableCell>
-                  <TableCell>{log.action}</TableCell>
-                  <TableCell>{log.resource}</TableCell>
-                  <TableCell>{log.ipAddress}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => setSelectedLog(log)}>Detalhes</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
         </CardContent>
       </Card>
-      {selectedLog && (
-        <Modal isOpen={true} onClose={() => setSelectedLog(null)}>
-          <h3 className="text-foreground">Detalhes do Log</h3>
-          <pre className="text-foreground bg-muted p-4 rounded overflow-auto max-h-96">{JSON.stringify(JSON.parse(selectedLog.details), null, 2)}</pre>
-        </Modal>
+
+      {/* Audit Logs Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Logs de Auditoria
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center space-x-2">
+                <RefreshCw className="h-6 w-6 animate-spin" />
+                <span className="text-muted-foreground">Carregando logs de auditoria...</span>
+              </div>
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="text-center py-12">
+              <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum log encontrado</h3>
+              <p className="text-muted-foreground">
+                Não há logs de auditoria que correspondam aos filtros aplicados.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Data/Hora</TableHead>
+                    <TableHead className="w-[120px]">Tenant</TableHead>
+                    <TableHead className="w-[120px]">Usuário</TableHead>
+                    <TableHead className="w-[150px]">Ação</TableHead>
+                    <TableHead className="w-[200px]">Recurso</TableHead>
+                    <TableHead className="w-[120px]">IP</TableHead>
+                    <TableHead className="w-[100px] text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.$id}>
+                      <TableCell className="font-mono text-sm">
+                        {formatDateTime(log.timestamp)}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {log.tenantId.substring(0, 8)}...
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {log.userId ? log.userId.substring(0, 8) + '...' : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {getActionBadge(log.action)}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm max-w-[200px] truncate">
+                        {log.resource}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {log.ipAddress}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[160px]">
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleViewDetails(log)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Ver Detalhes
+                            </DropdownMenuItem>
+                            {isCriticalAction(log.action) && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600">
+                                  <AlertTriangle className="mr-2 h-4 w-4" />
+                                  Ação Crítica
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1 || loading}
+          >
+            Anterior
+          </Button>
+          <span className="flex items-center px-3 py-2 text-sm text-muted-foreground">
+            Página {page} de {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages || loading}
+          >
+            Próxima
+          </Button>
+        </div>
       )}
+
+      {/* Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Detalhes do Log de Auditoria
+            </DialogTitle>
+            <DialogDescription>
+              Log ID: {selectedLog?.$id}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Data/Hora</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDateTime(selectedLog.timestamp)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Ação</Label>
+                  <div className="mt-1">
+                    {getActionBadge(selectedLog.action)}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Tenant ID</Label>
+                  <p className="text-sm font-mono text-muted-foreground">
+                    {selectedLog.tenantId}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">User ID</Label>
+                  <p className="text-sm font-mono text-muted-foreground">
+                    {selectedLog.userId || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Recurso</Label>
+                  <p className="text-sm font-mono text-muted-foreground">
+                    {selectedLog.resource}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">IP Address</Label>
+                  <p className="text-sm font-mono text-muted-foreground">
+                    {selectedLog.ipAddress}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Detalhes</Label>
+                <div className="mt-2 p-3 bg-muted rounded-lg max-h-64 overflow-auto">
+                  <pre className="text-xs whitespace-pre-wrap">
+                    {JSON.stringify(selectedLog.details, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -69,6 +69,13 @@ export declare class BillingEngine {
         refundId: string;
         error?: undefined;
     }>;
+    getBillingStats(): Promise<{
+        totalRevenue: number;
+        totalTransactions: number;
+        pendingAmount: number;
+        refundedAmount: number;
+        monthlyRevenue: number;
+    }>;
 }
 export declare const billingEngine: BillingEngine;
 export {};

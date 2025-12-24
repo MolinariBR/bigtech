@@ -32,7 +32,7 @@ export declare class AuthService {
     private static readonly BCRYPT_ROUNDS;
     static login(identifier: string, tenantId: string): Promise<AuthResponse>;
     private static createUser;
-    private static ensureTenantExists;
+    static ensureTenantExists(tenantId: string): Promise<boolean>;
     static generateToken(user: any): string;
     static generateRefreshToken(user: any): Promise<string>;
     static verifyToken(token: string): Promise<any | null>;

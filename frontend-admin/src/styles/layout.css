@@ -1,0 +1,152 @@
+/* Estilos adicionais para Header e Sidebar - Melhorias de simetria e detalhes */
+
+/* Header melhorado */
+.header-gradient {
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
+}
+
+.header-shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Sidebar melhorado */
+.sidebar-gradient {
+  background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.95) 100%);
+}
+
+.sidebar-border {
+  border-right: 1px solid hsl(var(--border) / 0.6);
+}
+
+.nav-item-active {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item-hover:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+}
+
+/* Indicadores visuais */
+.status-indicator {
+  position: relative;
+}
+
+.status-indicator::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 1px hsl(var(--background));
+}
+
+/* Animações suaves */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bounce-in {
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Gradientes sutis para profundidade */
+.subtle-gradient {
+  background: linear-gradient(135deg,
+    hsl(var(--background) / 0.5) 0%,
+    hsl(var(--background) / 0.8) 100%);
+}
+
+/* Bordas arredondadas consistentes */
+.rounded-consistent {
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* Sombras suaves */
+.shadow-soft {
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.05),
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 1px -1px rgb(0 0 0 / 0.1);
+}
+
+.shadow-hover {
+  transition: box-shadow 0.2s ease;
+}
+
+.shadow-hover:hover {
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Utilitários para layout responsivo */
+@media (max-width: 1024px) {
+  .sidebar-mobile {
+    transform: translateX(-100%);
+  }
+
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+}
+
+/* Ajustes para high contrast */
+@media (prefers-contrast: high) {
+  .header-gradient,
+  .sidebar-gradient {
+    background: hsl(var(--card));
+  }
+
+  .nav-item-active::before {
+    background: hsl(var(--primary));
+  }
+}
+
+/* Ajustes para reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .smooth-transition,
+  .nav-item-hover,
+  .bounce-in {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+}

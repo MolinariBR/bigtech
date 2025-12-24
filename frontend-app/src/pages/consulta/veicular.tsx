@@ -198,7 +198,7 @@ export default function ConsultaVeicular() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <Header />
+      <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex">
         {/* Sidebar */}

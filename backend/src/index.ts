@@ -21,6 +21,8 @@ import { adminBillingRouter } from './controllers/admin/billing';
 import { adminPluginsRouter } from './controllers/admin/plugins';
 import { adminTenantsRouter } from './controllers/admin/tenants';
 import adminSystemSettingsRouter from './controllers/admin/systemSettings';
+import { adminAuditRouter } from './controllers/admin/audit';
+import { adminDashboardRouter } from './controllers/admin/dashboardRouter';
 import { pluginsRouter } from './controllers/plugins';
 
 const app = express();
@@ -74,6 +76,8 @@ app.use('/api/admin/billing', adminBillingRouter);
 app.use('/api/admin/plugins', adminPluginsRouter);
 app.use('/api/admin/tenants', adminTenantsRouter);
 app.use('/api/admin/system-settings', adminSystemSettingsRouter);
+app.use('/api/admin/audit', adminAuditRouter);
+app.use('/api/admin/dashboard', adminDashboardRouter);
 
 // Rotas de execução de plugins (após middleware multi-tenant)
 app.use('/api/plugins', pluginsRouter);

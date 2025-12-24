@@ -441,6 +441,68 @@ export class BillingEngine {
       return { success: false, error: 'Erro ao processar reembolso' };
     }
   }
+
+  async getBillingStats(): Promise<{
+    totalRevenue: number;
+    totalTransactions: number;
+    pendingAmount: number;
+    refundedAmount: number;
+    monthlyRevenue: number;
+  }> {
+    try {
+      const result = await this.appwrite.databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'billings',
+        []
+      );
+
+      const docs = result.documents || [];
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      let totalRevenue = 0;
+      let totalTransactions = 0;
+      let pendingAmount = 0;
+      let refundedAmount = 0;
+      let monthlyRevenue = 0;
+
+      docs.forEach((doc: any) => {
+        const amount = Number(doc.amount) || 0;
+        const status = doc.status;
+        const createdAt = new Date(doc.createdAt);
+
+        totalTransactions++;
+
+        if (status === 'completed') {
+          totalRevenue += amount;
+          if (createdAt >= startOfMonth) {
+            monthlyRevenue += amount;
+          }
+        } else if (status === 'pending') {
+          pendingAmount += amount;
+        } else if (status === 'refunded') {
+          refundedAmount += Math.abs(amount);
+        }
+      });
+
+      return {
+        totalRevenue,
+        totalTransactions,
+        pendingAmount,
+        refundedAmount,
+        monthlyRevenue
+      };
+    } catch (error) {
+      console.error('Error getting billing stats:', error);
+      return {
+        totalRevenue: 0,
+        totalTransactions: 0,
+        pendingAmount: 0,
+        refundedAmount: 0,
+        monthlyRevenue: 0
+      };
+    }
+  }
 }
 
 export const billingEngine = BillingEngine.getInstance();

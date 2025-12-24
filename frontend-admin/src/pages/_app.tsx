@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
+import { Toaster } from 'sonner';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,13 +37,14 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className="lg:ml-64 pt-16">
-        <div className="px-4 py-6">
+      <main className="lg:ml-72 pt-16">
+        <div className="px-6 py-6">
           <Component {...pageProps} />
         </div>
       </main>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

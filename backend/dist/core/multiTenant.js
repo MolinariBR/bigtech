@@ -40,7 +40,7 @@ const multiTenantMiddleware = async (req, res, next) => {
             // Se tenant existe mas não está ativo, permitir login em ambientes de desenvolvimento
             // ou para rotas de autenticação (permitir primeiro acesso / auto-onboarding)
             if (tenant.status !== 'active') {
-                if (process.env.NODE_ENV === 'development' || req.path.includes('/auth/login')) {
+                if (process.env.NODE_ENV === 'development' || req.path.includes('/auth/login') || req.path.includes('/auth/register')) {
                     req.tenantId = tenantId;
                 }
                 else {
@@ -59,6 +59,7 @@ const multiTenantMiddleware = async (req, res, next) => {
             // Tenant não encontrado - permitir para desenvolvimento ou rotas públicas
             if (process.env.NODE_ENV === 'development' ||
                 req.path.includes('/auth/login') ||
+                req.path.includes('/auth/register') ||
                 req.path === '/health' ||
                 req.path.startsWith('/api/admin/')) {
                 req.tenantId = tenantId;

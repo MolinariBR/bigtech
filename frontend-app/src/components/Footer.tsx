@@ -3,7 +3,7 @@
 
 export default function Footer() {
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-60 bg-card border-t border-border px-6 py-4">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-sm border-t border-border px-4 lg:px-6 py-3 lg:py-4 shadow-sm">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
           <div className="text-sm text-muted-foreground">

@@ -42,6 +42,10 @@ const s3_1 = require("../../lib/s3");
 const router = (0, express_1.Router)();
 // In-memory export jobs store
 const exportJobs = {};
+router.get('/stats', async (req, res) => {
+    const result = await billingEngine_1.billingEngine.getBillingStats();
+    res.json(result);
+});
 router.get('/', async (req, res) => {
     const { tenantId, page, perPage, from, to, type, status } = req.query;
     const result = await billingEngine_1.billingEngine.listBillings({ tenantId, page: Number(page) || 1, perPage: Number(perPage) || 50, from, to, type, status });

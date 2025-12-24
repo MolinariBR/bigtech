@@ -269,7 +269,7 @@ export class AuthService {
   }
 
   // Garantir que tenant existe, criar se necessário (auto-onboarding)
-  private static async ensureTenantExists(tenantId: string): Promise<boolean> {
+  static async ensureTenantExists(tenantId: string): Promise<boolean> {
     try {
       // Tentar buscar tenant
       await appwrite.databases.getDocument(
@@ -284,16 +284,8 @@ export class AuthService {
         try {
           const tenantData = {
             name: tenantId, // Usar tenantId como nome base
-            domain: `${tenantId}.bigtech.com`, // Domínio derivado
             status: 'pending', // Status pending para aprovação admin
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            plugins: ['consulta'], // Plugin padrão (array conforme schema Appwrite)
-            settings: JSON.stringify({
-              theme: 'light',
-              language: 'pt-BR',
-              timezone: 'America/Sao_Paulo'
-            })
+            plugins: '[]' // Plugins padrão como string JSON
           };
 
           await appwrite.databases.createDocument(
@@ -800,11 +792,31 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 
   try {
+    // Primeiro, verificar se usuário existe no banco de dados
+    let users: any;
+    try {
+      users = await appwrite.databases.listDocuments(
+        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+        'users',
+        [Query.equal('email', email), Query.equal('status', 'active')]
+      );
+    } catch (userErr) {
+      console.error('[auth.login] Erro ao buscar coleção `users`:', userErr);
+      return res.status(500).json({ success: false, message: 'Erro ao verificar usuário' });
+    }
+
+    if (!users || users.documents.length === 0) {
+      return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+    }
+
+    const user = users.documents[0];
+
     // Tentar criar sessão na Appwrite via REST
     const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
     const trimmed = rawEndpoint.replace(/\/$/, '');
     const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
     const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
+
     let resp: any;
     try {
       resp = await axios.post(
@@ -819,58 +831,42 @@ router.post('/login', async (req: Request, res: Response) => {
         }
       );
     } catch (axiosErr: any) {
-      if (axiosErr && axiosErr.response) {
-        const status = axiosErr.response.status;
-        if (status === 401) {
+      // Se erro 401, pode ser que a conta não exista no Appwrite Accounts
+      // Vamos tentar criar a conta
+      if (axiosErr && axiosErr.response && axiosErr.response.status === 401) {
+        try {
+          console.log('[auth.login] Conta não encontrada, criando conta no Appwrite Accounts...');
+          
+          // Criar conta usando o SDK do Appwrite
+          await appwrite.users.create(
+            ID.unique(), // userId
+            email, // email
+            undefined, // phone (não usado)
+            password, // password
+            email // name
+          );
+
+          // Agora tentar login novamente
+          resp = await axios.post(
+            `${apiBase}/account/sessions`,
+            { email, password },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Appwrite-Project': project
+              },
+              timeout: 5000
+            }
+          );
+        } catch (createErr: any) {
+          console.error('[auth.login] Erro ao criar/tentar login na conta:', createErr);
           return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
         }
-      }
-      console.error('[auth.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
-      return res.status(500).json({ success: false, message: 'Erro ao validar credenciais' });
-    }
-
-    // Encontrar usuário na coleção `users` por email
-    let users: any;
-    try {
-      users = await appwrite.databases.listDocuments(
-        process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-        'users',
-        [Query.equal('email', email), Query.equal('status', 'active')]
-      );
-    } catch (userErr) {
-      console.error('[auth.login] Erro ao buscar coleção `users`:', userErr);
-      return res.status(500).json({ success: false, message: 'Erro ao verificar usuário' });
-    }
-
-    if (!users || users.documents.length === 0) {
-      // Auto-onboarding: criar usuário se não existir
-      try {
-        const userId = ID.unique();
-        const userData = {
-          email,
-          identifier: email,
-          tenantId: 'default',
-          status: 'active',
-          credits: '100'
-        };
-        const newUser = await appwrite.databases.createDocument(
-          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-          'users',
-          userId,
-          userData
-        );
-        console.log('[auth.login] Novo usuário criado:', newUser.$id);
-
-        // Gerar token para o novo usuário
-        const result = await AuthService.userLoginWithUserDoc(newUser);
-        return res.json({ ...result, tenantCreated: true });
-      } catch (createErr) {
-        console.error('[auth.login] Erro ao criar novo usuário:', createErr);
-        return res.status(500).json({ success: false, message: 'Erro ao criar conta' });
+      } else {
+        console.error('[auth.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
+        return res.status(500).json({ success: false, message: 'Erro ao validar credenciais' });
       }
     }
-
-    const user = users.documents[0];
 
     // Gerar token JWT para usuário
     const result = await AuthService.userLoginWithUserDoc(user);
@@ -878,6 +874,89 @@ router.post('/login', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Erro no user login:', err);
     return res.status(500).json({ success: false, message: 'Erro interno no login' });
+  }
+});
+
+// Rota de registro para usuários
+router.post('/register', async (req: Request, res: Response) => {
+  const { name, email, password, company }: { name: string; email: string; password: string; company?: string } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
+  }
+
+  try {
+    // Derivar tenantId do domínio do email ou da empresa
+    let tenantId = 'default';
+    if (company) {
+      tenantId = company.toLowerCase().replace(/[^a-z0-9]/g, '');
+    } else {
+      const domain = email.split('@')[1];
+      if (domain) {
+        tenantId = domain.split('.')[0].toLowerCase();
+      }
+    }
+
+    // Verificar se usuário já existe
+    const existingUsers = await appwrite.databases.listDocuments(
+      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+      'users',
+      [Query.equal('email', email)]
+    );
+
+    if (existingUsers.documents.length > 0) {
+      return res.status(409).json({ success: false, message: 'Email já cadastrado' });
+    }
+
+    // Garantir que tenant existe (auto-onboarding)
+    const tenantExists = await AuthService.ensureTenantExists(tenantId);
+
+    // Criar documento na coleção users
+    const userId = ID.unique();
+    console.log('[auth.register] Generated userId:', userId, 'type:', typeof userId);
+    const userData = {
+      email,
+      identifier: email.substring(0, 20), // Truncar para 20 chars conforme schema
+      tenantId,
+      type: 'user',
+      role: 'viewer',
+      status: 'active',
+      credits: '0' // Como string conforme schema
+    };
+
+    console.log('[auth.register] Creating document with userId:', userId, 'userData:', userData);
+
+    const newUser = await appwrite.databases.createDocument(
+      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+      'users',
+      userId,
+      userData
+    );
+
+    console.log('[auth.register] Novo usuário registrado:', newUser?.$id, 'tenant:', tenantId);
+
+    // Log de auditoria
+    await auditLogger.log({
+      tenantId,
+      userId: newUser.$id,
+      action: tenantExists ? 'user_register' : 'user_register_tenant_created',
+      resource: `user:${newUser.$id}`,
+      details: {
+        email,
+        name,
+        tenantCreated: !tenantExists
+      },
+      ipAddress: 'system'
+    });
+
+    res.json({
+      success: true,
+      message: 'Conta criada com sucesso',
+      tenantCreated: !tenantExists
+    });
+  } catch (err: any) {
+    console.error('Erro no registro:', err);
+    return res.status(500).json({ success: false, message: 'Erro interno no registro' });
   }
 });
 

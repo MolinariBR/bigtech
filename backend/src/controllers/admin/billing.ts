@@ -9,6 +9,11 @@ const router = Router();
 // In-memory export jobs store
 const exportJobs: Record<string, any> = {};
 
+router.get('/stats', async (req, res) => {
+  const result = await billingEngine.getBillingStats();
+  res.json(result);
+});
+
 router.get('/', async (req, res) => {
   const { tenantId, page, perPage, from, to, type, status } = req.query as any;
   const result = await billingEngine.listBillings({ tenantId, page: Number(page) || 1, perPage: Number(perPage) || 50, from, to, type, status });
