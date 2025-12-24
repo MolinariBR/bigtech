@@ -8,11 +8,16 @@ export default class MyDocument extends Document {
     const setInitialTheme = `(function() {
       try {
         var theme = localStorage.getItem('theme');
-        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (theme === 'dark') {
           document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
+        } else if (!theme) {
+          // Detectar preferência do sistema apenas se não há tema salvo
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          }
         }
+        // Armazenar o tema inicial para o hook useTheme
+        window.__initialTheme = theme;
       } catch (e) { }
     })()`
 

@@ -1,0 +1,604 @@
+openapi: 3.1.0
+info:
+  title: BigTech API
+  description: API para consultas BigTech - Serviços de consulta cadastral, crédito e veicular
+  version: 1.0.0
+  contact:
+    name: BigTech Support
+    email: support@bigtech.com.br
+
+servers:
+  - url: https://api.consultasbigtech.com.br/json/service.aspx
+    description: Production server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /consultas/cadastral/contatos-cep:
+    post:
+      tags:
+        - Cadastral
+      summary: Consulta contatos por CEP
+      description: Busca contatos associados a um CEP específico
+      operationId: consultarContatosPorCep
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1465"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                Cep: "01025478"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/cadastral/quod-pf:
+    post:
+      tags:
+        - Cadastral
+      summary: Consulta QUOD Cadastral PF
+      description: Consulta cadastral pessoa física QUOD
+      operationId: consultarQuodPf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1468"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                TipoPessoa: "F"
+                CPFCNPJ: "12345678901"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/cadastral/validacao-localizacao:
+    post:
+      tags:
+        - Cadastral
+      summary: Validação ID com Localização
+      description: Validação de identidade com localização
+      operationId: consultarValidacaoIdLocalizacao
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1470"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                # Parâmetros específicos do serviço
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/cadastral/dados-cnh:
+    post:
+      tags:
+        - Cadastral
+      summary: Consulta Dados CNH
+      description: Consulta dados da Carteira Nacional de Habilitação
+      operationId: consultarDadosCnh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1471"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                # Parâmetros específicos do serviço
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/busca-nome-uf:
+    post:
+      tags:
+        - Crédito
+      summary: Busca por Nome + UF
+      description: Busca pessoa por nome e unidade federativa
+      operationId: consultarBuscaNomeUf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1449"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                UF: "RJ"
+                NomeCompleto: "JOSE ANTONIO DA SILVA"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/teleconfirma:
+    post:
+      tags:
+        - Crédito
+      summary: TeleConfirma
+      description: Confirmação telefônica
+      operationId: consultarTeleConfirma
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1450"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                # Parâmetros específicos do serviço
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/protesto-sintetico-nacional:
+    post:
+      tags:
+        - Crédito
+      summary: Protesto Sintético Nacional
+      description: Consulta protestos nacionais sintéticos
+      operationId: consultarProtestoSinteticoNacional
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1451"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                # Parâmetros específicos do serviço
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/positivo-define-risco-cnpj:
+    post:
+      tags:
+        - Crédito
+      summary: Positivo Define Risco CNPJ
+      description: Análise de risco para CNPJ
+      operationId: consultarPositivoDefineRiscoCnpj
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1452"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                # Parâmetros específicos do serviço
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/positivo-acerta-essencial-pf:
+    post:
+      tags:
+        - Crédito
+      summary: Positivo Acerta Essencial PF
+      description: Análise essencial pessoa física
+      operationId: consultarPositivoAcertaEssencialPf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1453"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                # Parâmetros específicos do serviço
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/veicular/crlv-ro:
+    post:
+      tags:
+        - Veículo
+      summary: CRLV Rondônia
+      description: Consulta CRLV do estado de Rondônia
+      operationId: consultarCrlvRo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1527"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                Placa: "ABC1234"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/veicular/crlv-rr:
+    post:
+      tags:
+        - Veículo
+      summary: CRLV Roraima
+      description: Consulta CRLV do estado de Roraima
+      operationId: consultarCrlvRr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1528"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                Placa: "ABC1234"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/veicular/crlv-se:
+    post:
+      tags:
+        - Veículo
+      summary: CRLV Sergipe
+      description: Consulta CRLV do estado de Sergipe
+      operationId: consultarCrlvSe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1529"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                Placa: "ABC1234"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/veicular/crlv-sp:
+    post:
+      tags:
+        - Veículo
+      summary: CRLV São Paulo
+      description: Consulta CRLV do estado de São Paulo
+      operationId: consultarCrlvSp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1530"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                Placa: "ABC1234"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+
+  schemas:
+    BigTechRequest:
+      type: object
+      required:
+        - CodigoProduto
+        - Versao
+        - ChaveAcesso
+      properties:
+        CodigoProduto:
+          type: string
+          description: Código do produto/serviço
+          example: "1465"
+        Versao:
+          type: string
+          description: Versão da API
+          example: "20180521"
+        ChaveAcesso:
+          type: string
+          description: Chave de acesso para autenticação
+          example: "your-access-key"
+        Info:
+          type: object
+          properties:
+            Solicitante:
+              type: string
+              description: CNPJ do solicitante
+              example: "12345678000123"
+        Parametros:
+          type: object
+          description: Parâmetros específicos do serviço
+        WebHook:
+          type: object
+          properties:
+            UrlCallBack:
+              type: string
+              description: URL para callback de webhook
+              example: "https://example.com/webhook"
+
+    BigTechResponse:
+      type: object
+      properties:
+        HEADER:
+          type: object
+          properties:
+            INFORMACOES_RETORNO:
+              type: object
+              properties:
+                VERSAO:
+                  type: string
+                STATUS_RETORNO:
+                  type: object
+                  properties:
+                    CODIGO:
+                      type: string
+                    DESCRICAO:
+                      type: string
+                CHAVE_CONSULTA:
+                  type: string
+                PRODUTO:
+                  type: string
+                CLIENTE:
+                  type: string
+                DATA_HORA_CONSULTA:
+                  type: string
+                SOLICITANTE:
+                  type: string
+            PARAMETROS:
+              type: object
+            DADOS_RETORNADOS:
+              type: object
+            CONTROLE:
+              type: object
+        CREDCADASTRAL:
+          type: object
+        VEICULAR:
+          type: object
+
+    BigTechErrorResponse:
+      type: object
+      properties:
+        HEADER:
+          type: object
+          properties:
+            INFORMACOES_RETORNO:
+              type: object
+              properties:
+                STATUS_RETORNO:
+                  type: object
+                  properties:
+                    CODIGO:
+                      type: string
+                      example: "0"
+                    DESCRICAO:
+                      type: string
+                      example: "HOUVE UM ERRO NA CONSULTA"
+                DATA_HORA_CONSULTA:
+                  type: string

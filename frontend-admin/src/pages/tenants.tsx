@@ -28,7 +28,7 @@ export default function TenantsPage() {
   const loadTenants = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/tenants');
+      const res = await fetch('http://localhost:8080/api/admin/tenants');
       if (!res.ok) throw new Error('Failed to load tenants');
       const data = await res.json();
       setTenants(data.tenants || []);
@@ -99,13 +99,13 @@ export default function TenantsPage() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div className="text-foreground">Loading...</div>;
+  if (error) return <div className="text-destructive">Error: {error}</div>;
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Gestão de Tenants</h1>
+        <h1 className="text-3xl font-bold text-foreground">Gestão de Tenants</h1>
         <Button onClick={handleCreate}>Criar Tenant</Button>
       </div>
 
@@ -116,7 +116,7 @@ export default function TenantsPage() {
         <CardContent>
           {tenants.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">Nenhum tenant encontrado. Clique em "Criar Tenant" para começar.</p>
+              <p className="text-muted-foreground mb-4">Nenhum tenant encontrado. Clique em "Criar Tenant" para começar.</p>
             </div>
           ) : (
             <Table>

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const base = process.env.E2E_BASE_URL || 'http://localhost:3000'
+const base = process.env.E2E_BASE_URL || 'http://localhost:8080'
 const testPluginId = process.env.TEST_PLUGIN_ID
 
 test.describe('PAC-001 - Sistema de Plugins - Loader (Playwright)', () => {

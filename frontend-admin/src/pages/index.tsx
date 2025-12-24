@@ -81,7 +81,7 @@ export default function AdminDashboard() {
   }, [router]);
 
   if (authChecking) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-foreground">Carregando...</div>;
   }
 
   
@@ -89,8 +89,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard Administrativo</h1>
-        <Button onClick={() => { localStorage.removeItem('accessToken'); router.replace('/login'); }}>Logout</Button>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Administrativo</h1>
       </div>
 
       {/* Métricas Globais */}
@@ -133,59 +132,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Gráficos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Consumo por Mês</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="consumption" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Tenants Ativos ao Longo do Tempo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="consumption" stroke="#82ca9d" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Alertas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <AlertTriangle className="h-5 w-5 mr-2" />
-            Alertas em Tempo Real
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {alerts.map((alert) => (
-            <Alert key={alert.id} variant={alert.type === 'error' ? 'destructive' : 'default'}>
-              <AlertDescription>{alert.message}</AlertDescription>
-            </Alert>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Links para Gestão */}
       <Card>
         <CardHeader>
@@ -212,6 +158,59 @@ export default function AdminDashboard() {
               Ver Auditoria
             </Button>
           </Link>
+        </CardContent>
+      </Card>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Consumo por Mês</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="consumption" fill="var(--chart-bar)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Tenants Ativos ao Longo do Tempo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="consumption" stroke="var(--chart-line)" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Alertas */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2 text-muted-foreground" />
+            Alertas em Tempo Real
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {alerts.map((alert) => (
+            <Alert key={alert.id} variant={alert.type === 'error' ? 'destructive' : 'default'}>
+              <AlertDescription>{alert.message}</AlertDescription>
+            </Alert>
+          ))}
         </CardContent>
       </Card>
     </div>

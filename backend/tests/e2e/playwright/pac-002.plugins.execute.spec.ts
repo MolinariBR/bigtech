@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const base = process.env.E2E_BASE_URL || 'http://localhost:3000'
+const base = process.env.E2E_BASE_URL || 'http://localhost:8080'
 const pluginId = process.env.TEST_PLUGIN_ID
 const tenantId = process.env.E2E_TENANT_ID
 const userEmail = process.env.E2E_TEST_USER_EMAIL

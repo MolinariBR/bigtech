@@ -1,5 +1,5 @@
 export async function listTenants() {
-  const res = await fetch('/api/admin/tenants', {
+  const res = await fetch('http://localhost:8080/api/admin/tenants', {
     method: 'GET',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

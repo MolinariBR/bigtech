@@ -36,7 +36,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     (async () => {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-        await fetch('/api/auth/logout', {
+        await fetch('http://localhost:8080/api/auth/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -58,7 +58,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       {/* Overlay para mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ backgroundColor: 'var(--overlay-bg)' }}
           onClick={onClose}
         />
       )}
@@ -94,10 +95,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full text-foreground"
               onClick={handleLogout}
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4 text-muted-foreground" />
               Sair
             </Button>
           </div>

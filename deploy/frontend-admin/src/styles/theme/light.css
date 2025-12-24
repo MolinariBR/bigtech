@@ -1,0 +1,16 @@
+/* Tema claro para frontend-admin
+   Aplicado no :root para ser o tema padrão (não requer classe .light).
+   Isso evita a necessidade de dois mecanismos separados (classe .light + classe .dark)
+*/
+:root {
+  /* HSL variables to match the variable-based Tailwind colors
+     Values are H S% L% triplets used by `hsl(var(--primary) / <alpha>)` */
+  --primary: 222 73% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 8% 54%;
+  --secondary-foreground: 210 8% 98%;
+  --bg-primary: #f9fafb;
+  --text-primary: #111827;
+  --bg-secondary: #e5e7eb;
+  --text-secondary: #6b7280;
+}

@@ -3,13 +3,15 @@ import type { AppProps } from 'next/app';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { useState, useEffect } from 'react';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Tentar renovar access token ao iniciar (envia cookie HttpOnly)
-    fetch('/api/auth/refresh', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+    fetch('http://localhost:8080/api/auth/refresh', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } })
       .then((r) => r.json())
       .then((data) => {
         if (data && data.success && data.token) {
@@ -26,7 +28,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   // If the page opts out of the default layout (login), render minimal wrapper.
   if (noLayout) {
     return (
-      <div className="dark min-h-screen bg-background">
+      <div className="min-h-screen bg-background">
         <Component {...pageProps} />
       </div>
     );

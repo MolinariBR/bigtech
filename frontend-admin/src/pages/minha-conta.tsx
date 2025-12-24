@@ -75,7 +75,7 @@ export default function AccountPage() {
                     {editing ? (
                       <>
                         <div>
-                          <label className="block text-sm font-medium mb-1">Nome Completo</label>
+                          <label className="block text-sm font-medium mb-1 text-foreground">Nome Completo</label>
                           <input
                             type="text"
                             value={user.name}
@@ -84,7 +84,7 @@ export default function AccountPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-1">Email</label>
+                          <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
                           <input
                             type="email"
                             value={user.email}
@@ -93,7 +93,7 @@ export default function AccountPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-1">Telefone</label>
+                          <label className="block text-sm font-medium mb-1 text-foreground">Telefone</label>
                           <input
                             type="tel"
                             value={user.phone}
@@ -125,7 +125,7 @@ export default function AccountPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span>Notificações por Email</span>
+                      <span className="text-foreground">Notificações por Email</span>
                       <input
                         type="checkbox"
                         checked={user.notifications}
@@ -134,7 +134,7 @@ export default function AccountPage() {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Alertas do Sistema</span>
+                      <span className="text-foreground">Alertas do Sistema</span>
                       <input
                         type="checkbox"
                         checked={user.systemAlerts}
@@ -143,7 +143,7 @@ export default function AccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tema Preferido</label>
+                      <label className="block text-sm font-medium mb-1 text-foreground">Tema Preferido</label>
                       <select
                         value={user.theme}
                         onChange={(e) => setUser({ ...user, theme: e.target.value as 'light' | 'dark' | 'auto' })}
@@ -155,7 +155,7 @@ export default function AccountPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Idioma</label>
+                      <label className="block text-sm font-medium mb-1 text-foreground">Idioma</label>
                       <select
                         value={user.language}
                         onChange={(e) => setUser({ ...user, language: e.target.value })}

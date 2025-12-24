@@ -5,12 +5,43 @@
 :root {
   /* HSL variables to match the variable-based Tailwind colors
      Values are H S% L% triplets used by `hsl(var(--primary) / <alpha>)` */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 3.9%;
   --primary: 222 73% 56%;
   --primary-foreground: 0 0% 100%;
   --secondary: 210 8% 54%;
   --secondary-foreground: 210 8% 98%;
-  --bg-primary: #f9fafb;
-  --text-primary: #111827;
-  --bg-secondary: #e5e7eb;
-  --text-secondary: #6b7280;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 98%;
+  --error: 0 84.2% 60.2%;
+  --error-foreground: 210 40% 98%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 89%;
+
+  /* Backwards-compatible vars used by frontend-admin components */
+  --bg-primary: hsl(var(--background));
+  --text-primary: hsl(var(--foreground));
+  --bg-secondary: hsl(var(--card));
+  --text-secondary: hsl(var(--card-foreground));
+
+  /* Cores para gráficos */
+  --chart-bar: #8884d8;
+  --chart-line: #82ca9d;
+
+  /* Cores para inputs e elementos específicos */
+  --input-text: hsl(var(--foreground));
+  --overlay-bg: rgba(0, 0, 0, 0.5);
 }

@@ -5,20 +5,21 @@ export function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('light')
 
   useEffect(() => {
-    // Verificar tema salvo no localStorage
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'auto' | null
+    // Verificar tema salvo no localStorage ou na variável global definida no _document.tsx
+    const savedTheme = (window as any).__initialTheme || localStorage.getItem('theme') as 'light' | 'dark' | 'auto' | null
     if (savedTheme) {
       setTheme(savedTheme)
-      if (savedTheme === 'auto') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        document.documentElement.classList.toggle('dark', prefersDark)
+      // Aplicar classe no documentElement para o Tailwind funcionar
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark')
       } else {
-        document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+        document.documentElement.classList.remove('dark')
       }
     } else {
       // Detectar preferência do sistema
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setTheme('auto')
+      const initialTheme = prefersDark ? 'dark' : 'light'
+      setTheme(initialTheme)
       document.documentElement.classList.toggle('dark', prefersDark)
     }
   }, [])

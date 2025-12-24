@@ -30,4 +30,12 @@
   --text-primary: hsl(var(--foreground));
   --bg-secondary: hsl(var(--card));
   --text-secondary: hsl(var(--card-foreground));
+
+  /* Cores para gráficos (versões dark) */
+  --chart-bar: #6b46c1;
+  --chart-line: #059669;
+
+  /* Cores para inputs e elementos específicos (dark) */
+  --input-text: hsl(var(--foreground));
+  --overlay-bg: rgba(0, 0, 0, 0.7);
 }

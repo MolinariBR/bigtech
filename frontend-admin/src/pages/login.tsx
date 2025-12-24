@@ -48,27 +48,27 @@ function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium mb-1 text-foreground">Email</label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 placeholder="seu@exemplo.com"
-                className="text-black"
+                className="text-input-text"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">Senha</label>
+              <label htmlFor="password" className="block text-sm font-medium mb-1 text-foreground">Senha</label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 placeholder="********"
-                className="text-black"
+                className="text-input-text"
                 required
               />
             </div>

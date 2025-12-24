@@ -31,7 +31,7 @@ export default function Header({ tenantName, userRole = 'admin' }: HeaderProps) 
         <div className="flex items-center space-x-4">
           <ThemeToggle />
           <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-5 w-5" />
+            <Bell className="h-5 w-5 text-muted-foreground" />
             <span className="absolute -top-1 -right-1 h-3 w-3 bg-error text-error-foreground rounded-full text-xs flex items-center justify-center">
               3
             </span>
@@ -39,7 +39,7 @@ export default function Header({ tenantName, userRole = 'admin' }: HeaderProps) 
           <Link href="/minha-conta" title="Minha Conta">
             <div className="flex items-center space-x-2 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-md p-2">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-                <User className="h-4 w-4" />
+                <User className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="text-sm text-muted-foreground hidden sm:block">
                 {userRole}

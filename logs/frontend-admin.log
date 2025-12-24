@@ -7,10 +7,5 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 3.4s
- ○ Compiling / ...
- ✓ Compiled / in 3.8s (1034 modules)
- GET /_next/static/webpack/10f0b361828f4ce5.webpack.hot-update.json 404 in 4437ms
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- GET / 200 in 4441ms
- GET / 200 in 14ms
+ ✓ Ready in 2.3s
+[?25h

@@ -69,7 +69,7 @@ export default function PluginManager() {
 
   const loadAvailablePlugins = async () => {
     try {
-      const res = await fetch('/api/plugins');
+      const res = await fetch('http://localhost:8080/api/plugins');
       if (!res.ok) throw new Error('Failed to load available plugins');
       const data = await res.json();
       setAvailablePlugins(data.plugins || []);
@@ -184,7 +184,7 @@ export default function PluginManager() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div>Carregando plugins...</div>
+            <div className="text-foreground">Carregando plugins...</div>
           ) : plugins.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Nenhum plugin encontrado. Clique em "Instalar Novo Plugin" para começar.

@@ -153,8 +153,8 @@ export default function AuditPage() {
       </Card>
       {selectedLog && (
         <Modal isOpen={true} onClose={() => setSelectedLog(null)}>
-          <h3>Detalhes do Log</h3>
-          <pre>{JSON.stringify(JSON.parse(selectedLog.details), null, 2)}</pre>
+          <h3 className="text-foreground">Detalhes do Log</h3>
+          <pre className="text-foreground bg-muted p-4 rounded overflow-auto max-h-96">{JSON.stringify(JSON.parse(selectedLog.details), null, 2)}</pre>
         </Modal>
       )}
     </div>

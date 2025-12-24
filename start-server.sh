@@ -84,9 +84,9 @@ check_and_kill_existing_processes() {
         sleep 2
     fi
 
-    if pgrep -f "ts-node-dev" >/dev/null 2>&1; then
-        warn "Encontrados processos 'ts-node-dev'. Encerrando..."
-        pkill -f "ts-node-dev" 2>/dev/null || true
+    if pgrep -f "npm run dev" >/dev/null 2>&1; then
+        warn "Encontrados processos 'npm run dev'. Encerrando..."
+        pkill -f "npm run dev" 2>/dev/null || true
         sleep 2
     fi
 
@@ -120,11 +120,7 @@ start_frontend_admin() {
 start_backend() {
     log "Iniciando backend..."
     cd backend
-    if [ ! -f "dist/index.js" ]; then
-        warn "Arquivo dist/index.js não encontrado. Compilando..."
-        npm run build
-    fi
-    NODE_ENV=development PORT=8080 node dist/index.js > ../logs/backend.log 2>&1 &
+    npm run dev > ../logs/backend.log 2>&1 &
     local pid=$!
     echo $pid > ../logs/backend.pid
     cd ..
@@ -157,28 +153,32 @@ main() {
     check_and_kill_existing_processes
 
     echo
-    info "Selecione qual(is) servidor(es) deseja iniciar:"
     echo "1) frontend-app (porta 3000)"
     echo "2) frontend-admin (porta 3001)"
     echo "3) backend (porta 8080)"
     echo "4) Todos"
-    echo "5) Sair"
+    echo "5) Todos + Logs (tmux/screen)"
+    echo "6) Sair"
     echo
 
-    read -p "Digite sua opção (1-5): " choice
+    read -p "Digite sua opção (1-6): " choice
 
     case $choice in
         1)
+            check_and_kill_existing_processes
             start_frontend_app
             ;;
         2)
+            check_and_kill_existing_processes
             start_frontend_admin
             ;;
         3)
+            check_and_kill_existing_processes
             start_backend
             ;;
         4)
             log "Iniciando todos os servidores..."
+            check_and_kill_existing_processes
             start_frontend_app
             sleep 2
             start_frontend_admin
@@ -186,6 +186,18 @@ main() {
             start_backend
             ;;
         5)
+            log "Iniciando todos os servidores + logs..."
+            check_and_kill_existing_processes
+            start_frontend_app
+            sleep 2
+            start_frontend_admin
+            sleep 2
+            start_backend
+            sleep 2
+            log "Iniciando visualização de logs..."
+            ./watch-logs.sh all &
+            ;;
+        6)
             log "Saindo..."
             exit 0
             ;;
@@ -198,7 +210,8 @@ main() {
     echo
     log "=== Servidores iniciados com sucesso! ==="
     log "Para parar os servidores, execute: ./stop-server.sh"
-    log "Para ver logs: tail -f logs/<servico>.log"
+    log "Para ver logs: tail -f logs/<servico>.log  ou  ./watch-logs.sh"
+    log "Para ver todos os logs em tempo real: ./watch-logs.sh all"
 }
 
 main "$@"

@@ -1,0 +1,54 @@
+# Baseado em: 3.Structure.md v1.1
+# Precedência: 1.Project → 2.Architecture → 3.Structure
+# Decisão: Serviços Kubernetes para exposição interna (conforme 2.Architecture.md seção 5.1)
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: appwrite-service
+  namespace: bigtech
+spec:
+  selector:
+    app: appwrite
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 443
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: bigtech
+spec:
+  selector:
+    app: redis
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-service
+  namespace: bigtech
+spec:
+  selector:
+    app: mariadb
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+    protocol: TCP
+  type: ClusterIP
