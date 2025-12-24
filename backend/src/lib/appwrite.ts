@@ -10,6 +10,7 @@ export class AppwriteService {
   public databases: Databases;
   public account: Account;
   public users: Users;
+  public databaseId: string;
 
   private constructor() {
     this.client = new Client()
@@ -20,6 +21,7 @@ export class AppwriteService {
     this.databases = new Databases(this.client);
     this.account = new Account(this.client);
     this.users = new Users(this.client);
+    this.databaseId = process.env.APPWRITE_DATABASE_ID || 'bigtechdb';
   }
 
   public static getInstance(): AppwriteService {

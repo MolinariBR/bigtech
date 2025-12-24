@@ -27,6 +27,7 @@ router.put('/', async (req, res) => {
   try {
     const { billing, email, smtp, rates } = req.body;
     const userId = (req as any).userId; // From auth middleware
+    const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
 
     // Fetch existing or create new
     const existing = await appwrite.databases.listDocuments(
@@ -69,6 +70,7 @@ router.put('/', async (req, res) => {
       action: 'update_system_settings',
       resource: 'systemSettings',
       details: { changes: data },
+      ipAddress,
     });
 
     res.json({ ...result, auditId });
