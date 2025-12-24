@@ -2,7 +2,7 @@
 > backend-core@1.0.0 dev
 > ts-node-dev --respawn --transpile-only src/index.ts
 
-[INFO] 16:03:20 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[INFO] 16:21:52 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
 👂 Handler subscribed to event: query.executed
 👂 Handler subscribed to event: credits.purchased
 💰 Billing Engine initialized
@@ -39,18 +39,6 @@
 [auth.refresh] incoming cookies: <no-cookie-header>
 [DEV] Allowing tenant default for path /api/auth/refresh
 [auth.refresh] incoming cookies: <no-cookie-header>
-[DEV] Allowing tenant default for path /api/plugins/infosimples/services
-[DEV] Allowing tenant default for path /api/plugins/infosimples/services
-[DEV] Allowing tenant default for path /api/auth/refresh
-[auth.refresh] incoming cookies: <no-cookie-header>
-[DEV] Allowing tenant default for path /api/auth/refresh
-[auth.refresh] incoming cookies: <no-cookie-header>
-[DEV] Allowing tenant default for path /api/plugins/infosimples/services
-[DEV] Allowing tenant default for path /api/plugins/infosimples/services
-[DEV] Allowing tenant default for path /api/auth/refresh
-[auth.refresh] incoming cookies: <no-cookie-header>
-[DEV] Allowing tenant default for path /api/auth/refresh
-[auth.refresh] incoming cookies: <no-cookie-header>
 [DEV] Allowing tenant default for path /api/auth/login
 AuditLogger: created audit document {
   tenantId: 'default',
@@ -59,12 +47,12 @@ AuditLogger: created audit document {
   resource: 'user:694afb83001da8dae2b4',
   details: '{"email":"user@bigtech.com"}',
   ipAddress: 'system',
-  timestamp: '2025-12-24T19:14:58.291+00:00',
-  '$id': '694c3bb281c150efadd5',
+  timestamp: '2025-12-24T19:22:22.992+00:00',
+  '$id': '694c3d6f5d6a86a9ba31',
   '$permissions': [],
-  '$createdAt': '2025-12-24T19:14:58.535+00:00',
-  '$updatedAt': '2025-12-24T19:14:58.535+00:00',
-  '$sequence': 62,
+  '$createdAt': '2025-12-24T19:22:23.383+00:00',
+  '$updatedAt': '2025-12-24T19:22:23.383+00:00',
+  '$sequence': 66,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }
@@ -84,12 +72,12 @@ AuditLogger: created audit document {
   resource: 'user:694afb83001da8dae2b4',
   details: '{"email":"user@bigtech.com"}',
   ipAddress: 'system',
-  timestamp: '2025-12-24T19:15:07.538+00:00',
-  '$id': '694c3bbbb91de5a95f93',
+  timestamp: '2025-12-24T19:22:41.153+00:00',
+  '$id': '694c3d819d71961910c9',
   '$permissions': [],
-  '$createdAt': '2025-12-24T19:15:07.758+00:00',
-  '$updatedAt': '2025-12-24T19:15:07.758+00:00',
-  '$sequence': 63,
+  '$createdAt': '2025-12-24T19:22:41.645+00:00',
+  '$updatedAt': '2025-12-24T19:22:41.645+00:00',
+  '$sequence': 67,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }
@@ -97,3 +85,82 @@ AuditLogger: created audit document {
 [auth.refresh] incoming cookies: <no-cookie-header>
 [DEV] Allowing tenant default for path /api/auth/refresh
 [auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/login
+AuditLogger: created audit document {
+  tenantId: 'default',
+  userId: '694afb83001da8dae2b4',
+  action: 'user_login',
+  resource: 'user:694afb83001da8dae2b4',
+  details: '{"email":"user@bigtech.com"}',
+  ipAddress: 'system',
+  timestamp: '2025-12-24T19:23:03.860+00:00',
+  '$id': '694c3d985652725c0057',
+  '$permissions': [],
+  '$createdAt': '2025-12-24T19:23:04.354+00:00',
+  '$updatedAt': '2025-12-24T19:23:04.354+00:00',
+  '$sequence': 68,
+  '$databaseId': 'bigtechdb',
+  '$collectionId': 'audits'
+}
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/login
+AuditLogger: created audit document {
+  tenantId: 'default',
+  userId: '694afb83001da8dae2b4',
+  action: 'user_login',
+  resource: 'user:694afb83001da8dae2b4',
+  details: '{"email":"user@bigtech.com"}',
+  ipAddress: 'system',
+  timestamp: '2025-12-24T19:23:40.346+00:00',
+  '$id': '694c3dbc8aa74f23f9f7',
+  '$permissions': [],
+  '$createdAt': '2025-12-24T19:23:40.568+00:00',
+  '$updatedAt': '2025-12-24T19:23:40.568+00:00',
+  '$sequence': 69,
+  '$databaseId': 'bigtechdb',
+  '$collectionId': 'audits'
+}
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/refresh
+[auth.refresh] incoming cookies: <no-cookie-header>
+[DEV] Allowing tenant default for path /api/auth/login
+AuditLogger: created audit document {
+  tenantId: 'default',
+  userId: '694afb83001da8dae2b4',
+  action: 'user_login',
+  resource: 'user:694afb83001da8dae2b4',
+  details: '{"email":"user@bigtech.com"}',
+  ipAddress: 'system',
+  timestamp: '2025-12-24T19:24:17.924+00:00',
+  '$id': '694c3de2267f0ab95216',
+  '$permissions': [],
+  '$createdAt': '2025-12-24T19:24:18.158+00:00',
+  '$updatedAt': '2025-12-24T19:24:18.158+00:00',
+  '$sequence': 70,
+  '$databaseId': 'bigtechdb',
+  '$collectionId': 'audits'
+}
