@@ -11,6 +11,7 @@ import {
   Puzzle,
   CreditCard,
   Shield,
+  Settings,
   LogOut
 } from 'lucide-react';
 
@@ -27,7 +28,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     { name: 'Tenants', href: '/tenants', icon: Users },
     { name: 'Plugins', href: '/plugins', icon: Puzzle },
     { name: 'Billing', href: '/billing', icon: CreditCard },
-    { name: 'Auditoria', href: '/audit', icon: Shield }
+    { name: 'Auditoria', href: '/audit', icon: Shield },
+    { name: 'Settings', href: '/settings', icon: Settings }
   ];
 
   const isActive = (href: string) => router.pathname === href;

@@ -213,8 +213,18 @@ describe('BigTechPlugin', () => {
       const result = (plugin as any).prepareRequestPayload('416-crlv-sp', input);
 
       expect(result).toEqual({
-        placa: 'ABC1234',
-        state: 'SP',
+        CodigoProduto: "1532",
+        Versao: "20180521",
+        ChaveAcesso: "",
+        Info: {
+          Solicitante: "",
+        },
+        Parametros: {
+          Placa: "ABC1234",
+        },
+        WebHook: {
+          UrlCallBack: "",
+        },
       });
     });
   });

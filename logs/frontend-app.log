@@ -10,6 +10,5 @@
 
 npm error code ENOWORKSPACES
 npm error This command does not support workspaces.
-npm error A complete log of this run can be found in: /home/mau/.npm/_logs/2025-12-23T23_20_57_892Z-debug-0.log
- ✓ Ready in 2.2s
-[?25h
+npm error A complete log of this run can be found in: /home/mau/.npm/_logs/2025-12-24T14_18_53_126Z-debug-0.log
+ ✓ Ready in 4s

@@ -10,6 +10,7 @@ export const defaultConfig: BigTechConfig = {
   retryDelayMs: 5000, // Aumentar delay base entre retries
   fallbackSources: ['internal'], // Fontes de fallback (provedores internos)
   rateLimitPerMinute: 10, // Limitar a 10 requisições por minuto
+  rateLimitWindowMs: 60000, // Janela de 1 minuto para rate limiting
   minRequestInterval: 6000, // Mínimo 6 segundos entre requisições
 };
 

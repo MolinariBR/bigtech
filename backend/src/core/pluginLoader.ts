@@ -5,6 +5,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppwriteService } from '../lib/appwrite';
+import { auditLogger } from './audit';
+import { billingEngine } from './billingEngine';
+import { eventBus } from './eventBus';
 
 export interface Plugin {
   id: string;
@@ -46,12 +49,17 @@ export class PluginLoader {
   }
 
   async initialize(): Promise<void> {
+    // Inicializar sistemas CORE necessários
+    await auditLogger.initialize();
+    await billingEngine.initialize();
+    await eventBus.initialize();
+
     await this.loadPlugins();
     await this.loadActivePlugins();
 
     // Para desenvolvimento: ativar plugin infosimples por padrão
-    this.activePlugins.set('default', new Set(['infosimples']));
-    console.log('✅ Plugin infosimples ativado por padrão para tenant default');
+    this.activePlugins.set('default', new Set(['infosimples', 'bigtech']));
+    console.log('✅ Plugins infosimples e bigtech ativados por padrão para tenant default');
   }
 
   async shutdown(): Promise<void> {
@@ -186,15 +194,69 @@ export class PluginLoader {
       };
     }
 
+    const startTime = Date.now();
+    let result: PluginResult;
+
     try {
-      return await plugin.execute(context);
+      result = await plugin.execute(context);
+
+      // Auditoria automática para todas as operações
+      await auditLogger.log({
+        tenantId: context.tenantId,
+        userId: context.userId,
+        action: 'plugin_execute',
+        resource: `plugin:${pluginId}`,
+        details: {
+          pluginId,
+          input: this.sanitizeAuditData(context.input),
+          success: result.success,
+          cost: result.cost,
+          duration: Date.now() - startTime,
+          error: result.error
+        },
+        ipAddress: 'system' // TODO: capturar IP real quando disponível
+      });
+
+      // Publicar evento para billing se houver custo
+      if (result.success && result.cost && result.cost > 0) {
+        await eventBus.publish({
+          tenantId: context.tenantId,
+          userId: context.userId,
+          type: 'plugin.executed',
+          payload: {
+            pluginId,
+            cost: result.cost,
+            consultaId: this.extractConsultaId(context.input),
+            type: pluginId
+          }
+        });
+      }
+
+      return result;
     } catch (error) {
-      console.error(`Plugin ${pluginId} execution error:`, error);
       const err = error instanceof Error ? error : new Error(String(error));
-      return {
+
+      // Auditoria para falhas também
+      await auditLogger.log({
+        tenantId: context.tenantId,
+        userId: context.userId,
+        action: 'plugin_execute_failed',
+        resource: `plugin:${pluginId}`,
+        details: {
+          pluginId,
+          input: this.sanitizeAuditData(context.input),
+          error: err.message,
+          duration: Date.now() - startTime
+        },
+        ipAddress: 'system'
+      });
+
+      result = {
         success: false,
         error: `Plugin execution failed: ${err.message}`
       };
+
+      return result;
     }
   }
 
@@ -219,9 +281,28 @@ export class PluginLoader {
     return Array.from(this.plugins.values()).find(p => p.id === pluginId);
   }
 
-  isPluginActiveForTenant(pluginId: string, tenantId: string): boolean {
-    const activePlugins = this.activePlugins.get(tenantId) || new Set();
-    return activePlugins.has(pluginId);
+  // Sanitizar dados para auditoria (remover dados sensíveis)
+  private sanitizeAuditData(data: any): any {
+    if (!data || typeof data !== 'object') return data;
+
+    const sanitized = { ...data };
+
+    // Campos sensíveis que não devem ser logados
+    const sensitiveFields = ['senha', 'password', 'token', 'apiKey', 'secret', 'cpf', 'cnpj'];
+
+    sensitiveFields.forEach(field => {
+      if (sanitized[field]) {
+        sanitized[field] = '[REDACTED]';
+      }
+    });
+
+    return sanitized;
+  }
+
+  // Extrair ID de consulta do input do plugin
+  private extractConsultaId(input: any): string | undefined {
+    // Para plugins de consulta, o input pode conter um consultaId
+    return input?.consultaId || input?.id;
   }
 }
 

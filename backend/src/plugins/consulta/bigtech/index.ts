@@ -2,8 +2,12 @@
 // Plugin BigTech - Implementação principal
 
 import { Plugin, PluginContext, PluginResult } from '../../../core/pluginLoader';
-import { BigTechConfig, BigTechRequest, BigTechResponse } from './types';
+import { BigTechConfig, BigTechRequest, BigTechResponse, BigTechRateLimitEntry, BigTechFallbackConfig, BigTechCircuitBreakerState } from './types';
 import { defaultConfig, bigTechServices, serviceCategories, servicePrices } from './config';
+import { Validator, ValidationError } from './validator';
+import { auditLogger } from '../../../core/audit';
+import { billingEngine } from '../../../core/billingEngine';
+import { eventBus } from '../../../core/eventBus';
 
 export class BigTechPlugin implements Plugin {
   id = 'bigtech';
@@ -11,9 +15,29 @@ export class BigTechPlugin implements Plugin {
   version = '1.0.0';
 
   private config: BigTechConfig;
+  private validator: Validator;
+
+  // Rate limiting state
+  private rateLimitMap: Map<string, BigTechRateLimitEntry> = new Map();
+
+  // Circuit breaker state
+  private circuitBreakerMap: Map<string, BigTechCircuitBreakerState> = new Map();
+
+  // Fallback configuration
+  private fallbackConfig: BigTechFallbackConfig = {
+    // Vehicle services can fallback to each other
+    '411-crlv-ro': ['412-crlv-rr', '415-crlv-se', '416-crlv-sp'],
+    '412-crlv-rr': ['411-crlv-ro', '415-crlv-se', '416-crlv-sp'],
+    '415-crlv-se': ['411-crlv-ro', '412-crlv-rr', '416-crlv-sp'],
+    '416-crlv-sp': ['411-crlv-ro', '412-crlv-rr', '415-crlv-se'],
+    // Credit services can fallback to similar services
+    '304-positivo-define-risco-cnpj': ['370-positivo-acerta-essencial-pf'],
+    '370-positivo-acerta-essencial-pf': ['304-positivo-define-risco-cnpj'],
+  };
 
   constructor(config?: Partial<BigTechConfig>) {
     this.config = { ...defaultConfig, ...config };
+    this.validator = new Validator();
   }
 
   /**
@@ -58,17 +82,17 @@ export class BigTechPlugin implements Plugin {
         throw new Error('serviceCode é obrigatório');
       }
 
-      // Aplicar rate limiting
-      await this.enforceRateLimit();
+      // Validar entrada usando o validador centralizado
+      this.validator.validateInput(serviceCode, input);
 
-      // Preparar payload da requisição
-      const payload = this.prepareRequestPayload(serviceCode, input);
+      // Aplicar rate limiting avançado
+      await this.enforceAdvancedRateLimit(context.tenantId || 'default', serviceCode);
 
-      // Executar requisição com retry logic
-      const response = await this.makeRequestWithRetry(payload);
+      // Tentar executar com fallbacks
+      const result = await this.executeWithFallbacks(context, serviceCode);
 
-      // Normalizar resposta
-      const normalizedResponse = this.normalizeResponse(serviceCode, response);
+      // Normalizar saída usando o validador
+      const normalizedData = this.validator.normalizeOutput(serviceCode, result.data);
 
       // Calcular custo
       const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
@@ -78,7 +102,10 @@ export class BigTechPlugin implements Plugin {
 
       return {
         success: true,
-        data: normalizedResponse,
+        data: {
+          ...normalizedData,
+          consultaId: input.consultaId || `bigtech-${serviceCode}-${Date.now()}`
+        },
         cost,
       };
 
@@ -131,21 +158,33 @@ export class BigTechPlugin implements Plugin {
       case '431-dados-cnh':
         return this.prepareDadosCnhPayload(input);
 
+      // Serviços de Crédito
       case '36-busca-nome-uf':
-        return {
-          nome: input.nome,
-          uf: input.uf,
-          ...input,
-        };
+        return this.prepareBuscaNomeUfPayload(input);
+
+      case '39-teleconfirma':
+        return this.prepareTeleConfirmaPayload(input);
+
+      case '41-protesto-sintetico-nacional':
+        return this.prepareProtestoSinteticoPayload(input);
+
+      case '304-positivo-define-risco-cnpj':
+        return this.preparePositivoDefineRiscoCnpjPayload(input);
+
+      case '370-positivo-acerta-essencial-pf':
+        return this.preparePositivoAcertaEssencialPfPayload(input);
 
       case '411-crlv-ro':
+        return this.prepareCrlvRoPayload(input);
+
       case '412-crlv-rr':
+        return this.prepareCrlvRrPayload(input);
+
       case '415-crlv-se':
+        return this.prepareCrlvSePayload(input);
+
       case '416-crlv-sp':
-        return {
-          placa: input.placa,
-          ...input,
-        };
+        return this.prepareCrlvSpPayload(input);
 
       default:
         return input;
@@ -160,11 +199,8 @@ export class BigTechPlugin implements Plugin {
       throw new Error('CEP é obrigatório para o serviço 320-Contatos Por CEP');
     }
 
-    // Validar formato do CEP (somente números, 8 dígitos)
-    const cepClean = input.cep.replace(/\D/g, '');
-    if (cepClean.length !== 8) {
-      throw new Error('CEP deve ter exatamente 8 dígitos');
-    }
+    // Usar validador centralizado para CEP
+    const cepValidado = this.validator.validateCep(input.cep);
 
     return {
       CodigoProduto: "1465",
@@ -174,7 +210,7 @@ export class BigTechPlugin implements Plugin {
         Solicitante: input.solicitante || ''
       },
       Parametros: {
-        Cep: cepClean
+        Cep: cepValidado
       },
       WebHook: {
         UrlCallBack: input.webhookUrl || ''
@@ -194,13 +230,10 @@ export class BigTechPlugin implements Plugin {
       throw new Error('TipoPessoa deve ser "F" (física) ou "J" (jurídica)');
     }
 
-    // Validar e limpar CPF/CNPJ
-    const documentoClean = input.cpfCnpj.replace(/\D/g, '');
-    const expectedLength = input.tipoPessoa === 'F' ? 11 : 14;
-
-    if (documentoClean.length !== expectedLength) {
-      throw new Error(`CPF/CNPJ deve ter ${expectedLength} dígitos para pessoa ${input.tipoPessoa === 'F' ? 'física' : 'jurídica'}`);
-    }
+    // Usar validador centralizado para CPF/CNPJ
+    const documentoValidado = input.tipoPessoa === 'F'
+      ? this.validator.validateCpf(input.cpfCnpj)
+      : this.validator.validateCnpj(input.cpfCnpj);
 
     return {
       CodigoProduto: "1468",
@@ -211,7 +244,7 @@ export class BigTechPlugin implements Plugin {
       },
       Parametros: {
         TipoPessoa: input.tipoPessoa,
-        CPFCNPJ: documentoClean
+        CPFCNPJ: documentoValidado
       },
       WebHook: {
         UrlCallBack: input.webhookUrl || ''
@@ -227,11 +260,8 @@ export class BigTechPlugin implements Plugin {
       throw new Error('CPF é obrigatório para o serviço 424-ValidaID - Localizacao');
     }
 
-    // Validar e limpar CPF
-    const cpfClean = input.cpf.replace(/\D/g, '');
-    if (cpfClean.length !== 11) {
-      throw new Error('CPF deve ter exatamente 11 dígitos');
-    }
+    // Usar validador centralizado para CPF
+    const cpfValidado = this.validator.validateCpf(input.cpf);
 
     return {
       CodigoProduto: "1475",
@@ -242,7 +272,7 @@ export class BigTechPlugin implements Plugin {
       },
       Parametros: {
         TipoPessoa: "F",
-        CPFCNPJ: cpfClean
+        CPFCNPJ: cpfValidado
       },
       WebHook: {
         UrlCallBack: input.webhookUrl || ''
@@ -258,11 +288,8 @@ export class BigTechPlugin implements Plugin {
       throw new Error('CPF é obrigatório para o serviço 431-Dados de CNH');
     }
 
-    // Validar e limpar CPF
-    const cpfClean = input.cpf.replace(/\D/g, '');
-    if (cpfClean.length !== 11) {
-      throw new Error('CPF deve ter exatamente 11 dígitos');
-    }
+    // Usar validador centralizado para CPF
+    const cpfValidado = this.validator.validateCpf(input.cpf);
 
     return {
       CodigoProduto: "1476",
@@ -273,7 +300,272 @@ export class BigTechPlugin implements Plugin {
       },
       Parametros: {
         TipoPessoa: "F",
-        CPFCNPJ: cpfClean
+        CPFCNPJ: cpfValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 36 - Busca por Nome+UF
+   */
+  private prepareBuscaNomeUfPayload(input: any): any {
+    if (!input.uf) {
+      throw new Error('UF é obrigatório para o serviço 36-Busca por Nome+UF');
+    }
+
+    if (!input.nomeCompleto) {
+      throw new Error('NomeCompleto é obrigatório para o serviço 36-Busca por Nome+UF');
+    }
+
+    // Validar UF (2 letras maiúsculas)
+    const ufUpper = input.uf.toUpperCase();
+    if (!/^[A-Z]{2}$/.test(ufUpper)) {
+      throw new Error('UF deve ter exatamente 2 letras maiúsculas');
+    }
+
+    return {
+      CodigoProduto: "1449",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        UF: ufUpper,
+        NomeCompleto: input.nomeCompleto
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 39 - TeleConfirma
+   */
+  private prepareTeleConfirmaPayload(input: any): any {
+    if (!input.ddd) {
+      throw new Error('DDD é obrigatório para o serviço 39-TeleConfirma');
+    }
+
+    if (!input.telefone) {
+      throw new Error('Telefone é obrigatório para o serviço 39-TeleConfirma');
+    }
+
+    // Usar validador centralizado para telefone
+    const telefoneValidado = this.validator.validatePhone(`${input.ddd}${input.telefone}`);
+
+    return {
+      CodigoProduto: "1450",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        DDD: telefoneValidado.ddd,
+        Telefone: telefoneValidado.numero
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 41 - PROTESTO SINTÉTICO NACIONAL
+   */
+  private prepareProtestoSinteticoPayload(input: any): any {
+    if (!input.cpfCnpj) {
+      throw new Error('CPFCNPJ é obrigatório para o serviço 41-PROTESTO SINTÉTICO NACIONAL');
+    }
+
+    if (!input.tipoPessoa || !['F', 'J'].includes(input.tipoPessoa)) {
+      throw new Error('TipoPessoa deve ser "F" (física) ou "J" (jurídica)');
+    }
+
+    // Usar validador centralizado para CPF/CNPJ
+    const documentoValidado = input.tipoPessoa === 'F'
+      ? this.validator.validateCpf(input.cpfCnpj)
+      : this.validator.validateCnpj(input.cpfCnpj);
+
+    return {
+      CodigoProduto: "1451",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        TipoPessoa: input.tipoPessoa,
+        CPFCNPJ: documentoValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 304 - POSITIVO DEFINE RISCO CNPJ
+   */
+  private preparePositivoDefineRiscoCnpjPayload(input: any): any {
+    if (!input.cpfCnpj) {
+      throw new Error('CPFCNPJ é obrigatório para o serviço 304-POSITIVO DEFINE RISCO CNPJ');
+    }
+
+    // Usar validador centralizado para CNPJ
+    const cnpjValidado = this.validator.validateCnpj(input.cpfCnpj);
+
+    return {
+      CodigoProduto: "1464",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        TipoPessoa: "J",
+        CPFCNPJ: cnpjValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 370 - POSITIVO ACERTA ESSENCIAL PF
+   */
+  private preparePositivoAcertaEssencialPfPayload(input: any): any {
+    if (!input.cpfCnpj) {
+      throw new Error('CPFCNPJ é obrigatório para o serviço 370-POSITIVO ACERTA ESSENCIAL PF');
+    }
+
+    // Usar validador centralizado para CPF
+    const cpfValidado = this.validator.validateCpf(input.cpfCnpj);
+
+    return {
+      CodigoProduto: "1471",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        TipoPessoa: "F",
+        CPFCNPJ: cpfValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 411 - CRLV RO
+   */
+  private prepareCrlvRoPayload(input: any): any {
+    if (!input.placa) {
+      throw new Error('Placa é obrigatória para o serviço 411-CRLV RO');
+    }
+
+    // Usar validador centralizado para placa
+    const placaValidada = this.validator.validatePlaca(input.placa);
+
+    return {
+      CodigoProduto: "1527",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        Placa: placaValidada
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 412 - CRLV RR
+   */
+  private prepareCrlvRrPayload(input: any): any {
+    if (!input.placa) {
+      throw new Error('Placa é obrigatória para o serviço 412-CRLV RR');
+    }
+
+    // Usar validador centralizado para placa
+    const placaValidada = this.validator.validatePlaca(input.placa);
+
+    return {
+      CodigoProduto: "1528",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        Placa: placaValidada
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 415 - CRLV SE
+   */
+  private prepareCrlvSePayload(input: any): any {
+    if (!input.placa) {
+      throw new Error('Placa é obrigatória para o serviço 415-CRLV SE');
+    }
+
+    // Usar validador centralizado para placa
+    const placaValidada = this.validator.validatePlaca(input.placa);
+
+    return {
+      CodigoProduto: "1531",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        Placa: placaValidada
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 416 - CRLV SP
+   */
+  private prepareCrlvSpPayload(input: any): any {
+    if (!input.placa) {
+      throw new Error('Placa é obrigatória para o serviço 416-CRLV SP');
+    }
+
+    // Usar validador centralizado para placa
+    const placaValidada = this.validator.validatePlaca(input.placa);
+
+    return {
+      CodigoProduto: "1532",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        Placa: placaValidada
       },
       WebHook: {
         UrlCallBack: input.webhookUrl || ''
@@ -284,8 +576,11 @@ export class BigTechPlugin implements Plugin {
   /**
    * Faz requisição HTTP com lógica de retry para a API BigTech
    */
-  private async makeRequestWithRetry(payload: any): Promise<any> {
+  private async makeRequestWithRetry(payload: any, serviceCode?: string): Promise<any> {
     let lastError: Error | null = null;
+
+    // Obter timeout baseado na categoria do serviço
+    const timeout = this.getTimeoutForService(serviceCode);
 
     for (let attempt = 0; attempt <= this.config.retries; attempt++) {
       try {
@@ -296,7 +591,7 @@ export class BigTechPlugin implements Plugin {
             'User-Agent': 'BigTech-Plugin/1.0.0',
           },
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(this.config.timeout),
+          signal: AbortSignal.timeout(timeout),
         });
 
         if (!response.ok) {
@@ -317,6 +612,22 @@ export class BigTechPlugin implements Plugin {
     }
 
     throw lastError || new Error('Falha após todas as tentativas de retry');
+  }
+
+  /**
+   * Obtém timeout baseado na categoria do serviço
+   */
+  private getTimeoutForService(serviceCode?: string): number {
+    if (!serviceCode) return this.config.timeout;
+
+    const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
+    const timeouts: Record<string, number> = {
+      'cadastral': 15000,  // 15 segundos para serviços cadastrais
+      'credito': 20000,    // 20 segundos para serviços de crédito
+      'veicular': 10000,   // 10 segundos para serviços veiculares
+    };
+
+    return timeouts[category] || this.config.timeout;
   }
 
   /**
@@ -348,15 +659,34 @@ export class BigTechPlugin implements Plugin {
       case '431-dados-cnh':
         return this.normalizeDadosCnhResponse(response);
 
-      default:
-        // Para outros serviços, retornar resposta básica normalizada
-        return {
-          success: true,
-          service: serviceCode,
-          chaveConsulta: response.HEADER.INFORMACOES_RETORNO.CHAVE_CONSULTA,
-          dataHora: response.HEADER.INFORMACOES_RETORNO.DATA_HORA_CONSULTA,
-          dados: response
-        };
+      // Serviços de Crédito
+      case '36-busca-nome-uf':
+        return this.normalizeBuscaNomeUfResponse(response);
+
+      case '39-teleconfirma':
+        return this.normalizeTeleConfirmaResponse(response);
+
+      case '41-protesto-sintetico-nacional':
+        return this.normalizeProtestoSinteticoResponse(response);
+
+      case '304-positivo-define-risco-cnpj':
+        return this.normalizePositivoDefineRiscoCnpjResponse(response);
+
+      case '370-positivo-acerta-essencial-pf':
+        return this.normalizePositivoAcertaEssencialPfResponse(response);
+
+      // Serviços Veiculares
+      case '411-crlv-ro':
+        return this.normalizeCrlvRoResponse(response);
+
+      case '412-crlv-rr':
+        return this.normalizeCrlvRrResponse(response);
+
+      case '415-crlv-se':
+        return this.normalizeCrlvSeResponse(response);
+
+      case '416-crlv-sp':
+        return this.normalizeCrlvSpResponse(response);
     }
   }
 
@@ -369,7 +699,7 @@ export class BigTechPlugin implements Plugin {
     const params = header.PARAMETROS;
     const dadosRetornados = header.DADOS_RETORNADOS;
 
-    return {
+    const normalized = {
       success: true,
       service: '320-contatos-por-cep',
       chaveConsulta: info.CHAVE_CONSULTA,
@@ -391,6 +721,9 @@ export class BigTechPlugin implements Plugin {
       },
       rawResponse: response
     };
+
+    // Aplicar sanitização usando o validador
+    return this.validator.sanitizeOutput('320-contatos-por-cep', normalized);
   }
 
   /**
@@ -402,7 +735,7 @@ export class BigTechPlugin implements Plugin {
     const params = header.PARAMETROS;
     const dadosRetornados = header.DADOS_RETORNADOS;
 
-    return {
+    const normalized = {
       success: true,
       service: '327-quod-cadastral-pf',
       chaveConsulta: info.CHAVE_CONSULTA,
@@ -431,6 +764,9 @@ export class BigTechPlugin implements Plugin {
       },
       rawResponse: response
     };
+
+    // Aplicar sanitização usando o validador
+    return this.validator.sanitizeOutput('327-quod-cadastral-pf', normalized);
   }
 
   /**
@@ -492,13 +828,457 @@ export class BigTechPlugin implements Plugin {
   }
 
   /**
-   * Aplica rate limiting
+   * Normaliza resposta do serviço 36 - Busca por Nome+UF
    */
-  private async enforceRateLimit(): Promise<void> {
-    // Implementar lógica de rate limiting simples
-    // Por enquanto, apenas um delay mínimo
+  private normalizeBuscaNomeUfResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '36-busca-nome-uf',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        uf: params.UF,
+        nomeCompleto: params.NomeCompleto
+      },
+      dados: {
+        credCadastral: response.CREDCADASTRAL || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 39 - TeleConfirma
+   */
+  private normalizeTeleConfirmaResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '39-teleconfirma',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        ddd: params.DDD,
+        telefone: params.TELEFONE
+      },
+      dados: {
+        titularTelefone: dadosRetornados.TITULAR_DO_TELEFONE === "1",
+        telefones: response.CREDCADASTRAL?.TITULAR_DO_TELEFONE?.TELEFONES || []
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 41 - PROTESTO SINTÉTICO NACIONAL
+   */
+  private normalizeProtestoSinteticoResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '41-protesto-sintetico-nacional',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        tipoPessoa: params.TIPO_PESSOA,
+        cpfCnpj: params.CPFCNPJ
+      },
+      dados: {
+        protestoSintetico: dadosRetornados.PROTESTO_SINTETICO === "1",
+        protesto: response.CREDCADASTRAL?.PROTESTO_SINTETICO || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 304 - POSITIVO DEFINE RISCO CNPJ
+   */
+  private normalizePositivoDefineRiscoCnpjResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+
+    return {
+      success: true,
+      service: '304-positivo-define-risco-cnpj',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        tipoPessoa: params.TIPO_PESSOA,
+        cpfCnpj: params.CPFCNPJ
+      },
+      dados: {
+        // Este serviço retorna apenas análise de risco, sem dados específicos
+        analiseRisco: true
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 370 - POSITIVO ACERTA ESSENCIAL PF
+   */
+  private normalizePositivoAcertaEssencialPfResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+
+    return {
+      success: true,
+      service: '370-positivo-acerta-essencial-pf',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        tipoPessoa: params.TIPO_PESSOA,
+        cpfCnpj: params.CPFCNPJ
+      },
+      dados: {
+        // Este serviço retorna apenas análise de risco, sem dados específicos
+        analiseRisco: true
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 411 - CRLV RO
+   */
+  private normalizeCrlvRoResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '411-crlv-ro',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        placa: params.PLACA
+      },
+      dados: {
+        // Dados específicos do veículo em Rondônia
+        crlv: dadosRetornados.CRLV === "1",
+        proprietarioAtual: dadosRetornados.PROPRIETARIO_ATUAL_VEICULO === "1",
+        historicoProprietarios: dadosRetornados.HISTORICO_PROPRIETARIOS === "1",
+        gravame: dadosRetornados.GRAVAME === "1",
+        rouboFurto: dadosRetornados.ROUBO_FURTO === "1",
+        perdaTotal: dadosRetornados.PERDA_TOTAL === "1",
+        alertas: dadosRetornados.ALERTAS === "1",
+        recall: dadosRetornados.RECALL === "1",
+        dpvat: dadosRetornados.DPVAT === "1",
+        debitosIpva: dadosRetornados.DEBITOS_IPVA === "1",
+        restricoesFinanceiras: dadosRetornados.RESTRICOES_FINANCEIRAS === "1",
+        veicular: response.VEICULAR || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 412 - CRLV RR
+   */
+  private normalizeCrlvRrResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '412-crlv-rr',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        placa: params.PLACA
+      },
+      dados: {
+        // Dados específicos do veículo em Roraima
+        crlv: dadosRetornados.CRLV === "1",
+        proprietarioAtual: dadosRetornados.PROPRIETARIO_ATUAL_VEICULO === "1",
+        historicoProprietarios: dadosRetornados.HISTORICO_PROPRIETARIOS === "1",
+        gravame: dadosRetornados.GRAVAME === "1",
+        rouboFurto: dadosRetornados.ROUBO_FURTO === "1",
+        perdaTotal: dadosRetornados.PERDA_TOTAL === "1",
+        alertas: dadosRetornados.ALERTAS === "1",
+        recall: dadosRetornados.RECALL === "1",
+        dpvat: dadosRetornados.DPVAT === "1",
+        debitosIpva: dadosRetornados.DEBITOS_IPVA === "1",
+        restricoesFinanceiras: dadosRetornados.RESTRICOES_FINANCEIRAS === "1",
+        veicular: response.VEICULAR || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 415 - CRLV SE
+   */
+  private normalizeCrlvSeResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '415-crlv-se',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        placa: params.PLACA
+      },
+      dados: {
+        // Dados específicos do veículo em Sergipe
+        crlv: dadosRetornados.CRLV === "1",
+        proprietarioAtual: dadosRetornados.PROPRIETARIO_ATUAL_VEICULO === "1",
+        historicoProprietarios: dadosRetornados.HISTORICO_PROPRIETARIOS === "1",
+        gravame: dadosRetornados.GRAVAME === "1",
+        rouboFurto: dadosRetornados.ROUBO_FURTO === "1",
+        perdaTotal: dadosRetornados.PERDA_TOTAL === "1",
+        alertas: dadosRetornados.ALERTAS === "1",
+        recall: dadosRetornados.RECALL === "1",
+        dpvat: dadosRetornados.DPVAT === "1",
+        debitosIpva: dadosRetornados.DEBITOS_IPVA === "1",
+        restricoesFinanceiras: dadosRetornados.RESTRICOES_FINANCEIRAS === "1",
+        veicular: response.VEICULAR || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 416 - CRLV SP
+   */
+  private normalizeCrlvSpResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '416-crlv-sp',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        placa: params.PLACA
+      },
+      dados: {
+        // Dados específicos do veículo em São Paulo
+        crlv: dadosRetornados.CRLV === "1",
+        proprietarioAtual: dadosRetornados.PROPRIETARIO_ATUAL_VEICULO === "1",
+        historicoProprietarios: dadosRetornados.HISTORICO_PROPRIETARIOS === "1",
+        gravame: dadosRetornados.GRAVAME === "1",
+        rouboFurto: dadosRetornados.ROUBO_FURTO === "1",
+        perdaTotal: dadosRetornados.PERDA_TOTAL === "1",
+        alertas: dadosRetornados.ALERTAS === "1",
+        recall: dadosRetornados.RECALL === "1",
+        dpvat: dadosRetornados.DPVAT === "1",
+        debitosIpva: dadosRetornados.DEBITOS_IPVA === "1",
+        restricoesFinanceiras: dadosRetornados.RESTRICOES_FINANCEIRAS === "1",
+        veicular: response.VEICULAR || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Aplica rate limiting avançado com controle por tenant/serviço
+   */
+  private async enforceAdvancedRateLimit(tenantId: string, serviceCode: string): Promise<void> {
+    const now = Date.now();
+    const key = `${tenantId}:${serviceCode}`;
+
+    // Obter ou criar entrada de rate limiting
+    let entry = this.rateLimitMap.get(key);
+    if (!entry) {
+      entry = {
+        tenantId,
+        serviceCode,
+        requests: 0,
+        windowStart: now,
+        windowSize: this.config.rateLimitWindowMs || 60000, // 1 minuto padrão
+      };
+      this.rateLimitMap.set(key, entry);
+    }
+
+    // Verificar se a janela expirou
+    if (now - entry.windowStart >= entry.windowSize) {
+      entry.requests = 0;
+      entry.windowStart = now;
+    }
+
+    // Obter limite baseado na categoria do serviço
+    const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
+    const limit = this.getRateLimitForCategory(category);
+
+    // Verificar se excedeu o limite
+    if (entry.requests >= limit) {
+      const resetTime = entry.windowStart + entry.windowSize;
+      const waitTime = resetTime - now;
+      throw new Error(`Rate limit excedido para ${serviceCode}. Aguarde ${Math.ceil(waitTime / 1000)} segundos.`);
+    }
+
+    // Incrementar contador
+    entry.requests++;
+
+    // Aplicar delay mínimo se configurado
     if (this.config.minRequestInterval > 0) {
       await new Promise(resolve => setTimeout(resolve, this.config.minRequestInterval));
+    }
+  }
+
+  /**
+   * Obtém limite de rate limiting baseado na categoria
+   */
+  private getRateLimitForCategory(category: string): number {
+    const limits: Record<string, number> = {
+      'cadastral': 10,  // 10 requests por minuto
+      'credito': 5,     // 5 requests por minuto
+      'veicular': 8,    // 8 requests por minuto
+    };
+
+    return limits[category] || 5; // Default: 5 requests por minuto
+  }
+
+  /**
+   * Executa consulta com sistema de fallbacks
+   */
+  private async executeWithFallbacks(context: PluginContext, primaryServiceCode: string): Promise<{ data: any; serviceUsed: string }> {
+    const triedServices = new Set<string>();
+    let lastError: Error | null = null;
+
+    // Lista de serviços a tentar (primário + fallbacks)
+    const servicesToTry = [primaryServiceCode, ...(this.fallbackConfig[primaryServiceCode] || [])];
+
+    for (const serviceCode of servicesToTry) {
+      if (triedServices.has(serviceCode)) continue;
+      triedServices.add(serviceCode);
+
+      try {
+        // Verificar circuit breaker
+        if (this.isCircuitBreakerOpen(serviceCode)) {
+          console.warn(`⏰ Circuit breaker aberto para ${serviceCode}, pulando...`);
+          continue;
+        }
+
+        // Preparar payload da requisição
+        const payload = this.prepareRequestPayload(serviceCode, context.input);
+
+        // Executar requisição com retry logic
+        const response = await this.makeRequestWithRetry(payload, serviceCode);
+
+        // Normalizar resposta
+        const normalizedResponse = this.normalizeResponse(serviceCode, response);
+
+        // Reset circuit breaker em caso de sucesso
+        this.resetCircuitBreaker(serviceCode);
+
+        return {
+          data: normalizedResponse,
+          serviceUsed: serviceCode
+        };
+
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Registrar falha no circuit breaker
+        this.recordCircuitBreakerFailure(serviceCode);
+
+        console.warn(`⚠️ Falha no serviço ${serviceCode}: ${lastError.message}`);
+
+        // Se não é o serviço primário, continuar tentando fallbacks
+        if (serviceCode !== primaryServiceCode) {
+          continue;
+        }
+      }
+    }
+
+    // Se chegou aqui, todos os serviços falharam
+    throw lastError || new Error(`Todos os serviços falharam para ${primaryServiceCode}`);
+  }
+
+  /**
+   * Verifica se o circuit breaker está aberto
+   */
+  private isCircuitBreakerOpen(serviceCode: string): boolean {
+    const state = this.circuitBreakerMap.get(serviceCode);
+    if (!state) return false;
+
+    const now = Date.now();
+
+    switch (state.state) {
+      case 'open':
+        if (now >= state.nextAttemptTime) {
+          // Tempo de tentar novamente
+          state.state = 'half-open';
+          return false;
+        }
+        return true;
+
+      case 'half-open':
+        return false;
+
+      case 'closed':
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Registra falha no circuit breaker
+   */
+  private recordCircuitBreakerFailure(serviceCode: string): void {
+    const now = Date.now();
+    let state = this.circuitBreakerMap.get(serviceCode);
+
+    if (!state) {
+      state = {
+        serviceCode,
+        failures: 0,
+        lastFailureTime: now,
+        state: 'closed',
+        nextAttemptTime: 0,
+      };
+      this.circuitBreakerMap.set(serviceCode, state);
+    }
+
+    state.failures++;
+    state.lastFailureTime = now;
+
+    // Abrir circuit breaker após 5 falhas consecutivas
+    if (state.failures >= 5 && state.state === 'closed') {
+      state.state = 'open';
+      state.nextAttemptTime = now + 60000; // 1 minuto
+      console.warn(`🔴 Circuit breaker aberto para ${serviceCode} após ${state.failures} falhas`);
+    }
+  }
+
+  /**
+   * Reseta circuit breaker em caso de sucesso
+   */
+  private resetCircuitBreaker(serviceCode: string): void {
+    const state = this.circuitBreakerMap.get(serviceCode);
+    if (state) {
+      state.failures = 0;
+      state.state = 'closed';
+      state.nextAttemptTime = 0;
     }
   }
 
@@ -515,9 +1295,34 @@ export class BigTechPlugin implements Plugin {
   getConfig(): BigTechConfig {
     return { ...this.config };
   }
+
+  /**
+   * Obtém estatísticas de rate limiting
+   */
+  getRateLimitStats(): Record<string, BigTechRateLimitEntry> {
+    const stats: Record<string, BigTechRateLimitEntry> = {};
+    for (const [key, entry] of this.rateLimitMap.entries()) {
+      stats[key] = { ...entry };
+    }
+    return stats;
+  }
+
+  /**
+   * Obtém estatísticas do circuit breaker
+   */
+  getCircuitBreakerStats(): Record<string, BigTechCircuitBreakerState> {
+    const stats: Record<string, BigTechCircuitBreakerState> = {};
+    for (const [key, state] of this.circuitBreakerMap.entries()) {
+      stats[key] = { ...state };
+    }
+    return stats;
+  }
 }
 
 // Exportar função de factory para o PluginLoader
 export function createBigTechPlugin(config?: Partial<BigTechConfig>) {
   return new BigTechPlugin(config);
 }
+
+// Exportar instância padrão para compatibilidade com PluginLoader
+export default new BigTechPlugin();

@@ -132,7 +132,8 @@ router.get('/:pluginId/services', async (req: Request, res: Response) => {
     }
 
     // Verificar se plugin está ativo para o tenant
-    const isActive = pluginLoader.isPluginActiveForTenant(pluginId, tenantId);
+    const activePlugins = pluginLoader.getActivePluginsForTenant(tenantId!);
+    const isActive = activePlugins.has(pluginId);
     if (!isActive) {
       return res.status(403).json({
         error: 'Plugin not active',

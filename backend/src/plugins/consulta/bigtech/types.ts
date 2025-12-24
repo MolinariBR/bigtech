@@ -8,6 +8,7 @@ export interface BigTechConfig {
   retries: number;
   retryDelayMs: number;
   rateLimitPerMinute: number;
+  rateLimitWindowMs: number;
   minRequestInterval: number;
   fallbackSources: string[];
 }
@@ -176,4 +177,18 @@ export interface BigTechRateLimitEntry {
   requests: number;
   windowStart: number;
   windowSize: number;
+}
+
+// Fallback configuration
+export interface BigTechFallbackConfig {
+  [serviceCode: string]: string[]; // Array of fallback service codes
+}
+
+// Circuit breaker state
+export interface BigTechCircuitBreakerState {
+  serviceCode: string;
+  failures: number;
+  lastFailureTime: number;
+  state: 'closed' | 'open' | 'half-open';
+  nextAttemptTime: number;
 }
