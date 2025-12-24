@@ -16,7 +16,23 @@ router.get('/', async (req, res) => {
       SYSTEM_SETTINGS_COLLECTION,
       []
     );
-    const data = settings.documents[0] || {}; // Assume single document
+    const doc = settings.documents[0];
+    if (!doc) {
+      return res.json({
+        billing: { minCreditPurchase: 1, maxCreditPurchase: 1000, creditValue: 1.0, retentionDays: 365 },
+        email: { fromEmail: '', replyToEmail: '', supportEmail: '' },
+        smtp: { host: '', port: 587, secure: false, user: '', pass: '' },
+        rates: { defaultRateLimit: 100, fallbackCostMultiplier: 1.5 },
+      });
+    }
+
+    // Parse JSON strings back to objects
+    const data = {
+      billing: JSON.parse(doc.billing || '{}'),
+      email: JSON.parse(doc.email || '{}'),
+      smtp: JSON.parse(doc.smtp || '{}'),
+      rates: JSON.parse(doc.rates || '{}'),
+    };
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch system settings' });
@@ -26,7 +42,7 @@ router.get('/', async (req, res) => {
 router.put('/', async (req, res) => {
   try {
     const { billing, email, smtp, rates } = req.body;
-    const userId = (req as any).userId; // From auth middleware
+    const userId = (req as any).userId || 'system-admin'; // From auth middleware or default for dev
     const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
 
     // Fetch existing or create new
@@ -38,12 +54,10 @@ router.put('/', async (req, res) => {
     const documentId = existing.documents[0]?.$id || 'global';
 
     const data = {
-      billing,
-      email,
-      smtp,
-      rates,
-      updatedAt: new Date().toISOString(),
-      updatedBy: userId,
+      billing: JSON.stringify(billing),
+      email: JSON.stringify(email),
+      smtp: JSON.stringify(smtp),
+      rates: JSON.stringify(rates),
     };
 
     let result;
@@ -69,12 +83,13 @@ router.put('/', async (req, res) => {
       userId,
       action: 'update_system_settings',
       resource: 'systemSettings',
-      details: { changes: data },
+      details: { changes: { billing, email, smtp, rates } },
       ipAddress,
     });
 
     res.json({ ...result, auditId });
   } catch (error) {
+    console.error('Error updating system settings:', error);
     res.status(500).json({ error: 'Failed to update system settings' });
   }
 });

@@ -1,0 +1,28 @@
+{
+  "name": "projeto-bigtech",
+  "version": "1.0.0",
+  "description": "Plataforma SaaS multi-tenant para consultas de dados",
+  "private": true,
+  "workspaces": [
+    "frontend-app",
+    "frontend-admin",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspace=frontend-app",
+    "test": "npm run test --workspaces",
+    "e2e:up": "docker compose -f appwrite/docker-compose.yml up -d && docker compose -f infrastructure/docker/docker-compose.dev.yml up -d",
+    "e2e:down": "docker compose -f infrastructure/docker/docker-compose.dev.yml down && docker compose -f appwrite/docker-compose.yml down",
+    "e2e:test": "npm --prefix backend test && npm --prefix frontend-app test || true",
+    "e2e:run": "npm run e2e:up && sleep 8 && npm run e2e:test && npm run e2e:down"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

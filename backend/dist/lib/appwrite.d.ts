@@ -5,6 +5,7 @@ export declare class AppwriteService {
     databases: Databases;
     account: Account;
     users: Users;
+    databaseId: string;
     private constructor();
     static getInstance(): AppwriteService;
     createUserClient(jwt: string): Client;

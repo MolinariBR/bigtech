@@ -29,6 +29,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors text-xl"
+            data-cy="lgpd-modal-close"
           >
             <span className="sr-only">Fechar</span>
             ✕

@@ -11,6 +11,7 @@ class AppwriteService {
     databases;
     account;
     users;
+    databaseId;
     constructor() {
         this.client = new node_appwrite_1.Client()
             .setEndpoint(process.env.APPWRITE_ENDPOINT || 'http://localhost/v1')
@@ -19,6 +20,7 @@ class AppwriteService {
         this.databases = new node_appwrite_1.Databases(this.client);
         this.account = new node_appwrite_1.Account(this.client);
         this.users = new node_appwrite_1.Users(this.client);
+        this.databaseId = process.env.APPWRITE_DATABASE_ID || 'bigtechdb';
     }
     static getInstance() {
         if (!AppwriteService.instance) {

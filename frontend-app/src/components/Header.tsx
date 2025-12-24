@@ -30,8 +30,9 @@ export default function Header() {
           <Button variant="outline" size="sm">
             Notificações
           </Button>
-          <Link href="/minha-conta" title="Minha Conta" onClick={() => console.log('[header] click /minha-conta')}>
-            <User className="w-6 h-6 text-foreground hover:text-primary cursor-pointer" />
+          <Link href="/minha-conta" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+            <User className="w-5 h-5" />
+            <span className="text-sm font-medium">Minha Conta</span>
           </Link>
         </div>
       </div>

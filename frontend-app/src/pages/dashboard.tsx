@@ -5,9 +5,11 @@ import { Button } from '../components/Button'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import Footer from '../components/Footer'
+import { useRouter } from 'next/router'
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const router = useRouter()
 
   const userCredits = {
     available: 150,
@@ -74,7 +76,7 @@ export default function Dashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button className="w-full">Acessar Consultas</Button>
+                    <Button className="w-full" onClick={() => router.push('/consulta/credito')}>Acessar Consultas</Button>
                   </CardContent>
                 </Card>
 
@@ -86,7 +88,7 @@ export default function Dashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button className="w-full">Acessar Consultas</Button>
+                    <Button className="w-full" onClick={() => router.push('/consulta/cadastral')}>Acessar Consultas</Button>
                   </CardContent>
                 </Card>
 
@@ -98,7 +100,7 @@ export default function Dashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button className="w-full">Acessar Consultas</Button>
+                    <Button className="w-full" onClick={() => router.push('/consulta/veicular')}>Acessar Consultas</Button>
                   </CardContent>
                 </Card>
               </div>

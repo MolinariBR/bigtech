@@ -24,6 +24,7 @@ const audit_1 = require("./core/audit");
 const billing_1 = require("./controllers/admin/billing");
 const plugins_1 = require("./controllers/admin/plugins");
 const tenants_1 = require("./controllers/admin/tenants");
+const systemSettings_1 = __importDefault(require("./controllers/admin/systemSettings"));
 const plugins_2 = require("./controllers/plugins");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
@@ -68,6 +69,7 @@ app.use('/api/auth', auth_1.authRouter);
 app.use('/api/admin/billing', billing_1.adminBillingRouter);
 app.use('/api/admin/plugins', plugins_1.adminPluginsRouter);
 app.use('/api/admin/tenants', tenants_1.adminTenantsRouter);
+app.use('/api/admin/system-settings', systemSettings_1.default);
 // Rotas de execução de plugins (após middleware multi-tenant)
 app.use('/api/plugins', plugins_2.pluginsRouter);
 // Inicialização de componentes CORE

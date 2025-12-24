@@ -40,6 +40,9 @@ exports.pluginLoader = exports.PluginLoader = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const appwrite_1 = require("../lib/appwrite");
+const audit_1 = require("./audit");
+const billingEngine_1 = require("./billingEngine");
+const eventBus_1 = require("./eventBus");
 class PluginLoader {
     static instance;
     appwrite = appwrite_1.AppwriteService.getInstance();
@@ -53,11 +56,15 @@ class PluginLoader {
         return PluginLoader.instance;
     }
     async initialize() {
+        // Inicializar sistemas CORE necessários
+        await audit_1.auditLogger.initialize();
+        await billingEngine_1.billingEngine.initialize();
+        await eventBus_1.eventBus.initialize();
         await this.loadPlugins();
         await this.loadActivePlugins();
         // Para desenvolvimento: ativar plugin infosimples por padrão
-        this.activePlugins.set('default', new Set(['infosimples']));
-        console.log('✅ Plugin infosimples ativado por padrão para tenant default');
+        this.activePlugins.set('default', new Set(['infosimples', 'bigtech']));
+        console.log('✅ Plugins infosimples e bigtech ativados por padrão para tenant default');
     }
     async shutdown() {
         // Cleanup plugins if needed
@@ -172,16 +179,63 @@ class PluginLoader {
                 error: `Plugin ${pluginId} not active for tenant ${context.tenantId}`
             };
         }
+        const startTime = Date.now();
+        let result;
         try {
-            return await plugin.execute(context);
+            result = await plugin.execute(context);
+            // Auditoria automática para todas as operações
+            await audit_1.auditLogger.log({
+                tenantId: context.tenantId,
+                userId: context.userId,
+                action: 'plugin_execute',
+                resource: `plugin:${pluginId}`,
+                details: {
+                    pluginId,
+                    input: this.sanitizeAuditData(context.input),
+                    success: result.success,
+                    cost: result.cost,
+                    duration: Date.now() - startTime,
+                    error: result.error
+                },
+                ipAddress: 'system' // TODO: capturar IP real quando disponível
+            });
+            // Publicar evento para billing se houver custo
+            if (result.success && result.cost && result.cost > 0) {
+                await eventBus_1.eventBus.publish({
+                    tenantId: context.tenantId,
+                    userId: context.userId,
+                    type: 'plugin.executed',
+                    payload: {
+                        pluginId,
+                        cost: result.cost,
+                        consultaId: this.extractConsultaId(context.input),
+                        type: pluginId
+                    }
+                });
+            }
+            return result;
         }
         catch (error) {
-            console.error(`Plugin ${pluginId} execution error:`, error);
             const err = error instanceof Error ? error : new Error(String(error));
-            return {
+            // Auditoria para falhas também
+            await audit_1.auditLogger.log({
+                tenantId: context.tenantId,
+                userId: context.userId,
+                action: 'plugin_execute_failed',
+                resource: `plugin:${pluginId}`,
+                details: {
+                    pluginId,
+                    input: this.sanitizeAuditData(context.input),
+                    error: err.message,
+                    duration: Date.now() - startTime
+                },
+                ipAddress: 'system'
+            });
+            result = {
                 success: false,
                 error: `Plugin execution failed: ${err.message}`
             };
+            return result;
         }
     }
     getAvailablePlugins() {
@@ -202,9 +256,24 @@ class PluginLoader {
         // Fallback: procurar pela propriedade `id` do plugin (ex: 'infosimples')
         return Array.from(this.plugins.values()).find(p => p.id === pluginId);
     }
-    isPluginActiveForTenant(pluginId, tenantId) {
-        const activePlugins = this.activePlugins.get(tenantId) || new Set();
-        return activePlugins.has(pluginId);
+    // Sanitizar dados para auditoria (remover dados sensíveis)
+    sanitizeAuditData(data) {
+        if (!data || typeof data !== 'object')
+            return data;
+        const sanitized = { ...data };
+        // Campos sensíveis que não devem ser logados
+        const sensitiveFields = ['senha', 'password', 'token', 'apiKey', 'secret', 'cpf', 'cnpj'];
+        sensitiveFields.forEach(field => {
+            if (sanitized[field]) {
+                sanitized[field] = '[REDACTED]';
+            }
+        });
+        return sanitized;
+    }
+    // Extrair ID de consulta do input do plugin
+    extractConsultaId(input) {
+        // Para plugins de consulta, o input pode conter um consultaId
+        return input?.consultaId || input?.id;
     }
 }
 exports.PluginLoader = PluginLoader;

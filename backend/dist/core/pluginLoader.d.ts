@@ -40,7 +40,8 @@ export declare class PluginLoader {
     }[];
     getActivePluginsForTenant(tenantId: string): Set<string>;
     getPlugin(pluginId: string): Plugin | undefined;
-    isPluginActiveForTenant(pluginId: string, tenantId: string): boolean;
+    private sanitizeAuditData;
+    private extractConsultaId;
 }
 export declare const pluginLoader: PluginLoader;
 //# sourceMappingURL=pluginLoader.d.ts.map

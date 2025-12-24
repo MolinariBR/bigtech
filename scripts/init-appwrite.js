@@ -119,6 +119,14 @@ async function initAppwrite() {
     await createAttribute('admins', 'createdAt', 'datetime', null, true);
     await createAttribute('admins', 'updatedAt', 'datetime', null, true);
 
+    // Collection: systemSettings
+    await createCollectionIfNotExists('systemSettings', 'System Settings', []);
+
+    await createAttribute('systemSettings', 'billing', 'string', 2000, false, '{}');
+    await createAttribute('systemSettings', 'email', 'string', 2000, false, '{}');
+    await createAttribute('systemSettings', 'smtp', 'string', 2000, false, '{}');
+    await createAttribute('systemSettings', 'rates', 'string', 2000, false, '{}');
+
     console.log('🎉 Appwrite inicializado com sucesso!');
 
   } catch (error) {
