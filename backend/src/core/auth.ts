@@ -9,6 +9,7 @@ import { AppwriteService } from '../lib/appwrite';
 import axios from 'axios';
 import { Query, ID } from 'node-appwrite';
 import { auditLogger } from './audit';
+import { pluginLoader } from './pluginLoader';
 
 const router = Router();
 const appwrite = AppwriteService.getInstance();
@@ -627,6 +628,7 @@ export const authenticateMiddleware = async (
     const decoded = await AuthService.verifyToken(token);
 
     if (!decoded) {
+      console.log('[auth.middleware] Token verification failed for endpoint:', req.path);
       return res.status(401).json({
         success: false,
         message: 'Token inválido ou expirado'
@@ -982,6 +984,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
   try {
     if (process.env.NODE_ENV !== 'production') {
       console.log('[auth.refresh] incoming cookies:', req.headers.cookie || '<no-cookie-header>')
+      console.log('[auth.refresh] refreshToken from body:', refreshToken || '<no-token>')
     }
   } catch (e) {
     // não falhar por causa do log
@@ -999,14 +1002,19 @@ router.post('/refresh', async (req: Request, res: Response) => {
   }
 
   if (!refreshToken) {
+    console.log('[auth.refresh] No refresh token found, returning 400');
     return res.status(400).json({ success: false, message: 'refreshToken é obrigatório' });
   }
 
+  console.log('[auth.refresh] Verifying refresh token...');
   const decoded = await AuthService.verifyRefreshToken(refreshToken);
 
   if (!decoded) {
+    console.log('[auth.refresh] Invalid refresh token');
     return res.status(401).json({ success: false, message: 'Refresh token inválido ou expirado' });
   }
+
+  console.log('[auth.refresh] Refresh token valid, userId:', decoded.userId);
 
   try {
     // Buscar usuário e gerar novos tokens
@@ -1017,9 +1025,11 @@ router.post('/refresh', async (req: Request, res: Response) => {
     );
 
     if (!user || user.status !== 'active') {
+      console.log('[auth.refresh] User not found or inactive:', decoded.userId);
       return res.status(401).json({ success: false, message: 'Usuário inválido' });
     }
 
+    console.log('[auth.refresh] Generating new tokens for user:', user.$id);
     const token = AuthService.generateToken(user);
     const newRefresh = await AuthService.generateRefreshToken(user);
 
@@ -1031,6 +1041,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       maxAge: refreshMaxAge
     });
 
+    console.log('[auth.refresh] Tokens generated successfully');
     return res.json({ success: true, token });
   } catch (error) {
     console.error('Erro no refresh token:', error);
@@ -1047,11 +1058,15 @@ router.post('/logout', authenticateMiddleware, async (req: Request, res: Respons
 
 router.get('/me/plugins', authenticateMiddleware, async (req: Request, res: Response) => {
   try {
+    console.log('[auth.me.plugins] User authenticated:', req.userId);
+
     const user = await appwrite.databases.getDocument(
       process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
       'users',
       req.userId!
     );
+
+    console.log('[auth.me.plugins] User data:', { id: user.$id, tenantId: user.tenantId, allowedPlugins: user.allowedPlugins });
 
     // Buscar tenant para obter plugins ativos
     const tenant = await appwrite.databases.getDocument(
@@ -1060,41 +1075,77 @@ router.get('/me/plugins', authenticateMiddleware, async (req: Request, res: Resp
       user.tenantId
     );
 
-    const tenantPlugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
-    const userAllowedPlugins = Array.isArray(user.allowedPlugins) ? user.allowedPlugins : [];
+    console.log('[auth.me.plugins] Tenant data:', { id: tenant.$id, plugins: tenant.plugins });
 
-    // Filtrar apenas plugins ativos no tenant que o usuário pode acessar
-    const activeTenantPluginIds = tenantPlugins
-      .filter(tp => tp.status === 'active')
-      .map(tp => tp.pluginId);
+    // Usar plugins ativos do pluginLoader para desenvolvimento
+    const activeTenantPluginIds = Array.from(pluginLoader.getActivePluginsForTenant(user.tenantId));
+    console.log('[auth.me.plugins] activeTenantPluginIds from pluginLoader:', activeTenantPluginIds);
+
+    let userAllowedPlugins = [];
+    try {
+      userAllowedPlugins = user.allowedPlugins ? JSON.parse(user.allowedPlugins) : [];
+    } catch (e) {
+      userAllowedPlugins = [];
+    }
+
+    console.log('[auth.me.plugins] userAllowedPlugins:', userAllowedPlugins);
+
+    // Para desenvolvimento: se não há allowedPlugins configurado, permitir bigtech e bloquear infosimples
+    if (userAllowedPlugins.length === 0) {
+      userAllowedPlugins = ['bigtech']; // Apenas bigtech permitido
+      console.log('[auth.me.plugins] Using default allowed plugins for development:', userAllowedPlugins);
+    }
 
     const allowedPlugins = activeTenantPluginIds.filter(pluginId =>
       userAllowedPlugins.includes(pluginId)
     );
 
+    console.log('[auth.me.plugins] allowedPlugins:', allowedPlugins);
+
     // Buscar detalhes dos plugins permitidos
     const pluginsDetails = [];
     for (const pluginId of allowedPlugins) {
       try {
+        console.log(`[auth.me.plugins] Searching for plugin ${pluginId} in database`);
         const pluginDoc = await appwrite.databases.listDocuments(
           process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
           'plugins',
           [Query.equal('$id', pluginId)]
         );
 
+        console.log(`[auth.me.plugins] Found ${pluginDoc.documents.length} documents for plugin ${pluginId}`);
         if (pluginDoc.documents.length > 0) {
           const plugin = pluginDoc.documents[0];
+          console.log(`[auth.me.plugins] Plugin details:`, { id: plugin.$id, name: plugin.name });
           pluginsDetails.push({
             id: plugin.$id,
             name: plugin.name,
             type: plugin.type,
             config: plugin.config
           });
+        } else {
+          console.log(`[auth.me.plugins] No documents found for plugin ${pluginId}, returning mock data`);
+          // Para desenvolvimento, retornar dados mock se não encontrar no banco
+          pluginsDetails.push({
+            id: pluginId,
+            name: pluginId === 'bigtech' ? 'BigTech Consultas' : pluginId,
+            type: 'consulta',
+            config: {}
+          });
         }
       } catch (error) {
         console.warn(`Could not load details for plugin ${pluginId}:`, error);
+        // Mesmo em erro, retornar dados mock para desenvolvimento
+        pluginsDetails.push({
+          id: pluginId,
+          name: pluginId === 'bigtech' ? 'BigTech Consultas' : pluginId,
+          type: 'consulta',
+          config: {}
+        });
       }
     }
+
+    console.log('[auth.me.plugins] pluginsDetails:', pluginsDetails);
 
     res.json({
       success: true,

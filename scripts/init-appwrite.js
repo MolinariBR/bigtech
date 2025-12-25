@@ -105,6 +105,7 @@ async function initAppwrite() {
     await createAttribute('users', 'status', 'string', 50, false, 'active');
     await createAttribute('users', 'credits', 'string', 50, false, '0');
     await createAttribute('users', 'refreshToken', 'string', 500, false);
+    await createAttribute('users', 'allowedPlugins', 'string', 1000, false, '[]');
 
     // Collection: admins
     await createCollectionIfNotExists('admins', 'Admins', []);
@@ -119,15 +120,18 @@ async function initAppwrite() {
     await createAttribute('admins', 'createdAt', 'datetime', null, true);
     await createAttribute('admins', 'updatedAt', 'datetime', null, true);
 
-    // Collection: systemSettings
-    await createCollectionIfNotExists('systemSettings', 'System Settings', []);
+    // Collection: plugins
+    await createCollectionIfNotExists('plugins', 'Plugins', []);
 
-    await createAttribute('systemSettings', 'billing', 'string', 2000, false, '{}');
-    await createAttribute('systemSettings', 'email', 'string', 2000, false, '{}');
-    await createAttribute('systemSettings', 'smtp', 'string', 2000, false, '{}');
-    await createAttribute('systemSettings', 'rates', 'string', 2000, false, '{}');
+    await createAttribute('plugins', 'tenantId', 'string', 255, true);
+    await createAttribute('plugins', 'type', 'string', 50, true);
+    await createAttribute('plugins', 'name', 'string', 255, true);
+    await createAttribute('plugins', 'version', 'string', 50, true);
+    await createAttribute('plugins', 'status', 'string', 50, false, 'enabled');
+    await createAttribute('plugins', 'config', 'string', 2000, false, '{}');
+    await createAttribute('plugins', 'dependencies', 'string', 1000, false, '[]');
 
-    console.log('🎉 Appwrite inicializado com sucesso!');
+    // Collection: consultas
 
   } catch (error) {
     console.error('❌ Erro ao inicializar Appwrite:', error);

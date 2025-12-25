@@ -52,33 +52,59 @@ export default function ConsultaCredito() {
       try {
         setLoadingServices(true)
 
-        // Buscar serviços do plugin infosimples via API REST
-        // `apiCall` já retorna o JSON parseado ou lança erro em caso de HTTP não-ok
-        const data = await apiCall(API_CONFIG.endpoints.plugins.services('infosimples'), {
-          method: 'GET',
-          headers: {
-            'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
-          }
+        // Primeiro, buscar plugins permitidos para o usuário
+        const userPluginsResponse = await apiCall(API_CONFIG.endpoints.auth.me.plugins, {
+          method: 'GET'
         })
 
-        if (data.services) {
-          // Filtrar apenas serviços de crédito
-          const creditServices = data.services
-            .filter((service: any) => service.category === 'credito')
-            .map((service: any) => ({
-              id: service.id,
-              name: service.name,
-              description: service.description,
-              price: service.price,
-              plugin: 'infosimples',
-              active: service.active
-            }))
-
-          setCreditQueries(creditServices)
-        } else {
-          console.error('Erro ao buscar serviços:', data.error)
+        if (!userPluginsResponse.success || !userPluginsResponse.plugins) {
+          console.warn('Nenhum plugin permitido encontrado para o usuário')
           setCreditQueries([])
+          return
         }
+
+        const allowedPlugins = userPluginsResponse.plugins
+        console.log('Plugins permitidos para o usuário:', allowedPlugins)
+
+        // Buscar serviços de crédito de todos os plugins permitidos
+        const allCreditServices: CreditQuery[] = []
+
+        for (const plugin of allowedPlugins) {
+          try {
+            console.log(`Buscando serviços de crédito do plugin: ${plugin.id}`)
+
+            const data = await apiCall(API_CONFIG.endpoints.plugins.services(plugin.id), {
+              method: 'GET',
+              headers: {
+                'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
+              }
+            })
+
+            if (data.services) {
+              // Filtrar apenas serviços de crédito e adicionar identificação do plugin
+              const creditServices = data.services
+                .filter((service: any) => service.category === 'credito')
+                .map((service: any) => ({
+                  id: service.id,
+                  name: service.name,
+                  description: service.description,
+                  price: service.price,
+                  plugin: plugin.id,
+                  active: service.active
+                }))
+
+              allCreditServices.push(...creditServices)
+              console.log(`Encontrados ${creditServices.length} serviços de crédito no plugin ${plugin.id}`)
+            }
+          } catch (error) {
+            console.warn(`Erro ao buscar serviços do plugin ${plugin.id}:`, error)
+            // Continua com os outros plugins mesmo se um falhar
+          }
+        }
+
+        console.log(`Total de serviços de crédito encontrados: ${allCreditServices.length}`)
+        setCreditQueries(allCreditServices)
+
       } catch (error) {
         console.error('Erro ao buscar serviços de crédito:', error)
         setCreditQueries([])
@@ -116,7 +142,7 @@ export default function ConsultaCredito() {
 
     try {
       // Executar consulta via plugin
-      const data = await apiCall(API_CONFIG.endpoints.plugins.execute('infosimples'), {
+      const data = await apiCall(API_CONFIG.endpoints.plugins.execute(selectedQuery.plugin), {
         method: 'POST',
         headers: {
           'x-tenant-id': 'default', // TODO: Obter do contexto do usuário

@@ -2,7 +2,7 @@
 > backend-core@1.0.0 dev
 > ts-node-dev --respawn --transpile-only src/index.ts
 
-[INFO] 11:55:49 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[INFO] 14:19:47 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
 👂 Handler subscribed to event: query.executed
 👂 Handler subscribed to event: credits.purchased
 💰 Billing Engine initialized
@@ -35,37 +35,390 @@
 ✅ CORE initialized successfully
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health
-[INFO] 12:00:53 Restarting: /home/mau/projeto/consulta/backend/src/index.ts has been modified
-🛑 Shutting down CORE...
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-🚀 BigTech CORE running on port 8080
-📊 Health check: http://localhost:8080/health
+[auth.admin.login] Appwrite response error status: 429
+[auth.admin.login] Appwrite response error data: {"message":"Rate limit for the current endpoint has been exceeded. Please try again after some time.","code":429,"type":"general_rate_limit_exceeded","version":"1.8.0"}
+[auth.admin.login] Erro ao chamar Appwrite /account/sessions: AxiosError: Request failed with status code 429
+    at settle (/home/mau/projeto/consulta/backend/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (/home/mau/projeto/consulta/backend/node_modules/axios/lib/adapters/http.js:793:11)
+    at IncomingMessage.emit (node:events:536:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at Axios.request (/home/mau/projeto/consulta/backend/node_modules/axios/lib/core/Axios.js:45:41)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /home/mau/projeto/consulta/backend/src/core/auth.ts:713:16 {
+  code: 'ERR_BAD_REQUEST',
+  config: {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function: transformRequest] ],
+    transformResponse: [ [Function: transformResponse] ],
+    timeout: 5000,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      'X-Appwrite-Project': '694ad3e9003e02c8ecf0',
+      'User-Agent': 'axios/1.13.2',
+      'Content-Length': '51',
+      'Accept-Encoding': 'gzip, compress, deflate, br'
+    },
+    method: 'post',
+    url: 'https://sfo.cloud.appwrite.io/v1/account/sessions',
+    data: '{"email":"admin@bigtech.com","password":"admin123"}',
+    allowAbsoluteUrls: true
+  },
+  request: <ref *1> ClientRequest {
+    _events: [Object: null prototype] {
+      abort: [Function (anonymous)],
+      aborted: [Function (anonymous)],
+      connect: [Function (anonymous)],
+      error: [Function (anonymous)],
+      socket: [Function (anonymous)],
+      timeout: [Function (anonymous)],
+      finish: [Function: requestOnFinish]
+    },
+    _eventsCount: 7,
+    _maxListeners: undefined,
+    outputData: [],
+    outputSize: 0,
+    writable: true,
+    destroyed: true,
+    _last: false,
+    chunkedEncoding: false,
+    shouldKeepAlive: true,
+    maxRequestsOnConnectionReached: false,
+    _defaultKeepAlive: true,
+    useChunkedEncodingByDefault: true,
+    sendDate: false,
+    _removedConnection: false,
+    _removedContLen: false,
+    _removedTE: false,
+    strictContentLength: false,
+    _contentLength: 51,
+    _hasBody: true,
+    _trailer: '',
+    finished: true,
+    _headerSent: true,
+    _closed: true,
+    socket: TLSSocket {
+      _tlsOptions: [Object],
+      _secureEstablished: true,
+      _securePending: false,
+      _newSessionPending: false,
+      _controlReleased: true,
+      secureConnecting: false,
+      _SNICallback: null,
+      servername: 'sfo.cloud.appwrite.io',
+      alpnProtocol: false,
+      authorized: true,
+      authorizationError: null,
+      encrypted: true,
+      _events: [Object: null prototype],
+      _eventsCount: 9,
+      connecting: false,
+      _hadError: false,
+      _parent: null,
+      _host: 'sfo.cloud.appwrite.io',
+      _closeAfterHandlingError: false,
+      _readableState: [ReadableState],
+      _writableState: [WritableState],
+      allowHalfOpen: false,
+      _maxListeners: undefined,
+      _sockname: null,
+      _pendingData: null,
+      _pendingEncoding: '',
+      server: undefined,
+      _server: null,
+      ssl: [TLSWrap],
+      _requestCert: true,
+      _rejectUnauthorized: true,
+      timeout: 5000,
+      parser: null,
+      _httpMessage: null,
+      autoSelectFamilyAttemptedAddresses: [Array],
+      [Symbol(alpncallback)]: null,
+      [Symbol(res)]: [TLSWrap],
+      [Symbol(verified)]: true,
+      [Symbol(pendingSession)]: null,
+      [Symbol(async_id_symbol)]: -1,
+      [Symbol(kHandle)]: [TLSWrap],
+      [Symbol(lastWriteQueueSize)]: 0,
+      [Symbol(timeout)]: Timeout {
+        _idleTimeout: 5000,
+        _idlePrev: [TimersList],
+        _idleNext: [TimersList],
+        _idleStart: 18145,
+        _onTimeout: [Function: bound ],
+        _timerArgs: undefined,
+        _repeat: null,
+        _destroyed: false,
+        [Symbol(refed)]: false,
+        [Symbol(kHasPrimitive)]: false,
+        [Symbol(asyncId)]: 99,
+        [Symbol(triggerId)]: 97
+      },
+      [Symbol(kBuffer)]: null,
+      [Symbol(kBufferCb)]: null,
+      [Symbol(kBufferGen)]: null,
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kSetNoDelay)]: false,
+      [Symbol(kSetKeepAlive)]: true,
+      [Symbol(kSetKeepAliveInitialDelay)]: 1,
+      [Symbol(kBytesRead)]: 0,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(connect-options)]: [Object]
+    },
+    _header: 'POST /v1/account/sessions HTTP/1.1\r\n' +
+      'Accept: application/json, text/plain, */*\r\n' +
+      'Content-Type: application/json\r\n' +
+      'X-Appwrite-Project: 694ad3e9003e02c8ecf0\r\n' +
+      'User-Agent: axios/1.13.2\r\n' +
+      'Content-Length: 51\r\n' +
+      'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+      'Host: sfo.cloud.appwrite.io\r\n' +
+      'Connection: keep-alive\r\n' +
+      '\r\n',
+    _keepAliveTimeout: 0,
+    _onPendingData: [Function: nop],
+    agent: Agent {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      defaultPort: 443,
+      protocol: 'https:',
+      options: [Object: null prototype],
+      requests: [Object: null prototype] {},
+      sockets: [Object: null prototype] {},
+      freeSockets: [Object: null prototype],
+      keepAliveMsecs: 1000,
+      keepAlive: true,
+      maxSockets: Infinity,
+      maxFreeSockets: 256,
+      scheduling: 'lifo',
+      maxTotalSockets: Infinity,
+      totalSocketCount: 1,
+      maxCachedSessions: 100,
+      _sessionCache: [Object],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false
+    },
+    socketPath: undefined,
+    method: 'POST',
+    maxHeaderSize: undefined,
+    insecureHTTPParser: undefined,
+    joinDuplicateHeaders: undefined,
+    path: '/v1/account/sessions',
+    _ended: true,
+    res: IncomingMessage {
+      _events: [Object],
+      _readableState: [ReadableState],
+      _maxListeners: undefined,
+      socket: null,
+      httpVersionMajor: 1,
+      httpVersionMinor: 1,
+      httpVersion: '1.1',
+      complete: true,
+      rawHeaders: [Array],
+      rawTrailers: [],
+      joinDuplicateHeaders: undefined,
+      aborted: false,
+      upgrade: false,
+      url: '',
+      method: null,
+      statusCode: 429,
+      statusMessage: 'Too Many Requests',
+      client: [TLSSocket],
+      _consuming: true,
+      _dumped: false,
+      req: [Circular *1],
+      _eventsCount: 4,
+      responseUrl: 'https://sfo.cloud.appwrite.io/v1/account/sessions',
+      redirects: [],
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kHeaders)]: [Object],
+      [Symbol(kHeadersCount)]: 52,
+      [Symbol(kTrailers)]: null,
+      [Symbol(kTrailersCount)]: 0
+    },
+    aborted: false,
+    timeoutCb: null,
+    upgradeOrConnect: false,
+    parser: null,
+    maxHeadersCount: null,
+    reusedSocket: false,
+    host: 'sfo.cloud.appwrite.io',
+    protocol: 'https:',
+    _redirectable: Writable {
+      _events: [Object],
+      _writableState: [WritableState],
+      _maxListeners: undefined,
+      _options: [Object],
+      _ended: true,
+      _ending: true,
+      _redirectCount: 0,
+      _redirects: [],
+      _requestBodyLength: 51,
+      _requestBodyBuffers: [],
+      _eventsCount: 3,
+      _onNativeResponse: [Function (anonymous)],
+      _currentRequest: [Circular *1],
+      _currentUrl: 'https://sfo.cloud.appwrite.io/v1/account/sessions',
+      _timeout: null,
+      [Symbol(shapeMode)]: true,
+      [Symbol(kCapture)]: false
+    },
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false,
+    [Symbol(kBytesWritten)]: 0,
+    [Symbol(kNeedDrain)]: false,
+    [Symbol(corked)]: 0,
+    [Symbol(kOutHeaders)]: [Object: null prototype] {
+      accept: [Array],
+      'content-type': [Array],
+      'x-appwrite-project': [Array],
+      'user-agent': [Array],
+      'content-length': [Array],
+      'accept-encoding': [Array],
+      host: [Array]
+    },
+    [Symbol(errored)]: null,
+    [Symbol(kHighWaterMark)]: 16384,
+    [Symbol(kRejectNonStandardBodyWrites)]: false,
+    [Symbol(kUniqueHeaders)]: null
+  },
+  response: {
+    status: 429,
+    statusText: 'Too Many Requests',
+    headers: Object [AxiosHeaders] {
+      connection: 'keep-alive',
+      'content-length': '168',
+      'access-control-allow-credentials': 'true',
+      'access-control-allow-headers': 'Accept, Origin, Cookie, Set-Cookie, Content-Type, Content-Range, X-Appwrite-Project, X-Appwrite-Key, X-Appwrite-Dev-Key, X-Appwrite-Locale, X-Appwrite-Mode, X-Appwrite-JWT, X-Appwrite-Response-Format, X-Appwrite-Timeout, X-Appwrite-ID, X-Appwrite-Timestamp, X-Appwrite-Session, X-Appwrite-Platform, X-SDK-Version, X-SDK-Name, X-SDK-Language, X-SDK-Platform, X-SDK-GraphQL, X-SDK-Profile, Range, Cache-Control, Expires, Pragma, X-Fallback-Cookies, X-Requested-With, X-Forwarded-For, X-Forwarded-User-Agent',
+      'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE',
+      'access-control-expose-headers': 'X-Appwrite-Session, X-Fallback-Cookies',
+      'access-control-max-age': '86400',
+      'cache-control': 'no-cache, no-store, must-revalidate',
+      'content-type': 'application/json; charset=UTF-8',
+      expires: '0',
+      pragma: 'no-cache',
+      server: 'Appwrite',
+      'strict-transport-security': 'max-age=10886400',
+      'x-content-type-options': 'nosniff',
+      'x-debug-fallback': 'true',
+      'x-debug-speed': '0.0077319145202637',
+      'x-ratelimit-limit': '10',
+      'x-ratelimit-remaining': '0',
+      'x-ratelimit-reset': '1766685600',
+      'accept-ranges': 'bytes',
+      via: '1.1 varnish, 1.1 varnish',
+      date: 'Thu, 25 Dec 2025 17:20:05 GMT',
+      'x-served-by': 'cache-sjc10055-SJC, cache-for8427-FOR',
+      'x-cache': 'MISS, MISS',
+      'x-cache-hits': '0, 0',
+      'x-timer': 'S1766683205.128527,VS0,VE150'
+    },
+    config: {
+      transitional: [Object],
+      adapter: [Array],
+      transformRequest: [Array],
+      transformResponse: [Array],
+      timeout: 5000,
+      xsrfCookieName: 'XSRF-TOKEN',
+      xsrfHeaderName: 'X-XSRF-TOKEN',
+      maxContentLength: -1,
+      maxBodyLength: -1,
+      env: [Object],
+      validateStatus: [Function: validateStatus],
+      headers: [Object [AxiosHeaders]],
+      method: 'post',
+      url: 'https://sfo.cloud.appwrite.io/v1/account/sessions',
+      data: '{"email":"admin@bigtech.com","password":"admin123"}',
+      allowAbsoluteUrls: true
+    },
+    request: <ref *1> ClientRequest {
+      _events: [Object: null prototype],
+      _eventsCount: 7,
+      _maxListeners: undefined,
+      outputData: [],
+      outputSize: 0,
+      writable: true,
+      destroyed: true,
+      _last: false,
+      chunkedEncoding: false,
+      shouldKeepAlive: true,
+      maxRequestsOnConnectionReached: false,
+      _defaultKeepAlive: true,
+      useChunkedEncodingByDefault: true,
+      sendDate: false,
+      _removedConnection: false,
+      _removedContLen: false,
+      _removedTE: false,
+      strictContentLength: false,
+      _contentLength: 51,
+      _hasBody: true,
+      _trailer: '',
+      finished: true,
+      _headerSent: true,
+      _closed: true,
+      socket: [TLSSocket],
+      _header: 'POST /v1/account/sessions HTTP/1.1\r\n' +
+        'Accept: application/json, text/plain, */*\r\n' +
+        'Content-Type: application/json\r\n' +
+        'X-Appwrite-Project: 694ad3e9003e02c8ecf0\r\n' +
+        'User-Agent: axios/1.13.2\r\n' +
+        'Content-Length: 51\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: sfo.cloud.appwrite.io\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'POST',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: undefined,
+      joinDuplicateHeaders: undefined,
+      path: '/v1/account/sessions',
+      _ended: true,
+      res: [IncomingMessage],
+      aborted: false,
+      timeoutCb: null,
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: false,
+      host: 'sfo.cloud.appwrite.io',
+      protocol: 'https:',
+      _redirectable: [Writable],
+      [Symbol(shapeMode)]: false,
+      [Symbol(kCapture)]: false,
+      [Symbol(kBytesWritten)]: 0,
+      [Symbol(kNeedDrain)]: false,
+      [Symbol(corked)]: 0,
+      [Symbol(kOutHeaders)]: [Object: null prototype],
+      [Symbol(errored)]: null,
+      [Symbol(kHighWaterMark)]: 16384,
+      [Symbol(kRejectNonStandardBodyWrites)]: false,
+      [Symbol(kUniqueHeaders)]: null
+    },
+    data: {
+      message: 'Rate limit for the current endpoint has been exceeded. Please try again after some time.',
+      code: 429,
+      type: 'general_rate_limit_exceeded',
+      version: '1.8.0'
+    }
+  },
+  status: 429
+}

@@ -17,15 +17,17 @@ describe('BigTech Plugin', () => {
   describe('Serviços Disponíveis', () => {
     it('deve incluir o serviço BVS BASICA PF', () => {
       const services = plugin.getAvailableServices();
-      expect(services).toContain('1539-bvs-basica-pf');
+      const serviceIds = services.map((s: any) => s.id);
+      expect(serviceIds).toContain('1539-bvs-basica-pf');
     });
 
     it('deve ter todos os serviços esperados', () => {
       const services = plugin.getAvailableServices();
-      expect(services).toContain('320-contatos-por-cep');
-      expect(services).toContain('36-busca-nome-uf');
-      expect(services).toContain('411-crlv-ro');
-      expect(services).toContain('1539-bvs-basica-pf');
+      const serviceIds = services.map((s: any) => s.id);
+      expect(serviceIds).toContain('320-contatos-por-cep');
+      expect(serviceIds).toContain('36-busca-nome-uf');
+      expect(serviceIds).toContain('411-crlv-ro');
+      expect(serviceIds).toContain('1539-bvs-basica-pf');
     });
   });
 

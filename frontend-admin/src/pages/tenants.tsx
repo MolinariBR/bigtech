@@ -18,7 +18,7 @@ interface Tenant {
   id: string;
   name: string;
   status: 'active' | 'inactive';
-  plugins: string[];
+  plugins: any[]; // Array de objetos com pluginId, status, config
   createdAt: string;
 }
 
@@ -259,9 +259,9 @@ export default function TenantsPage() {
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {tenant.plugins.length > 0 ? (
-                            tenant.plugins.slice(0, 2).map((plugin, index) => (
+                            tenant.plugins.slice(0, 2).map((plugin: any, index: number) => (
                               <Badge key={index} variant="outline" className="text-xs">
-                                {plugin}
+                                {plugin.pluginId || plugin}
                               </Badge>
                             ))
                           ) : (
@@ -435,12 +435,20 @@ export default function TenantsPage() {
                 <Label htmlFor="plugins">Plugins (separados por vírgula)</Label>
                 <Input
                   id="plugins"
-                  placeholder="plugin1, plugin2, plugin3"
-                  value={editingTenant.plugins.join(', ')}
-                  onChange={(e) => setEditingTenant({
-                    ...editingTenant,
-                    plugins: e.target.value.split(', ').filter(p => p.trim())
-                  })}
+                  placeholder="bigtech, infosimples"
+                  value={editingTenant.plugins.map((p: any) => p.pluginId || p).join(', ')}
+                  onChange={(e) => {
+                    const pluginNames = e.target.value.split(', ').filter(p => p.trim());
+                    const plugins = pluginNames.map(name => ({
+                      pluginId: name,
+                      status: 'active',
+                      config: {}
+                    }));
+                    setEditingTenant({
+                      ...editingTenant,
+                      plugins
+                    });
+                  }}
                 />
                 <p className="text-sm text-muted-foreground">
                   Digite os nomes dos plugins separados por vírgula

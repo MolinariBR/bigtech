@@ -503,6 +503,7 @@ const authenticateMiddleware = async (req, res, next) => {
         const token = authHeader.substring(7);
         const decoded = await AuthService.verifyToken(token);
         if (!decoded) {
+            console.log('[auth.middleware] Token verification failed for endpoint:', req.path);
             return res.status(401).json({
                 success: false,
                 message: 'Token inválido ou expirado'
@@ -801,6 +802,7 @@ router.post('/refresh', async (req, res) => {
     try {
         if (process.env.NODE_ENV !== 'production') {
             console.log('[auth.refresh] incoming cookies:', req.headers.cookie || '<no-cookie-header>');
+            console.log('[auth.refresh] refreshToken from body:', refreshToken || '<no-token>');
         }
     }
     catch (e) {
@@ -818,18 +820,24 @@ router.post('/refresh', async (req, res) => {
         }
     }
     if (!refreshToken) {
+        console.log('[auth.refresh] No refresh token found, returning 400');
         return res.status(400).json({ success: false, message: 'refreshToken é obrigatório' });
     }
+    console.log('[auth.refresh] Verifying refresh token...');
     const decoded = await AuthService.verifyRefreshToken(refreshToken);
     if (!decoded) {
+        console.log('[auth.refresh] Invalid refresh token');
         return res.status(401).json({ success: false, message: 'Refresh token inválido ou expirado' });
     }
+    console.log('[auth.refresh] Refresh token valid, userId:', decoded.userId);
     try {
         // Buscar usuário e gerar novos tokens
         const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', decoded.userId);
         if (!user || user.status !== 'active') {
+            console.log('[auth.refresh] User not found or inactive:', decoded.userId);
             return res.status(401).json({ success: false, message: 'Usuário inválido' });
         }
+        console.log('[auth.refresh] Generating new tokens for user:', user.$id);
         const token = AuthService.generateToken(user);
         const newRefresh = await AuthService.generateRefreshToken(user);
         const refreshMaxAge = parseInt(process.env.REFRESH_EXPIRES_MS || String(7 * 24 * 60 * 60 * 1000));
@@ -839,6 +847,7 @@ router.post('/refresh', async (req, res) => {
             sameSite: 'lax',
             maxAge: refreshMaxAge
         });
+        console.log('[auth.refresh] Tokens generated successfully');
         return res.json({ success: true, token });
     }
     catch (error) {
@@ -854,16 +863,23 @@ router.post('/logout', exports.authenticateMiddleware, async (req, res) => {
 });
 router.get('/me/plugins', exports.authenticateMiddleware, async (req, res) => {
     try {
+        console.log('[auth.me.plugins] User authenticated:', req.userId);
         const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', req.userId);
+        console.log('[auth.me.plugins] User data:', { id: user.$id, tenantId: user.tenantId, allowedPlugins: user.allowedPlugins });
         // Buscar tenant para obter plugins ativos
         const tenant = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', user.tenantId);
+        console.log('[auth.me.plugins] Tenant data:', { id: tenant.$id, plugins: tenant.plugins });
         const tenantPlugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
         const userAllowedPlugins = Array.isArray(user.allowedPlugins) ? user.allowedPlugins : [];
+        console.log('[auth.me.plugins] tenantPlugins:', tenantPlugins);
+        console.log('[auth.me.plugins] userAllowedPlugins:', userAllowedPlugins);
         // Filtrar apenas plugins ativos no tenant que o usuário pode acessar
         const activeTenantPluginIds = tenantPlugins
             .filter(tp => tp.status === 'active')
             .map(tp => tp.pluginId);
-        const allowedPlugins = activeTenantPluginIds.filter(pluginId => userAllowedPlugins.includes(pluginId));
+        console.log('[auth.me.plugins] activeTenantPluginIds:', activeTenantPluginIds);
+        const allowedPlugins = activeTenantPluginIds.filter(pluginId => userAllowedPlugins.some(up => up.pluginId === pluginId && up.allowed === true));
+        console.log('[auth.me.plugins] allowedPlugins:', allowedPlugins);
         // Buscar detalhes dos plugins permitidos
         const pluginsDetails = [];
         for (const pluginId of allowedPlugins) {
@@ -883,6 +899,7 @@ router.get('/me/plugins', exports.authenticateMiddleware, async (req, res) => {
                 console.warn(`Could not load details for plugin ${pluginId}:`, error);
             }
         }
+        console.log('[auth.me.plugins] pluginsDetails:', pluginsDetails);
         res.json({
             success: true,
             plugins: pluginsDetails

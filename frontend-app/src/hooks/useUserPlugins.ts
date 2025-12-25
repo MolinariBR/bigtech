@@ -20,6 +20,20 @@ export function useUserPlugins() {
       setLoading(true);
       setError(null);
 
+      // Verificar se estamos no cliente e se há token
+      if (typeof window === 'undefined') {
+        setPlugins([]);
+        setLoading(false);
+        return;
+      }
+
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setPlugins([]);
+        setLoading(false);
+        return;
+      }
+
       const data = await apiCall('/api/auth/me/plugins');
       setPlugins(data.plugins || []);
     } catch (err) {
@@ -31,7 +45,10 @@ export function useUserPlugins() {
   };
 
   useEffect(() => {
-    loadUserPlugins();
+    // Só executar no cliente
+    if (typeof window !== 'undefined') {
+      loadUserPlugins();
+    }
   }, []);
 
   return {

@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import Footer from '@/components/Footer'
 import { useDynamicValidation, InitialFormField } from '@/hooks/useDynamicValidation'
+import { apiCall, API_CONFIG } from '@/lib/api'
 
 interface VeicularQuery {
   id: string
@@ -55,39 +56,59 @@ export default function ConsultaVeicular() {
       try {
         setLoadingServices(true)
 
-        // Buscar serviços do plugin infosimples via API REST
-        const response = await fetch('/api/plugins/infosimples/services', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // TODO: Adicionar autenticação se necessário
-          }
+        // Primeiro, buscar plugins permitidos para o usuário
+        const userPluginsResponse = await apiCall(API_CONFIG.endpoints.auth.me.plugins, {
+          method: 'GET'
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        if (data.services) {
-          // Filtrar apenas serviços veiculares
-          const veicularServices = data.services
-            .filter((service: any) => service.category === 'veicular')
-            .map((service: any) => ({
-              id: service.id,
-              name: service.name,
-              description: service.description,
-              price: service.price,
-              plugin: 'infosimples',
-              active: service.active
-            }))
-
-          setVeicularQueries(veicularServices)
-        } else {
-          console.error('Erro ao buscar serviços:', data.error)
+        if (!userPluginsResponse.success || !userPluginsResponse.plugins) {
+          console.warn('Nenhum plugin permitido encontrado para o usuário')
           setVeicularQueries([])
+          return
         }
+
+        const allowedPlugins = userPluginsResponse.plugins
+        console.log('Plugins permitidos para o usuário:', allowedPlugins)
+
+        // Buscar serviços veiculares de todos os plugins permitidos
+        const allVeicularServices: VeicularQuery[] = []
+
+        for (const plugin of allowedPlugins) {
+          try {
+            console.log(`Buscando serviços veiculares do plugin: ${plugin.id}`)
+
+            const data = await apiCall(API_CONFIG.endpoints.plugins.services(plugin.id), {
+              method: 'GET',
+              headers: {
+                'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
+              }
+            })
+
+            if (data.services) {
+              // Filtrar apenas serviços veiculares e adicionar identificação do plugin
+              const veicularServices = data.services
+                .filter((service: any) => service.category === 'veicular')
+                .map((service: any) => ({
+                  id: service.id,
+                  name: service.name,
+                  description: service.description,
+                  price: service.price,
+                  plugin: plugin.id,
+                  active: service.active
+                }))
+
+              allVeicularServices.push(...veicularServices)
+              console.log(`Encontrados ${veicularServices.length} serviços veiculares no plugin ${plugin.id}`)
+            }
+          } catch (error) {
+            console.warn(`Erro ao buscar serviços do plugin ${plugin.id}:`, error)
+            // Continua com os outros plugins mesmo se um falhar
+          }
+        }
+
+        console.log(`Total de serviços veiculares encontrados: ${allVeicularServices.length}`)
+        setVeicularQueries(allVeicularServices)
+
       } catch (error) {
         console.error('Erro ao buscar serviços veiculares:', error)
         setVeicularQueries([])
@@ -125,7 +146,7 @@ export default function ConsultaVeicular() {
 
     try {
       // Executar consulta via plugin
-      const response = await fetch('/api/plugins/infosimples/execute', {
+      const response = await fetch(`/api/plugins/${selectedQuery.plugin}/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

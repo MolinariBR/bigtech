@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'
 const INJECT_TENANT = process.env.NEXT_PUBLIC_INJECT_TENANT === 'true' || process.env.NODE_ENV !== 'production'
 const DEFAULT_TENANT = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'default'
 

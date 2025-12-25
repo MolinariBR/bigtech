@@ -1505,8 +1505,60 @@ export class BigTechPlugin implements Plugin {
   /**
    * Lista todos os serviços disponíveis
    */
-  getAvailableServices(): string[] {
-    return Object.keys(bigTechServices);
+  getAvailableServices(): any[] {
+    const services = Object.keys(bigTechServices);
+    return services.map(serviceCode => {
+      const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
+      const price = servicePrices[category as keyof typeof servicePrices];
+
+      // Mapeamento de nomes e descrições dos serviços
+      const serviceNames: Record<string, string> = {
+        '320-contatos-por-cep': 'Contatos por CEP',
+        '327-quod-cadastral-pf': 'QUOD Cadastral PF',
+        '424-validid-localizacao': 'ValidaID - Localização',
+        '431-dados-cnh': 'Dados de CNH',
+        '36-busca-nome-uf': 'Busca por Nome+UF',
+        '39-teleconfirma': 'TeleConfirma',
+        '41-protesto-sintetico-nacional': 'Protesto Sintético Nacional',
+        '304-positivo-define-risco-cnpj': 'Positivo Define Risco CNPJ',
+        'positivo-acerta-essencial-pf': 'Positivo Acerta Essencial PF',
+        '1539-bvs-basica-pf': 'BVS Básica PF',
+        '11-bvs-basica-pj': 'BVS Básica PJ',
+        '1003-scr-premium-integracoes': 'SCR Premium + Integrações',
+        '411-crlv-ro': 'CRLV RO',
+        '412-crlv-rr': 'CRLV RR',
+        '415-crlv-se': 'CRLV SE',
+        '416-crlv-sp': 'CRLV SP'
+      };
+
+      const serviceDescriptions: Record<string, string> = {
+        '320-contatos-por-cep': 'Consulta informações de contatos associados a um CEP específico',
+        '327-quod-cadastral-pf': 'Consulta completa de dados cadastrais de pessoa física',
+        '424-validid-localizacao': 'Validação de identidade com localização geográfica',
+        '431-dados-cnh': 'Consulta dados da Carteira Nacional de Habilitação',
+        '36-busca-nome-uf': 'Busca de informações de crédito por nome e estado',
+        '39-teleconfirma': 'Confirmação de titularidade de telefone',
+        '41-protesto-sintetico-nacional': 'Consulta de protestos em todo território nacional',
+        '304-positivo-define-risco-cnpj': 'Análise de risco para pessoa jurídica',
+        'positivo-acerta-essencial-pf': 'Relatório essencial de crédito pessoa física',
+        '1539-bvs-basica-pf': 'Relatório básico BVS para pessoa física',
+        '11-bvs-basica-pj': 'Relatório básico BVS para pessoa jurídica',
+        '1003-scr-premium-integracoes': 'Relatório premium SCR com integrações completas',
+        '411-crlv-ro': 'Consulta de CRLV para Rondônia',
+        '412-crlv-rr': 'Consulta de CRLV para Roraima',
+        '415-crlv-se': 'Consulta de CRLV para Sergipe',
+        '416-crlv-sp': 'Consulta de CRLV para São Paulo'
+      };
+
+      return {
+        id: serviceCode,
+        name: serviceNames[serviceCode] || serviceCode,
+        description: serviceDescriptions[serviceCode] || `Serviço ${serviceCode}`,
+        category: category,
+        price: price,
+        active: true // Todos os serviços estão ativos por padrão
+      };
+    });
   }
 
   /**

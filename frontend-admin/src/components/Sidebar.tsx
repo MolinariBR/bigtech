@@ -67,12 +67,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       description: 'Serviços disponíveis'
     },
     {
-      name: 'Acesso a Plugins',
-      href: '/plugin-access',
-      icon: Shield,
-      description: 'Controle de acesso por tenant'
-    },
-    {
       name: 'Billing',
       href: '/billing',
       icon: CreditCard,

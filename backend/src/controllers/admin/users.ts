@@ -63,9 +63,11 @@ router.put('/:id', async (req, res) => {
 
     // Atualizar apenas campos que existem no documento
     const updateData: any = {};
-    if (email !== undefined && existing.email !== undefined) updateData.email = email;
-    if (role !== undefined && existing.role !== undefined) updateData.role = role;
-    if (status !== undefined && existing.status !== undefined) updateData.status = status;
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (role !== undefined) updateData.role = role;
+    if (status !== undefined) updateData.status = status;
 
     // Se não há campos para atualizar, retornar sucesso
     if (Object.keys(updateData).length === 0) {

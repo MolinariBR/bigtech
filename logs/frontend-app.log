@@ -8,11 +8,4 @@
    - Experiments (use at your own risk):
      · webpackBuildWorker
 
- ✓ Ready in 8.7s
- ○ Compiling /_error ...
- ✓ Compiled /_error in 12s (355 modules)
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- ✓ Compiled in 1560ms (160 modules)
- ○ Compiling /consulta/credito ...
- ✓ Compiled /consulta/credito in 815ms (353 modules)
- ✓ Compiled /_error in 410ms (355 modules)
+ ✓ Ready in 2.3s

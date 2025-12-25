@@ -6,6 +6,7 @@ import { Router, Request, Response } from 'express';
 import { pluginLoader } from '../core/pluginLoader';
 import { PluginContext } from '../core/pluginLoader';
 import { validatePluginAccess, AuthenticatedRequest } from '../middleware/pluginAccess';
+import { authenticateMiddleware } from '../core/auth';
 
 const router = Router();
 
@@ -127,7 +128,7 @@ router.get('/active', validateExecutionContext, async (req: Request, res: Respon
 });
 
 // GET /api/plugins/:pluginId/services - Listar serviços disponíveis do plugin
-router.get('/:pluginId/services', pluginAccessMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:pluginId/services', authenticateMiddleware, pluginAccessMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { pluginId } = req.params;
     const tenantId = req.tenantId || 'default'; // Usar tenantId do middleware ou default

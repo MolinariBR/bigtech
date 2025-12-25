@@ -11,17 +11,14 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   const { theme } = useTheme();
 
   useEffect(() => {
-    // Tentar renovar access token ao iniciar (envia cookie HttpOnly)
-    fetch('http://localhost:8080/api/auth/refresh', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && data.success && data.token) {
-          localStorage.setItem('accessToken', data.token);
-        }
-      })
-      .catch(() => {
-        // silent
-      });
+    // Verificar se já existe um token válido no localStorage
+    const existingToken = localStorage.getItem('accessToken');
+    if (!existingToken) {
+      // Se não há token, redirecionar para login apenas se não estiver na página de login
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
   }, []);
 
   const noLayout = (Component as any).noLayout;

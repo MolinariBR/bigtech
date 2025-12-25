@@ -8,9 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Edit, Power, PowerOff, Trash2, MoreHorizontal, CheckCircle, XCircle, Loader2, User, Mail } from 'lucide-react';
+import { Plus, Edit, Power, PowerOff, MoreHorizontal, CheckCircle, XCircle, Loader2, User, Mail, Shield, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface User {
@@ -28,6 +27,20 @@ interface User {
   updatedAt: string;
 }
 
+interface UserPlugin {
+  pluginId: string;
+  allowed: boolean;
+  config?: Record<string, any>;
+}
+
+interface AvailablePlugin {
+  id: string;
+  name: string;
+  type: string;
+  version: string;
+  config?: Record<string, any>;
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +49,11 @@ export default function UsersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [togglingStatus, setTogglingStatus] = useState<string | null>(null);
-  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [managingPluginsUser, setManagingPluginsUser] = useState<User | null>(null);
+  const [userPlugins, setUserPlugins] = useState<UserPlugin[]>([]);
+  const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
+  const [isPluginsDialogOpen, setIsPluginsDialogOpen] = useState(false);
+  const [savingPlugins, setSavingPlugins] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -62,6 +79,42 @@ export default function UsersPage() {
     loadUsers();
   }, []);
 
+  const loadAvailablePlugins = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('http://localhost:8080/api/admin/plugin-access/plugins/available', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) throw new Error('Failed to load available plugins');
+      const data = await res.json();
+      setAvailablePlugins(data.plugins || []);
+    } catch (err) {
+      console.error('Error loading available plugins:', err);
+      toast.error('Erro ao carregar plugins disponíveis');
+    }
+  };
+
+  const loadUserPlugins = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch(`http://localhost:8080/api/admin/plugin-access/users/${userId}/plugins`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) throw new Error('Failed to load user plugins');
+      const data = await res.json();
+      setUserPlugins(data.plugins || []);
+    } catch (err) {
+      console.error('Error loading user plugins:', err);
+      toast.error('Erro ao carregar plugins do usuário');
+    }
+  };
+
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setIsDialogOpen(true);
@@ -73,17 +126,25 @@ export default function UsersPage() {
     try {
       setSaving(true);
       const token = localStorage.getItem('accessToken');
+      
+      // Preparar dados para atualização
+      const updateData: any = {
+        email: editingUser.email,
+        role: editingUser.role,
+        status: editingUser.status
+      };
+
+      // Adicionar campos opcionais se fornecidos
+      if (editingUser.name !== undefined) updateData.name = editingUser.name;
+      if (editingUser.phone !== undefined) updateData.phone = editingUser.phone;
+
       const res = await fetch(`http://localhost:8080/api/admin/users/${editingUser.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          email: editingUser.email,
-          role: editingUser.role,
-          status: editingUser.status
-        })
+        body: JSON.stringify(updateData)
       });
 
       if (!res.ok) throw new Error('Failed to update user');
@@ -125,25 +186,53 @@ export default function UsersPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleManageUserPlugins = async (user: User) => {
+    setManagingPluginsUser(user);
+    await loadAvailablePlugins();
+    await loadUserPlugins(user.id);
+    setIsPluginsDialogOpen(true);
+  };
+
+  const handleSaveUserPlugins = async () => {
+    if (!managingPluginsUser) return;
+
     try {
+      setSavingPlugins(true);
       const token = localStorage.getItem('accessToken');
-      const res = await fetch(`http://localhost:8080/api/admin/users/${userId}`, {
-        method: 'DELETE',
+      const allowedPlugins = userPlugins
+        .filter(up => up.allowed)
+        .map(up => up.pluginId);
+
+      const res = await fetch(`http://localhost:8080/api/admin/plugin-access/users/${managingPluginsUser.id}/plugins`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ allowedPlugins })
       });
 
-      if (!res.ok) throw new Error('Failed to delete user');
+      if (!res.ok) throw new Error('Failed to update user plugins');
 
-      toast.success('Usuário excluído com sucesso');
-      setDeletingUser(null);
-      loadUsers();
+      toast.success('Plugins do usuário atualizados com sucesso');
+      setIsPluginsDialogOpen(false);
+      setManagingPluginsUser(null);
+      setUserPlugins([]);
     } catch (err) {
-      toast.error('Erro ao excluir usuário');
+      toast.error('Erro ao atualizar plugins do usuário');
+    } finally {
+      setSavingPlugins(false);
     }
+  };
+
+  const handleToggleUserPlugin = (pluginId: string, allowed: boolean) => {
+    setUserPlugins(prev =>
+      prev.map(up =>
+        up.pluginId === pluginId
+          ? { ...up, allowed }
+          : up
+      )
+    );
   };
 
   const formatIdentifier = (identifier: string) => {
@@ -206,6 +295,7 @@ export default function UsersPage() {
                 <TableHead>Tenant</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Créditos</TableHead>
+                <TableHead>Plugins</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -227,6 +317,16 @@ export default function UsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>{user.credits}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleManageUserPlugins(user)}
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Gerenciar
+                    </Button>
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -254,36 +354,6 @@ export default function UsersPage() {
                           )}
                           {user.status === 'active' ? 'Desativar' : 'Ativar'}
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o usuário {formatIdentifier(user.identifier)}?
-                                Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -300,6 +370,75 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog de gerenciamento de plugins */}
+      <Dialog open={isPluginsDialogOpen} onOpenChange={setIsPluginsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              Gerenciar Plugins - {managingPluginsUser?.identifier}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {availablePlugins.length === 0 ? (
+              <div className="text-center py-8">
+                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Nenhum plugin disponível</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {availablePlugins.map((plugin) => {
+                  const userPlugin = userPlugins.find(up => up.pluginId === plugin.id);
+                  const isAllowed = userPlugin?.allowed || false;
+
+                  return (
+                    <div key={plugin.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{plugin.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Tipo: {plugin.type} | Versão: {plugin.version}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={isAllowed ? 'default' : 'secondary'}>
+                          {isAllowed ? 'Permitido' : 'Bloqueado'}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleUserPlugin(plugin.id, !isAllowed)}
+                        >
+                          {isAllowed ? 'Bloquear' : 'Permitir'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setIsPluginsDialogOpen(false)}
+                disabled={savingPlugins}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveUserPlugins} disabled={savingPlugins}>
+                {savingPlugins ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de edição */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -320,15 +459,28 @@ export default function UsersPage() {
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="name">Nome</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={editingUser.email || ''}
-                    onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-                    placeholder="email@exemplo.com"
+                    id="name"
+                    value={editingUser.name || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                    placeholder="Nome completo"
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Telefone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    value={editingUser.phone || ''}
+                    onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                    placeholder="(11) 99999-9999"
                     className="pl-10"
                   />
                 </div>

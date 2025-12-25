@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import Footer from '@/components/Footer'
 import { useDynamicValidation, InitialFormField } from '@/hooks/useDynamicValidation'
+import { apiCall, API_CONFIG } from '@/lib/api'
 
 interface OtherQuery {
   id: string
@@ -55,39 +56,59 @@ export default function ConsultaOutros() {
       try {
         setLoadingServices(true)
 
-        // Buscar serviços do plugin infosimples via API REST
-        const response = await fetch('/api/plugins/infosimples/services', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // TODO: Adicionar autenticação se necessário
-          }
+        // Primeiro, buscar plugins permitidos para o usuário
+        const userPluginsResponse = await apiCall(API_CONFIG.endpoints.auth.me.plugins, {
+          method: 'GET'
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        if (data.services) {
-          // Filtrar apenas serviços de outras categorias
-          const otherServices = data.services
-            .filter((service: any) => service.category === 'outros')
-            .map((service: any) => ({
-              id: service.id,
-              name: service.name,
-              description: service.description,
-              price: service.price,
-              plugin: 'infosimples',
-              active: service.active
-            }))
-
-          setOtherQueries(otherServices)
-        } else {
-          console.error('Erro ao buscar serviços:', data.error)
+        if (!userPluginsResponse.success || !userPluginsResponse.plugins) {
+          console.warn('Nenhum plugin permitido encontrado para o usuário')
           setOtherQueries([])
+          return
         }
+
+        const allowedPlugins = userPluginsResponse.plugins
+        console.log('Plugins permitidos para o usuário:', allowedPlugins)
+
+        // Buscar serviços de outras categorias de todos os plugins permitidos
+        const allOtherServices: OtherQuery[] = []
+
+        for (const plugin of allowedPlugins) {
+          try {
+            console.log(`Buscando serviços diversos do plugin: ${plugin.id}`)
+
+            const data = await apiCall(API_CONFIG.endpoints.plugins.services(plugin.id), {
+              method: 'GET',
+              headers: {
+                'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
+              }
+            })
+
+            if (data.services) {
+              // Filtrar apenas serviços de outras categorias e adicionar identificação do plugin
+              const otherServices = data.services
+                .filter((service: any) => service.category === 'outros')
+                .map((service: any) => ({
+                  id: service.id,
+                  name: service.name,
+                  description: service.description,
+                  price: service.price,
+                  plugin: plugin.id,
+                  active: service.active
+                }))
+
+              allOtherServices.push(...otherServices)
+              console.log(`Encontrados ${otherServices.length} serviços diversos no plugin ${plugin.id}`)
+            }
+          } catch (error) {
+            console.warn(`Erro ao buscar serviços do plugin ${plugin.id}:`, error)
+            // Continua com os outros plugins mesmo se um falhar
+          }
+        }
+
+        console.log(`Total de serviços diversos encontrados: ${allOtherServices.length}`)
+        setOtherQueries(allOtherServices)
+
       } catch (error) {
         console.error('Erro ao buscar serviços de outras categorias:', error)
         setOtherQueries([])
@@ -125,7 +146,7 @@ export default function ConsultaOutros() {
 
     try {
       // Executar consulta via plugin
-      const response = await fetch('/api/plugins/infosimples/execute', {
+      const response = await fetch(`/api/plugins/${selectedQuery.plugin}/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

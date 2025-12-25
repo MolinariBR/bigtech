@@ -10,7 +10,10 @@ export const API_CONFIG = {
       active: '/api/plugins/active'
     },
     auth: {
-      refresh: '/api/auth/refresh'
+      refresh: '/api/auth/refresh',
+      me: {
+        plugins: '/api/auth/me/plugins'
+      }
     }
   }
 }
@@ -22,9 +25,13 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   // por causa da política SameSite). Para endpoints externos mantenha o baseURL.
   const url = endpoint.startsWith('/api') ? endpoint : `${API_CONFIG.baseURL}${endpoint}`
 
+  // Obter token de autenticação se disponível
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers
     },
     credentials: 'include', // Para enviar cookies

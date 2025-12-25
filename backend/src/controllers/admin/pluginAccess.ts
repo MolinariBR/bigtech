@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { Query } from 'node-appwrite';
 import { AppwriteService as LocalAppwriteService } from '../../lib/appwrite';
 import { auditLogger } from '../../core/audit';
+import { pluginLoader } from '../../core/pluginLoader';
 
 const router = Router();
 const appwrite = LocalAppwriteService.getInstance();
@@ -27,9 +28,14 @@ router.get('/tenants/:tenantId/plugins', async (req, res) => {
     }
 
     // Retornar plugins do tenant
-    const plugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
+    let tenantPlugins = [];
+    try {
+      tenantPlugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
+    } catch (e) {
+      tenantPlugins = [];
+    }
 
-    res.json({ plugins });
+    res.json({ plugins: tenantPlugins });
   } catch (error) {
     console.error('Failed to get tenant plugins:', error);
     res.status(500).json({ error: 'Failed to load tenant plugins' });
@@ -86,7 +92,12 @@ router.put('/tenants/:tenantId/plugins', async (req, res) => {
 
     // Atualizar allowedPlugins de cada usuário
     for (const user of users.documents) {
-      const currentAllowed = Array.isArray(user.allowedPlugins) ? user.allowedPlugins : [];
+      let currentAllowed = [];
+      try {
+        currentAllowed = user.allowedPlugins ? JSON.parse(user.allowedPlugins) : [];
+      } catch (e) {
+        currentAllowed = [];
+      }
       const newAllowed = [...new Set([...currentAllowed, ...activePluginIds])];
 
       await appwrite.databases.updateDocument(
@@ -107,7 +118,12 @@ router.put('/tenants/:tenantId/plugins', async (req, res) => {
       userId: (req as any).userId,
     });
 
-    const formattedPlugins = Array.isArray(updatedTenant.plugins) ? updatedTenant.plugins : [];
+    let formattedPlugins = [];
+    try {
+      formattedPlugins = updatedTenant.plugins ? JSON.parse(updatedTenant.plugins) : [];
+    } catch (e) {
+      formattedPlugins = [];
+    }
 
     res.json({ plugins: formattedPlugins });
   } catch (error) {
@@ -139,13 +155,24 @@ router.get('/users/:userId/plugins', async (req, res) => {
       user.tenantId
     );
 
-    const tenantPlugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
-    const userAllowedPlugins = Array.isArray(user.allowedPlugins) ? user.allowedPlugins : [];
+    let tenantPlugins = [];
+    try {
+      tenantPlugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
+    } catch (e) {
+      tenantPlugins = [];
+    }
+
+    let userAllowedPlugins = [];
+    try {
+      userAllowedPlugins = user.allowedPlugins ? JSON.parse(user.allowedPlugins) : [];
+    } catch (e) {
+      userAllowedPlugins = [];
+    }
 
     // Retornar plugins disponíveis (ativos no tenant) e quais o usuário pode acessar
     const availablePlugins = tenantPlugins
-      .filter(tp => tp.status === 'active')
-      .map(tp => ({
+      .filter((tp: any) => tp.status === 'active')
+      .map((tp: any) => ({
         pluginId: tp.pluginId,
         allowed: userAllowedPlugins.includes(tp.pluginId),
         config: tp.config
@@ -186,10 +213,15 @@ router.put('/users/:userId/plugins', async (req, res) => {
       user.tenantId
     );
 
-    const tenantPlugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
+    let tenantPlugins = [];
+    try {
+      tenantPlugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
+    } catch (e) {
+      tenantPlugins = [];
+    }
     const activeTenantPluginIds = tenantPlugins
-      .filter(tp => tp.status === 'active')
-      .map(tp => tp.pluginId);
+      .filter((tp: any) => tp.status === 'active')
+      .map((tp: any) => tp.pluginId);
 
     // Validar que usuário só pode ter acesso a plugins ativos no tenant
     const invalidPlugins = allowedPlugins.filter(pluginId => !activeTenantPluginIds.includes(pluginId));
@@ -218,7 +250,12 @@ router.put('/users/:userId/plugins', async (req, res) => {
       userId: (req as any).userId,
     });
 
-    const formattedAllowedPlugins = Array.isArray(updatedUser.allowedPlugins) ? updatedUser.allowedPlugins : [];
+    let formattedAllowedPlugins = [];
+    try {
+      formattedAllowedPlugins = updatedUser.allowedPlugins ? JSON.parse(updatedUser.allowedPlugins) : [];
+    } catch (e) {
+      formattedAllowedPlugins = [];
+    }
 
     res.json({ allowedPlugins: formattedAllowedPlugins });
   } catch (error) {
@@ -230,19 +267,17 @@ router.put('/users/:userId/plugins', async (req, res) => {
 // GET /api/admin/plugins/available - Listar todos plugins de consulta disponíveis no sistema
 router.get('/plugins/available', async (req, res) => {
   try {
-    // Buscar plugins do tipo 'consulta' disponíveis no sistema
-    const plugins = await appwrite.databases.listDocuments(
-      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-      'plugins',
-      [Query.equal('type', 'consulta'), Query.equal('status', 'enabled')]
-    );
+    // Buscar plugins de consulta disponíveis no pluginLoader
+    const allPlugins = pluginLoader.getAvailablePlugins();
+    const consultaPlugins = allPlugins.filter(p => p.type === 'consulta');
 
-    const availablePlugins = plugins.documents.map(doc => ({
-      id: doc.$id,
-      name: doc.name,
-      type: doc.type,
-      version: doc.version,
-      config: doc.config
+    // Mapear para o formato esperado pelo frontend
+    const availablePlugins = consultaPlugins.map(plugin => ({
+      id: plugin.id,
+      name: plugin.id === 'bigtech' ? 'BigTech' : plugin.id === 'infosimples' ? 'InfoSimples' : plugin.id,
+      type: plugin.type,
+      version: plugin.version,
+      config: {}
     }));
 
     res.json({ plugins: availablePlugins });

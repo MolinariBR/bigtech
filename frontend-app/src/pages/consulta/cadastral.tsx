@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import Footer from '@/components/Footer'
 import { useDynamicValidation, InitialFormField } from '@/hooks/useDynamicValidation'
+import { apiCall, API_CONFIG } from '@/lib/api'
 
 interface CadastralQuery {
   id: string
@@ -55,39 +56,59 @@ export default function ConsultaCadastral() {
       try {
         setLoadingServices(true)
 
-        // Buscar serviços do plugin infosimples via API REST
-        const response = await fetch('/api/plugins/infosimples/services', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // TODO: Adicionar autenticação se necessário
-          }
+        // Primeiro, buscar plugins permitidos para o usuário
+        const userPluginsResponse = await apiCall(API_CONFIG.endpoints.auth.me.plugins, {
+          method: 'GET'
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        if (data.services) {
-          // Filtrar apenas serviços cadastrais
-          const cadastralServices = data.services
-            .filter((service: any) => service.category === 'cadastral')
-            .map((service: any) => ({
-              id: service.id,
-              name: service.name,
-              description: service.description,
-              price: service.price,
-              plugin: 'infosimples',
-              active: service.active
-            }))
-
-          setCadastralQueries(cadastralServices)
-        } else {
-          console.error('Erro ao buscar serviços:', data.error)
+        if (!userPluginsResponse.success || !userPluginsResponse.plugins) {
+          console.warn('Nenhum plugin permitido encontrado para o usuário')
           setCadastralQueries([])
+          return
         }
+
+        const allowedPlugins = userPluginsResponse.plugins
+        console.log('Plugins permitidos para o usuário:', allowedPlugins)
+
+        // Buscar serviços cadastrais de todos os plugins permitidos
+        const allCadastralServices: CadastralQuery[] = []
+
+        for (const plugin of allowedPlugins) {
+          try {
+            console.log(`Buscando serviços cadastrais do plugin: ${plugin.id}`)
+
+            const data = await apiCall(API_CONFIG.endpoints.plugins.services(plugin.id), {
+              method: 'GET',
+              headers: {
+                'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
+              }
+            })
+
+            if (data.services) {
+              // Filtrar apenas serviços cadastrais e adicionar identificação do plugin
+              const cadastralServices = data.services
+                .filter((service: any) => service.category === 'cadastral')
+                .map((service: any) => ({
+                  id: service.id,
+                  name: service.name,
+                  description: service.description,
+                  price: service.price,
+                  plugin: plugin.id,
+                  active: service.active
+                }))
+
+              allCadastralServices.push(...cadastralServices)
+              console.log(`Encontrados ${cadastralServices.length} serviços cadastrais no plugin ${plugin.id}`)
+            }
+          } catch (error) {
+            console.warn(`Erro ao buscar serviços do plugin ${plugin.id}:`, error)
+            // Continua com os outros plugins mesmo se um falhar
+          }
+        }
+
+        console.log(`Total de serviços cadastrais encontrados: ${allCadastralServices.length}`)
+        setCadastralQueries(allCadastralServices)
+
       } catch (error) {
         console.error('Erro ao buscar serviços cadastrais:', error)
         setCadastralQueries([])
@@ -125,7 +146,7 @@ export default function ConsultaCadastral() {
 
     try {
       // Executar consulta via plugin
-      const response = await fetch('/api/plugins/infosimples/execute', {
+      const response = await fetch(`/api/plugins/${selectedQuery.plugin}/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
