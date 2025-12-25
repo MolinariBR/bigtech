@@ -5,6 +5,8 @@ import { BigTechConfig, BigTechServiceValidation, BigTechValidationRule, BigTech
 
 export const defaultConfig: BigTechConfig = {
   baseUrl: 'https://api.consultasbigtech.com.br/json/service.aspx',
+  homologationUrl: 'https://api.consultasbigtech.com.br/json/homologa.aspx',
+  useHomologation: false, // false = produção, true = homologação
   timeout: 30000, // 30 segundos
   retries: 3, // Aumentar retries para lidar com rate limiting
   retryDelayMs: 5000, // Aumentar delay base entre retries
@@ -29,6 +31,9 @@ export const bigTechServices = {
   '41-protesto-sintetico-nacional': '/consultas/credito/protesto-sintetico',
   '304-positivo-define-risco-cnpj': '/consultas/credito/positivo-risco-cnpj',
   'positivo-acerta-essencial-pf': '/consultas/credito/positivo-essencial-pf',
+  '1539-bvs-basica-pf': '/consultas/credito/bvs-basica-pf',
+  '11-bvs-basica-pj': '/consultas/credito/bvs-basica-pj',
+  '1003-scr-premium-integracoes': '/consultas/credito/scr-premium-integracoes',
 
   // Veículo
   '411-crlv-ro': '/consultas/veicular/crlv-ro',
@@ -51,6 +56,9 @@ export const bigTechProductCodes = {
   '41-protesto-sintetico-nacional': '1451',
   '304-positivo-define-risco-cnpj': '1518',
   'positivo-acerta-essencial-pf': '1519',
+  '1539-bvs-basica-pf': '1539',
+  '11-bvs-basica-pj': '11',
+  '1003-scr-premium-integracoes': '1003',
 
   // Veículo
   '411-crlv-ro': '1527',
@@ -73,6 +81,9 @@ export const serviceCategories = {
   '41-protesto-sintetico-nacional': 'credito',
   '304-positivo-define-risco-cnpj': 'credito',
   'positivo-acerta-essencial-pf': 'credito',
+  '1539-bvs-basica-pf': 'credito',
+  '11-bvs-basica-pj': 'credito',
+  '1003-scr-premium-integracoes': 'credito',
 
   // Veículo
   '411-crlv-ro': 'veicular',
@@ -231,6 +242,98 @@ export const serviceValidations: BigTechServiceValidation = {
       field: 'cpf',
       type: 'cpf',
       required: true
+    }
+  ],
+  '1539-bvs-basica-pf': [
+    {
+      field: 'cpf',
+      type: 'cpf',
+      required: true
+    }
+  ],
+  '11-bvs-basica-pj': [
+    {
+      field: 'cnpj',
+      type: 'cnpj',
+      required: true,
+      customValidator: (value: string) => {
+        const cnpj = value.replace(/\D/g, '');
+        if (cnpj.length !== 14) return false;
+        // Validação de CNPJ básica
+        let sum = 0;
+        let multiplier = 5;
+        for (let i = 0; i < 12; i++) {
+          sum += parseInt(cnpj.charAt(i)) * multiplier;
+          multiplier = multiplier === 2 ? 9 : multiplier - 1;
+        }
+        let remainder = sum % 11;
+        if (remainder < 2) remainder = 0;
+        else remainder = 11 - remainder;
+        if (remainder !== parseInt(cnpj.charAt(12))) return false;
+
+        sum = 0;
+        multiplier = 6;
+        for (let i = 0; i < 13; i++) {
+          sum += parseInt(cnpj.charAt(i)) * multiplier;
+          multiplier = multiplier === 2 ? 9 : multiplier - 1;
+        }
+        remainder = sum % 11;
+        if (remainder < 2) remainder = 0;
+        else remainder = 11 - remainder;
+        return remainder === parseInt(cnpj.charAt(13));
+      }
+    }
+  ],
+  '1003-scr-premium-integracoes': [
+    {
+      field: 'cpfCnpj',
+      type: 'cpf', // Usando 'cpf' como base, mas validação customizada aceitará ambos
+      required: true,
+      customValidator: (value: string) => {
+        const documento = value.replace(/\D/g, '');
+        if (documento.length === 11) {
+          // Validação de CPF
+          let sum = 0;
+          for (let i = 0; i < 9; i++) {
+            sum += parseInt(documento.charAt(i)) * (10 - i);
+          }
+          let remainder = (sum * 10) % 11;
+          if (remainder === 10 || remainder === 11) remainder = 0;
+          if (remainder !== parseInt(documento.charAt(9))) return false;
+
+          sum = 0;
+          for (let i = 0; i < 10; i++) {
+            sum += parseInt(documento.charAt(i)) * (11 - i);
+          }
+          remainder = (sum * 10) % 11;
+          if (remainder === 10 || remainder === 11) remainder = 0;
+          return remainder === parseInt(documento.charAt(10));
+        } else if (documento.length === 14) {
+          // Validação de CNPJ
+          let sum = 0;
+          let multiplier = 5;
+          for (let i = 0; i < 12; i++) {
+            sum += parseInt(documento.charAt(i)) * multiplier;
+            multiplier = multiplier === 2 ? 9 : multiplier - 1;
+          }
+          let remainder = sum % 11;
+          if (remainder < 2) remainder = 0;
+          else remainder = 11 - remainder;
+          if (remainder !== parseInt(documento.charAt(12))) return false;
+
+          sum = 0;
+          multiplier = 6;
+          for (let i = 0; i < 13; i++) {
+            sum += parseInt(documento.charAt(i)) * multiplier;
+            multiplier = multiplier === 2 ? 9 : multiplier - 1;
+          }
+          remainder = sum % 11;
+          if (remainder < 2) remainder = 0;
+          else remainder = 11 - remainder;
+          return remainder === parseInt(documento.charAt(13));
+        }
+        return false;
+      }
     }
   ],
 

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
 import { Plus, Settings, Power, PowerOff, Trash2, MoreHorizontal, CheckCircle, XCircle, Loader2, Puzzle, Zap, Package, Play, Pause } from 'lucide-react';
 import * as api from '@/lib/api/plugins';
 import * as tenantApi from '@/lib/api/tenants';
@@ -28,7 +29,14 @@ interface Plugin {
   type: string;
   version: string;
   status: string;
-  config: { apiKey?: string; fallbackSources?: string[] } | null;
+  config: {
+    apiKey?: string;
+    fallbackSources?: string[];
+    // BigTech specific config
+    baseUrl?: string;
+    homologationUrl?: string;
+    useHomologation?: boolean;
+  } | null;
   installedAt: string | null;
   updatedAt: string | null;
 }
@@ -449,6 +457,69 @@ export default function PluginManager() {
           </DialogHeader>
           {editingPlugin && (
             <div className="space-y-4 py-4">
+              {/* Configurações específicas do BigTech */}
+              {editingPlugin.type === 'consulta' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="baseUrl">URL de Produção</Label>
+                    <Input
+                      id="baseUrl"
+                      placeholder="https://api.consultasbigtech.com.br/json/service.aspx"
+                      value={editingPlugin.config?.baseUrl || ''}
+                      onChange={(e) => setEditingPlugin({
+                        ...editingPlugin,
+                        config: {
+                          ...(editingPlugin.config || {}),
+                          baseUrl: e.target.value
+                        }
+                      })}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      URL da API BigTech para ambiente de produção
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="homologationUrl">URL de Homologação</Label>
+                    <Input
+                      id="homologationUrl"
+                      placeholder="https://api.consultasbigtech.com.br/json/homologa.aspx"
+                      value={editingPlugin.config?.homologationUrl || ''}
+                      onChange={(e) => setEditingPlugin({
+                        ...editingPlugin,
+                        config: {
+                          ...(editingPlugin.config || {}),
+                          homologationUrl: e.target.value
+                        }
+                      })}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      URL da API BigTech para ambiente de homologação
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={editingPlugin.config?.useHomologation || false}
+                      onCheckedChange={(checked) => setEditingPlugin({
+                        ...editingPlugin,
+                        config: {
+                          ...(editingPlugin.config || {}),
+                          useHomologation: checked
+                        }
+                      })}
+                    />
+                    <Label htmlFor="useHomologation" className="text-sm font-medium">
+                      Usar Homologação
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Quando ativado, usa a URL de homologação ao invés da produção
+                  </p>
+                </>
+              )}
+
+              {/* Configurações genéricas */}
               <div className="space-y-2">
                 <Label htmlFor="apiKey">API Key</Label>
                 <Input

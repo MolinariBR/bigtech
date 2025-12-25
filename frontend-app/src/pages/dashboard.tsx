@@ -6,6 +6,7 @@ import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import Footer from '../components/Footer'
 import { useRouter } from 'next/router'
+import { useUserPlugins } from '../hooks/useUserPlugins'
 import {
   CreditCard,
   Users,
@@ -24,12 +25,14 @@ import {
   Shield,
   Star,
   ArrowRight,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react'
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
+  const { plugins: userPlugins, loading: pluginsLoading, error: pluginsError } = useUserPlugins()
 
   const userCredits = {
     available: 150,
@@ -81,6 +84,7 @@ export default function Dashboard() {
 
   const services = [
     {
+      id: 'credito',
       title: 'Consulta de Crédito',
       description: 'Verifique informações de crédito de pessoas físicas e jurídicas',
       icon: CreditCard,
@@ -89,6 +93,7 @@ export default function Dashboard() {
       popular: true
     },
     {
+      id: 'cadastral',
       title: 'Consulta Cadastral',
       description: 'Dados cadastrais completos para validação de identidade',
       icon: Users,
@@ -97,6 +102,7 @@ export default function Dashboard() {
       popular: false
     },
     {
+      id: 'veicular',
       title: 'Consulta Veicular',
       description: 'Informações veiculares por placa e estado',
       icon: Car,
@@ -105,6 +111,7 @@ export default function Dashboard() {
       popular: false
     },
     {
+      id: 'outros',
       title: 'Outros Serviços',
       description: 'Consultas diversas e especializadas',
       icon: FileText,
@@ -113,6 +120,11 @@ export default function Dashboard() {
       popular: false
     }
   ]
+
+  // Filtrar serviços baseado nos plugins permitidos para o usuário
+  const availableServices = services.filter(service =>
+    userPlugins.some(plugin => plugin.id === service.id)
+  )
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -246,40 +258,66 @@ export default function Dashboard() {
                     Ver Todos
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {services.map((service, index) => (
-                    <Card
-                      key={index}
-                      className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
-                      onClick={() => router.push(service.href)}
-                    >
-                      {service.popular && (
-                        <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
-                          <Star className="w-3 h-3" />
-                          Popular
-                        </div>
-                      )}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                      <CardHeader className="pb-3">
-                        <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${service.color} rounded-xl mb-3 shadow-lg`}>
-                          <service.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                          {service.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <CardDescription className="text-sm leading-relaxed mb-4">
-                          {service.description}
-                        </CardDescription>
-                        <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors gap-2">
-                          Acessar
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+
+                {pluginsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Carregando serviços...</span>
+                  </div>
+                ) : pluginsError ? (
+                  <Card className="p-6 text-center">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <p className="text-red-600 mb-4">Erro ao carregar serviços disponíveis</p>
+                    <Button onClick={() => window.location.reload()} variant="outline">
+                      Tentar Novamente
+                    </Button>
+                  </Card>
+                ) : availableServices.length === 0 ? (
+                  <Card className="p-6 text-center">
+                    <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Nenhum serviço disponível no momento
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Entre em contato com o administrador do seu tenant para habilitar serviços.
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {availableServices.map((service, index) => (
+                      <Card
+                        key={index}
+                        className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+                        onClick={() => router.push(service.href)}
+                      >
+                        {service.popular && (
+                          <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                            <Star className="w-3 h-3" />
+                            Popular
+                          </div>
+                        )}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                        <CardHeader className="pb-3">
+                          <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${service.color} rounded-xl mb-3 shadow-lg`}>
+                            <service.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                            {service.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <CardDescription className="text-sm leading-relaxed mb-4">
+                            {service.description}
+                          </CardDescription>
+                          <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors gap-2">
+                            Acessar
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Recent Consultations */}

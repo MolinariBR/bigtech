@@ -284,7 +284,7 @@ export class AuthService {
         try {
           const tenantData = {
             name: tenantId, // Usar tenantId como nome base
-            status: 'pending', // Status pending para aprovação admin
+            status: 'active', // Status ativo para permitir uso imediato
             plugins: '[]' // Plugins padrão como string JSON
           };
 
@@ -300,7 +300,7 @@ export class AuthService {
             tenantId,
             action: 'tenant_auto_created',
             resource: `tenant:${tenantId}`,
-            details: { name: tenantId, status: 'pending' },
+            details: { name: tenantId, status: 'active', source: 'auto_onboarding' },
             ipAddress: 'system'
           });
 
@@ -886,14 +886,25 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 
   try {
-    // Derivar tenantId do domínio do email ou da empresa
+    // Derivar tenantId com lógica melhorada
     let tenantId = 'default';
-    if (company) {
+
+    if (company && company.trim()) {
+      // Se empresa fornecida, usar ela (sanitize)
       tenantId = company.toLowerCase().replace(/[^a-z0-9]/g, '');
     } else {
-      const domain = email.split('@')[1];
-      if (domain) {
-        tenantId = domain.split('.')[0].toLowerCase();
+      // Se não há empresa, verificar se domínio é corporativo
+      const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase();
+
+      // Lista de domínios pessoais comuns que não devem criar tenants separados
+      const personalDomains = ['gmail', 'hotmail', 'outlook', 'yahoo', 'icloud', 'live', 'protonmail', 'aol', 'yandex'];
+
+      if (domain && !personalDomains.includes(domain)) {
+        // Domínio parece corporativo, usar como tenantId
+        tenantId = domain;
+      } else {
+        // Domínio pessoal - usar tenant padrão compartilhado
+        tenantId = 'default';
       }
     }
 
@@ -908,7 +919,7 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(409).json({ success: false, message: 'Email já cadastrado' });
     }
 
-    // Garantir que tenant existe (auto-onboarding)
+    // Garantir que tenant existe (auto-onboarding com status ativo)
     const tenantExists = await AuthService.ensureTenantExists(tenantId);
 
     // Criar documento na coleção users
@@ -944,7 +955,9 @@ router.post('/register', async (req: Request, res: Response) => {
       details: {
         email,
         name,
-        tenantCreated: !tenantExists
+        company: company || null,
+        tenantCreated: !tenantExists,
+        tenantId
       },
       ipAddress: 'system'
     });
@@ -952,7 +965,8 @@ router.post('/register', async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'Conta criada com sucesso',
-      tenantCreated: !tenantExists
+      tenantCreated: !tenantExists,
+      tenantId
     });
   } catch (err: any) {
     console.error('Erro no registro:', err);
@@ -1031,7 +1045,7 @@ router.post('/logout', authenticateMiddleware, async (req: Request, res: Respons
   res.json({ success: true, message: 'Logout realizado com sucesso' });
 });
 
-router.get('/me', authenticateMiddleware, async (req: Request, res: Response) => {
+router.get('/me/plugins', authenticateMiddleware, async (req: Request, res: Response) => {
   try {
     const user = await appwrite.databases.getDocument(
       process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
@@ -1039,21 +1053,58 @@ router.get('/me', authenticateMiddleware, async (req: Request, res: Response) =>
       req.userId!
     );
 
+    // Buscar tenant para obter plugins ativos
+    const tenant = await appwrite.databases.getDocument(
+      process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+      'tenants',
+      user.tenantId
+    );
+
+    const tenantPlugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
+    const userAllowedPlugins = Array.isArray(user.allowedPlugins) ? user.allowedPlugins : [];
+
+    // Filtrar apenas plugins ativos no tenant que o usuário pode acessar
+    const activeTenantPluginIds = tenantPlugins
+      .filter(tp => tp.status === 'active')
+      .map(tp => tp.pluginId);
+
+    const allowedPlugins = activeTenantPluginIds.filter(pluginId =>
+      userAllowedPlugins.includes(pluginId)
+    );
+
+    // Buscar detalhes dos plugins permitidos
+    const pluginsDetails = [];
+    for (const pluginId of allowedPlugins) {
+      try {
+        const pluginDoc = await appwrite.databases.listDocuments(
+          process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
+          'plugins',
+          [Query.equal('$id', pluginId)]
+        );
+
+        if (pluginDoc.documents.length > 0) {
+          const plugin = pluginDoc.documents[0];
+          pluginsDetails.push({
+            id: plugin.$id,
+            name: plugin.name,
+            type: plugin.type,
+            config: plugin.config
+          });
+        }
+      } catch (error) {
+        console.warn(`Could not load details for plugin ${pluginId}:`, error);
+      }
+    }
+
     res.json({
       success: true,
-      user: {
-        id: user.$id,
-        identifier: AuthValidators.formatIdentifier(user.identifier),
-        type: user.type,
-        role: user.role,
-        credits: user.credits,
-        status: user.status
-      }
+      plugins: pluginsDetails
     });
   } catch (error) {
+    console.error('Error getting user plugins:', error);
     res.status(500).json({
       success: false,
-      message: 'Erro ao buscar dados do usuário'
+      message: 'Erro ao buscar plugins do usuário'
     });
   }
 });

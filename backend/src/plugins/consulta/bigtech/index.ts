@@ -174,6 +174,15 @@ export class BigTechPlugin implements Plugin {
       case '370-positivo-acerta-essencial-pf':
         return this.preparePositivoAcertaEssencialPfPayload(input);
 
+      case '1539-bvs-basica-pf':
+        return this.prepareBvsBasicaPfPayload(input);
+
+      case '11-bvs-basica-pj':
+        return this.prepareBvsBasicaPjPayload(input);
+
+      case '1003-scr-premium-integracoes':
+        return this.prepareScrPremiumIntegracoesPayload(input);
+
       case '411-crlv-ro':
         return this.prepareCrlvRoPayload(input);
 
@@ -466,6 +475,101 @@ export class BigTechPlugin implements Plugin {
   }
 
   /**
+   * Prepara payload para serviço 1539 - BVS BASICA PF
+   */
+  private prepareBvsBasicaPfPayload(input: any): any {
+    if (!input.cpfCnpj) {
+      throw new Error('CPFCNPJ é obrigatório para o serviço 1539-BVS BASICA PF');
+    }
+
+    // Usar validador centralizado para CPF
+    const cpfValidado = this.validator.validateCpf(input.cpfCnpj);
+
+    return {
+      CodigoProduto: "1539",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        TipoPessoa: "F",
+        CPFCNPJ: cpfValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 11 - BVS BASICA PJ
+   */
+  private prepareBvsBasicaPjPayload(input: any): any {
+    if (!input.cpfCnpj) {
+      throw new Error('CPFCNPJ é obrigatório para o serviço 11-BVS BASICA PJ');
+    }
+
+    // Usar validador centralizado para CNPJ
+    const cnpjValidado = this.validator.validateCnpj(input.cpfCnpj);
+
+    return {
+      CodigoProduto: "11",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        TipoPessoa: "J",
+        CPFCNPJ: cnpjValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
+   * Prepara payload para serviço 1003 - SCR Premium + Integrações
+   */
+  private prepareScrPremiumIntegracoesPayload(input: any): any {
+    if (!input.cpfCnpj) {
+      throw new Error('CPFCNPJ é obrigatório para o serviço 1003-SCR Premium + Integrações');
+    }
+
+    const documento = input.cpfCnpj.replace(/\D/g, '');
+    let tipoPessoa: string;
+    let documentoValidado: string;
+
+    if (documento.length === 11) {
+      tipoPessoa = "F";
+      documentoValidado = this.validator.validateCpf(input.cpfCnpj);
+    } else if (documento.length === 14) {
+      tipoPessoa = "J";
+      documentoValidado = this.validator.validateCnpj(input.cpfCnpj);
+    } else {
+      throw new Error('CPFCNPJ deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ)');
+    }
+
+    return {
+      CodigoProduto: "1003",
+      Versao: "20180521",
+      ChaveAcesso: this.config.apiKey || '',
+      Info: {
+        Solicitante: input.solicitante || ''
+      },
+      Parametros: {
+        TipoPessoa: tipoPessoa,
+        CPFCNPJ: documentoValidado
+      },
+      WebHook: {
+        UrlCallBack: input.webhookUrl || ''
+      }
+    };
+  }
+
+  /**
    * Prepara payload para serviço 411 - CRLV RO
    */
   private prepareCrlvRoPayload(input: any): any {
@@ -582,9 +686,12 @@ export class BigTechPlugin implements Plugin {
     // Obter timeout baseado na categoria do serviço
     const timeout = this.getTimeoutForService(serviceCode);
 
+    // Escolher URL baseada na configuração
+    const url = this.config.useHomologation ? this.config.homologationUrl : this.config.baseUrl;
+
     for (let attempt = 0; attempt <= this.config.retries; attempt++) {
       try {
-        const response = await fetch('https://api.consultasbigtech.com.br/json/service.aspx', {
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -674,6 +781,15 @@ export class BigTechPlugin implements Plugin {
 
       case '370-positivo-acerta-essencial-pf':
         return this.normalizePositivoAcertaEssencialPfResponse(response);
+
+      case '1539-bvs-basica-pf':
+        return this.normalizeBvsBasicaPfResponse(response);
+
+      case '11-bvs-basica-pj':
+        return this.normalizeBvsBasicaPjResponse(response);
+
+      case '1003-scr-premium-integracoes':
+        return this.normalizeScrPremiumIntegracoesResponse(response);
 
       // Serviços Veiculares
       case '411-crlv-ro':
@@ -949,6 +1065,110 @@ export class BigTechPlugin implements Plugin {
       dados: {
         // Este serviço retorna apenas análise de risco, sem dados específicos
         analiseRisco: true
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 1539 - BVS BASICA PF
+   */
+  private normalizeBvsBasicaPfResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '1539-bvs-basica-pf',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        tipoPessoa: params.TIPO_PESSOA,
+        cpfCnpj: params.CPFCNPJ
+      },
+      dados: {
+        receitaFederal: dadosRetornados.DADOS_RECEITA_FEDERAL === "1",
+        informacoesAlertasRestricoes: dadosRetornados.INFORMACOES_ALERTAS_RESTRICOES === "1",
+        dadosAgenciaBancaria: dadosRetornados.DADOS_AGENCIA_BANCARIA === "1",
+        pendenciasFinanceiras: dadosRetornados.PENDENCIAS_FINANCEIRAS === "1",
+        protestos: dadosRetornados.PROTESTO_ANALITICO === "1",
+        recheque: dadosRetornados.RECHEQUE === "1",
+        contumacia: dadosRetornados.CONTUMACIA === "1",
+        enderecoCep: dadosRetornados.ENDERECO_DO_CEP === "1",
+        credCadastral: response.CREDCADASTRAL || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 11 - BVS BASICA PJ
+   */
+  private normalizeBvsBasicaPjResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '11-bvs-basica-pj',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        tipoPessoa: params.TIPO_PESSOA,
+        cpfCnpj: params.CPFCNPJ
+      },
+      dados: {
+        receitaFederal: dadosRetornados.DADOS_RECEITA_FEDERAL === "1",
+        informacoesAlertasRestricoes: dadosRetornados.INFORMACOES_ALERTAS_RESTRICOES === "1",
+        dadosAgenciaBancaria: dadosRetornados.DADOS_AGENCIA_BANCARIA === "1",
+        pendenciasFinanceiras: dadosRetornados.PENDENCIAS_FINANCEIRAS === "1",
+        protestos: dadosRetornados.PROTESTO_ANALITICO === "1",
+        recheque: dadosRetornados.RECHEQUE === "1",
+        contumacia: dadosRetornados.CONTUMACIA === "1",
+        enderecoCep: dadosRetornados.ENDERECO_DO_CEP === "1",
+        credCadastral: response.CREDCADASTRAL || {}
+      },
+      rawResponse: response
+    };
+  }
+
+  /**
+   * Normaliza resposta do serviço 1003 - SCR Premium + Integrações
+   */
+  private normalizeScrPremiumIntegracoesResponse(response: any): any {
+    const header = response.HEADER;
+    const info = header.INFORMACOES_RETORNO;
+    const params = header.PARAMETROS;
+    const dadosRetornados = header.DADOS_RETORNADOS;
+
+    return {
+      success: true,
+      service: '1003-scr-premium-integracoes',
+      chaveConsulta: info.CHAVE_CONSULTA,
+      dataHora: info.DATA_HORA_CONSULTA,
+      parametros: {
+        tipoPessoa: params.TIPO_PESSOA,
+        cpfCnpj: params.CPFCNPJ
+      },
+      dados: {
+        // SCR Premium inclui dados completos de crédito
+        receitaFederal: dadosRetornados.DADOS_RECEITA_FEDERAL === "1",
+        informacoesAlertasRestricoes: dadosRetornados.INFORMACOES_ALERTAS_RESTRICOES === "1",
+        dadosAgenciaBancaria: dadosRetornados.DADOS_AGENCIA_BANCARIA === "1",
+        pendenciasFinanceiras: dadosRetornados.PENDENCIAS_FINANCEIRAS === "1",
+        protestos: dadosRetornados.PROTESTO_ANALITICO === "1",
+        recheque: dadosRetornados.RECHEQUE === "1",
+        contumacia: dadosRetornados.CONTUMACIA === "1",
+        enderecoCep: dadosRetornados.ENDERECO_DO_CEP === "1",
+        score: dadosRetornados.SCORE === "1",
+        relatorioScr: dadosRetornados.RELATORIO_SCR === "1",
+        relatorioScrSintetico: dadosRetornados.RELATORIO_SCR_SINTETICO === "1",
+        relatorioScrEncapsulado: dadosRetornados.RELATORIO_SCR_ENCAPSULADO === "1",
+        credCadastral: response.CREDCADASTRAL || {}
       },
       rawResponse: response
     };

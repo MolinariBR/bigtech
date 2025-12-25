@@ -46,9 +46,16 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       description: 'Visão geral do sistema'
     },
     {
+      name: 'Usuários',
+      href: '/users',
+      icon: Users,
+      badge: '120',
+      description: 'Gerenciar usuários do app'
+    },
+    {
       name: 'Tenants',
       href: '/tenants',
-      icon: Users,
+      icon: Shield,
       badge: '15',
       description: 'Gerenciar organizações'
     },
@@ -58,6 +65,12 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       icon: Puzzle,
       badge: '8',
       description: 'Serviços disponíveis'
+    },
+    {
+      name: 'Acesso a Plugins',
+      href: '/plugin-access',
+      icon: Shield,
+      description: 'Controle de acesso por tenant'
     },
     {
       name: 'Billing',

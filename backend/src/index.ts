@@ -23,6 +23,8 @@ import { adminTenantsRouter } from './controllers/admin/tenants';
 import adminSystemSettingsRouter from './controllers/admin/systemSettings';
 import { adminAuditRouter } from './controllers/admin/audit';
 import { adminDashboardRouter } from './controllers/admin/dashboardRouter';
+import { adminPluginAccessRouter } from './controllers/admin/pluginAccess';
+import { adminUsersRouter } from './controllers/admin/users';
 import { pluginsRouter } from './controllers/plugins';
 
 const app = express();
@@ -78,6 +80,8 @@ app.use('/api/admin/tenants', adminTenantsRouter);
 app.use('/api/admin/system-settings', adminSystemSettingsRouter);
 app.use('/api/admin/audit', adminAuditRouter);
 app.use('/api/admin/dashboard', adminDashboardRouter);
+app.use('/api/admin/plugin-access', adminPluginAccessRouter);
+app.use('/api/admin/users', adminUsersRouter);
 
 // Rotas de execução de plugins (após middleware multi-tenant)
 app.use('/api/plugins', pluginsRouter);

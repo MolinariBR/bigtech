@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pluginsRouter = void 0;
 const express_1 = require("express");
 const pluginLoader_1 = require("../core/pluginLoader");
+const pluginAccess_1 = require("../middleware/pluginAccess");
 const router = (0, express_1.Router)();
 exports.pluginsRouter = router;
 // Middleware para validar contexto de execução
@@ -29,8 +30,14 @@ const validateExecutionContext = (req, res, next) => {
     }
     next();
 };
+// Middleware para validar acesso ao plugin específico
+const pluginAccessMiddleware = async (req, res, next) => {
+    const { pluginId } = req.params;
+    const middleware = (0, pluginAccess_1.validatePluginAccess)(pluginId);
+    return middleware(req, res, next);
+};
 // POST /api/plugins/:pluginId/execute - Executar plugin específico
-router.post('/:pluginId/execute', validateExecutionContext, async (req, res) => {
+router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddleware, async (req, res) => {
     try {
         const { pluginId } = req.params;
         const { input = {}, config = {} } = req.body;
@@ -103,7 +110,7 @@ router.get('/active', validateExecutionContext, async (req, res) => {
     }
 });
 // GET /api/plugins/:pluginId/services - Listar serviços disponíveis do plugin
-router.get('/:pluginId/services', async (req, res) => {
+router.get('/:pluginId/services', pluginAccessMiddleware, async (req, res) => {
     try {
         const { pluginId } = req.params;
         const tenantId = req.tenantId || 'default'; // Usar tenantId do middleware ou default

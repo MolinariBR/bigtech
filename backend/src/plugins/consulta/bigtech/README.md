@@ -30,7 +30,10 @@ O plugin BigTech integra 13 serviços de consulta externa da provedora BigTech, 
 | 39 | Teleconfirma | Confirmação telefônica |
 | 41 | Protesto Sintético Nacional | Protesto sintético nacional |
 | 304 | Positivo Define Risco CNPJ | Análise de risco para CNPJ |
-| Positivo Acerta Essencial PF | Positivo Acerta Essencial PF | Positivo essencial pessoa física |
+| 1453 | Positivo Acerta Essencial PF | Positivo essencial pessoa física |
+| 1539 | BVS Básica PF | Consulta BVS Básica para Pessoa Física |
+| 11 | BVS Básica PJ | Consulta BVS Básica para Pessoa Jurídica |
+| 1003 | SCR Premium + Integrações | Consulta que retorna pontuação de crédito e análise de risco com SCR |
 
 ### Veicular (R$ 3,00 cada)
 
@@ -56,11 +59,20 @@ bigtech/
 
 O plugin é configurado através do arquivo `bigtech.yaml` e pode ser personalizado com:
 
-- **baseUrl**: URL base da API BigTech
+- **baseUrl**: URL base da API BigTech para produção
+- **homologationUrl**: URL base da API BigTech para homologação
+- **useHomologation**: Define se deve usar homologação (true) ou produção (false)
 - **timeout**: Timeout das requisições (padrão: 30s)
 - **retries**: Número de tentativas de retry (padrão: 3)
 - **rateLimitPerMinute**: Limite de requisições por minuto (padrão: 10)
 - **minRequestInterval**: Intervalo mínimo entre requisições (padrão: 6s)
+
+### Configuração via Frontend-Admin
+
+No frontend-admin, o usuário pode configurar:
+- **URL de Produção**: `baseUrl`
+- **URL de Homologação**: `homologationUrl`
+- **Ambiente**: Toggle para `useHomologation`
 
 ## Uso
 

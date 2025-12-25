@@ -350,6 +350,120 @@ paths:
               schema:
                 $ref: '#/components/schemas/BigTechErrorResponse'
 
+  /consultas/credito/bvs-basica-pf:
+    post:
+      tags:
+        - Crédito
+      summary: BVS Básica PF
+      description: Consulta BVS Básica para Pessoa Física
+      operationId: consultarBvsBasicaPf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1539"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                TipoPessoa: "F"
+                CPFCNPJ: "12345678901"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/bvs-basica-pj:
+    post:
+      tags:
+        - Crédito
+      summary: BVS Básica PJ
+      description: Consulta BVS Básica para Pessoa Jurídica
+      operationId: consultarBvsBasicaPj
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "11"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                TipoPessoa: "J"
+                CPFCNPJ: "12345678000123"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
+  /consultas/credito/scr-premium-integracoes:
+    post:
+      tags:
+        - Crédito
+      summary: SCR Premium + Integrações
+      description: Consulta que retorna a pontuação de crédito e análise de risco, combinando o score de mercado com o relatório do Banco Central (SCR)
+      operationId: consultarScrPremiumIntegracoes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BigTechRequest'
+            example:
+              CodigoProduto: "1003"
+              Versao: "20180521"
+              ChaveAcesso: "your-access-key"
+              Info:
+                Solicitante: "12345678000123"
+              Parametros:
+                TipoPessoa: "F"
+                CPFCNPJ: "12345678901"
+              WebHook:
+                UrlCallBack: ""
+      responses:
+        '200':
+          description: Consulta realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechResponse'
+        '400':
+          description: Erro na requisição
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BigTechErrorResponse'
+
   /consultas/veicular/crlv-ro:
     post:
       tags:

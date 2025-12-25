@@ -27,6 +27,8 @@ const tenants_1 = require("./controllers/admin/tenants");
 const systemSettings_1 = __importDefault(require("./controllers/admin/systemSettings"));
 const audit_2 = require("./controllers/admin/audit");
 const dashboardRouter_1 = require("./controllers/admin/dashboardRouter");
+const pluginAccess_1 = require("./controllers/admin/pluginAccess");
+const users_1 = require("./controllers/admin/users");
 const plugins_2 = require("./controllers/plugins");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
@@ -74,6 +76,8 @@ app.use('/api/admin/tenants', tenants_1.adminTenantsRouter);
 app.use('/api/admin/system-settings', systemSettings_1.default);
 app.use('/api/admin/audit', audit_2.adminAuditRouter);
 app.use('/api/admin/dashboard', dashboardRouter_1.adminDashboardRouter);
+app.use('/api/admin/plugin-access', pluginAccess_1.adminPluginAccessRouter);
+app.use('/api/admin/users', users_1.adminUsersRouter);
 // Rotas de execução de plugins (após middleware multi-tenant)
 app.use('/api/plugins', plugins_2.pluginsRouter);
 // Inicialização de componentes CORE

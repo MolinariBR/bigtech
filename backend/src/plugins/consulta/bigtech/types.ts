@@ -3,6 +3,8 @@
 
 export interface BigTechConfig {
   baseUrl: string;
+  homologationUrl: string;
+  useHomologation: boolean;
   apiKey?: string;
   timeout: number;
   retries: number;
