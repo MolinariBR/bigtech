@@ -29,7 +29,6 @@ import * as api from '@/lib/api/billing';
 
 interface BillingItem {
   $id: string;
-  tenantId: string;
   userId: string;
   type: string;
   amount: number;
@@ -273,7 +272,7 @@ export default function BillingPage() {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
-                  placeholder="ID, tenant ou usuário..."
+                  placeholder="ID ou usuário..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -350,7 +349,7 @@ export default function BillingPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[120px]">ID</TableHead>
-                    <TableHead className="w-[120px]">Tenant</TableHead>
+                    <TableHead className="w-[120px]">Usuário</TableHead>
                     <TableHead className="w-[120px]">Usuário</TableHead>
                     <TableHead className="w-[120px]">Tipo</TableHead>
                     <TableHead className="w-[120px]">Valor</TableHead>
@@ -366,7 +365,7 @@ export default function BillingPage() {
                         {item.$id.substring(0, 8)}...
                       </TableCell>
                       <TableCell className="font-mono text-sm">
-                        {item.tenantId.substring(0, 8)}...
+                        {item.userId.substring(0, 8)}...
                       </TableCell>
                       <TableCell className="font-mono text-sm">
                         {item.userId.substring(0, 8)}...

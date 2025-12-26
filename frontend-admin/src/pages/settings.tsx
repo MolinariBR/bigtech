@@ -611,7 +611,7 @@ const SettingsPage: React.FC = () => {
                       className={errors.defaultRateLimit ? 'border-red-500' : ''}
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      Consultas por hora por tenant
+                      Consultas por hora por usuário
                     </p>
                     {errors.defaultRateLimit && (
                       <p className="text-sm text-red-500 mt-1">{errors.defaultRateLimit}</p>

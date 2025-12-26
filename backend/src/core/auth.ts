@@ -367,7 +367,16 @@ export class AuthService {
   // Verificar token JWT
   static async verifyToken(token: string): Promise<any | null> {
     try {
-      const decoded = jwt.verify(token, this.JWT_SECRET) as any;
+      let decoded: any;
+      try {
+        decoded = jwt.verify(token, this.JWT_SECRET) as any;
+      } catch (err: unknown) {
+        if (process.env.NODE_ENV !== 'production') {
+          const msg = (err && typeof err === 'object' && 'message' in err) ? (err as any).message : String(err);
+          console.error('[AuthService.verifyToken] jwt.verify error:', msg);
+        }
+        return null;
+      }
 
       // Verificar se usuário ainda existe e está ativo
       const user = await appwrite.databases.getDocument(
@@ -381,7 +390,11 @@ export class AuthService {
       }
 
       return decoded;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV !== 'production') {
+        const stack = (error && typeof error === 'object' && 'stack' in error) ? (error as any).stack : String(error);
+        console.error('[AuthService.verifyToken] unexpected error:', stack);
+      }
       return null;
     }
   }

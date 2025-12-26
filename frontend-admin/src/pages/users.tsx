@@ -18,8 +18,7 @@ interface User {
   name?: string;
   email?: string;
   phone?: string;
-  tenantId: string;
-  type: string;
+  type: string; // 'empresa' | 'usuario_final'
   role: string;
   status: 'active' | 'inactive';
   credits: number;
@@ -297,7 +296,7 @@ export default function UsersPage() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Tenant</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Créditos</TableHead>
                 <TableHead>Plugins</TableHead>
@@ -314,7 +313,9 @@ export default function UsersPage() {
                   <TableCell>{user.email || '-'}</TableCell>
                   <TableCell>{user.phone || '-'}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{user.tenantId}</Badge>
+                    <Badge variant="outline">
+                      {user.type === 'empresa' ? 'Empresa' : 'Usuário Final'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>

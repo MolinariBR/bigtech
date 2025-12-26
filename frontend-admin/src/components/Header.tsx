@@ -4,8 +4,6 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Bell,
   User,
@@ -24,14 +22,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ThemeToggle from './ThemeToggle';
+import { Separator } from '@/components/ui/separator';
 
 interface HeaderProps {
-  tenantName?: string;
   userRole?: string;
   onMenuClick?: () => void;
 }
 
-export default function Header({ tenantName, userRole = 'admin', onMenuClick }: HeaderProps) {
+export default function Header({ userRole = 'admin', onMenuClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 header-shadow smooth-transition">
       <div className="container flex h-16 max-w-screen-2xl items-center px-4 lg:px-6">
@@ -46,7 +44,7 @@ export default function Header({ tenantName, userRole = 'admin', onMenuClick }: 
           <span className="sr-only">Toggle menu</span>
         </Button>
 
-        {/* Logo e identificação do tenant */}
+        {/* Logo */}
         <div className="flex items-center space-x-4 flex-1 lg:flex-none">
           <Link href="/" className="flex items-center space-x-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -56,15 +54,6 @@ export default function Header({ tenantName, userRole = 'admin', onMenuClick }: 
               BigTech Admin
             </div>
           </Link>
-
-          {tenantName && (
-            <>
-              <Separator orientation="vertical" className="h-6" />
-              <Badge variant="secondary" className="text-xs font-medium">
-                {tenantName}
-              </Badge>
-            </>
-          )}
         </div>
 
         {/* Barra de Pesquisa Centralizada */}

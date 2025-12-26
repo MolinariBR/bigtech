@@ -74,10 +74,7 @@ export default function ConsultaCredito() {
             console.log(`Buscando serviços de crédito do plugin: ${plugin.id}`)
 
             const data = await apiCall(API_CONFIG.endpoints.plugins.services(plugin.id), {
-              method: 'GET',
-              headers: {
-                'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
-              }
+              method: 'GET'
             })
 
             if (data.services) {
@@ -144,9 +141,6 @@ export default function ConsultaCredito() {
       // Executar consulta via plugin
       const data = await apiCall(API_CONFIG.endpoints.plugins.execute(selectedQuery.plugin), {
         method: 'POST',
-        headers: {
-          'x-tenant-id': 'default', // TODO: Obter do contexto do usuário
-        },
         body: JSON.stringify({
           input: {
             type: selectedQuery.id,

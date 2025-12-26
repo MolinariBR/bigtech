@@ -53,13 +53,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       description: 'Gerenciar usuários do app'
     },
     {
-      name: 'Tenants',
-      href: '/tenants',
-      icon: Shield,
-      badge: '15',
-      description: 'Gerenciar organizações'
-    },
-    {
       name: 'Plugins',
       href: '/plugins',
       icon: Puzzle,

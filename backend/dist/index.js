@@ -46,15 +46,24 @@ app.use((0, cors_1.default)({
         : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8080'],
     credentials: true
 }));
-// Rate limiting
+// Rate limiting (pode ser desabilitado em testes E2E setando SKIP_RATE_LIMIT=true)
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Aumentar limite para testes
     message: 'Too many requests from this IP, please try again later.'
 });
-app.use(limiter);
+if (process.env.SKIP_RATE_LIMIT === 'true') {
+    console.log('⚠️ SKIP_RATE_LIMIT=true -> rate limiting middleware disabled');
+}
+else {
+    app.use(limiter);
+}
 // Body parsing
 app.use((0, body_parser_1.json)({ limit: '10mb' }));
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 // Endpoint para listar plugins disponíveis (antes do middleware multi-tenant)
 app.get('/api/plugins', (req, res) => {
     try {

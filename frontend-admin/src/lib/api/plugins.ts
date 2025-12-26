@@ -1,6 +1,5 @@
-export async function listPlugins(tenantId?: string) {
-  const url = tenantId ? `http://localhost:8080/api/admin/plugins?tenantId=${encodeURIComponent(tenantId)}` : 'http://localhost:8080/api/admin/plugins';
-  const res = await fetch(url, {
+export async function listPlugins() {
+  const res = await fetch('http://localhost:8080/api/admin/plugins', {
     method: 'GET',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -10,20 +9,19 @@ export async function listPlugins(tenantId?: string) {
   return body.data || body.plugins || body || [];
 }
 
-export async function togglePluginForTenant(tenantId: string, pluginKey: string, action: 'enable' | 'disable') {
-  const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/toggle?tenantId=${encodeURIComponent(tenantId)}`, {
+export async function togglePlugin(pluginKey: string, action: 'enable' | 'disable') {
+  const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/toggle`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action }),
   });
-  if (!res.ok) throw new Error(`togglePluginForTenant failed: ${res.status}`);
+  if (!res.ok) throw new Error(`togglePlugin failed: ${res.status}`);
   return await res.json();
 }
 
-export async function configurePlugin(pluginKey: string, config: any, tenantId?: string) {
-  const url = tenantId ? `http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/config?tenantId=${encodeURIComponent(tenantId)}` : `http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/config`;
-  const res = await fetch(url, {
+export async function configurePlugin(pluginKey: string, config: any) {
+  const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/config`, {
     method: 'PUT',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -33,9 +31,8 @@ export async function configurePlugin(pluginKey: string, config: any, tenantId?:
   return await res.json();
 }
 
-export async function installPlugin(payload: { name: string; type: string; version: string }, tenantId?: string) {
-  const url = tenantId ? `http://localhost:8080/api/admin/plugins?tenantId=${encodeURIComponent(tenantId)}` : 'http://localhost:8080/api/admin/plugins';
-  const res = await fetch(url, {
+export async function installPlugin(payload: { name: string; type: string; version: string }) {
+  const res = await fetch('http://localhost:8080/api/admin/plugins', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -45,9 +42,8 @@ export async function installPlugin(payload: { name: string; type: string; versi
   return await res.json();
 }
 
-export async function removePlugin(pluginKey: string, tenantId?: string) {
-  const url = tenantId ? `http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}?tenantId=${encodeURIComponent(tenantId)}` : `http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}`;
-  const res = await fetch(url, {
+export async function removePlugin(pluginKey: string) {
+  const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}`, {
     method: 'DELETE',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

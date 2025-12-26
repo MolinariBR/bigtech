@@ -46,13 +46,17 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting (pode ser desabilitado em testes E2E setando SKIP_RATE_LIMIT=true)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Aumentar limite para testes
   message: 'Too many requests from this IP, please try again later.'
 });
-app.use(limiter);
+if (process.env.SKIP_RATE_LIMIT === 'true') {
+  console.log('⚠️ SKIP_RATE_LIMIT=true -> rate limiting middleware disabled');
+} else {
+  app.use(limiter);
+}
 
 // Body parsing
 app.use(json({ limit: '10mb' }));

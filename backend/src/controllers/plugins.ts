@@ -12,14 +12,7 @@ const router = Router();
 
 // Middleware para validar contexto de execução
 const validateExecutionContext = (req: Request, res: Response, next: any) => {
-  const { tenantId, userId } = req;
-
-  if (!tenantId) {
-    return res.status(400).json({
-      error: 'Missing tenant context',
-      details: 'tenantId is required in request context'
-    });
-  }
+  const { userId } = req;
 
   // Em desenvolvimento, permitir sem userId ou pegar do header
   if (!userId && process.env.NODE_ENV !== 'production') {
@@ -44,7 +37,7 @@ const pluginAccessMiddleware = async (req: Request, res: Response, next: any) =>
 };
 
 // POST /api/plugins/:pluginId/execute - Executar plugin específico
-router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:pluginId/execute', authenticateMiddleware, validateExecutionContext, pluginAccessMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { pluginId } = req.params;
     const { input = {}, config = {} } = req.body;
@@ -58,21 +51,21 @@ router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddlewa
       });
     }
 
-    // Buscar config salva do plugin para o tenant (simulação para desenvolvimento)
-    const savedConfig = (tenantId && pluginId) ? (global as any).pluginConfigStore?.[tenantId]?.[pluginId] || {} : {};
+    // Buscar config salva do plugin globalmente (simulação para desenvolvimento)
+    const savedConfig = pluginId ? (global as any).pluginConfigStore?.['default']?.[pluginId] || {} : {};
 
     // Mesclar config passada com config salva
     const effectiveConfig = { ...savedConfig, ...config };
 
-    // Criar contexto de execução isolado por tenant
+    // Criar contexto de execução global
     const context: PluginContext = {
-      tenantId: tenantId!,
+      tenantId: 'default', // Sempre usar 'default' para single-tenant
       userId: userId!,
       input,
       config: effectiveConfig
     };
 
-    // Executar plugin com isolamento
+    // Executar plugin
     const result = await pluginLoader.executePlugin(pluginId, context);
 
     if (!result.success) {
@@ -80,8 +73,7 @@ router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddlewa
       return res.status(403).json({
         error: 'Plugin execution failed',
         details: result.error,
-        pluginId,
-        tenantId
+        pluginId
       });
     }
 
@@ -89,7 +81,6 @@ router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddlewa
     res.json({
       success: true,
       pluginId,
-      tenantId,
       userId,
       data: result.data,
       executedAt: new Date().toISOString()
@@ -104,16 +95,13 @@ router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddlewa
   }
 });
 
-// GET /api/plugins/active - Listar plugins ativos para o tenant atual
-router.get('/active', validateExecutionContext, async (req: Request, res: Response) => {
+// GET /api/plugins/active - Listar plugins ativos
+router.get('/active', authenticateMiddleware, validateExecutionContext, async (req: Request, res: Response) => {
   try {
-    const { tenantId } = req;
-
-    // Obter plugins ativos para o tenant
-    const activePlugins = pluginLoader.getActivePluginsForTenant(tenantId!);
+    // Obter plugins ativos globalmente
+    const activePlugins = pluginLoader.getActivePluginsForTenant('default');
 
     res.json({
-      tenantId,
       activePlugins: Array.from(activePlugins),
       count: activePlugins.size
     });
@@ -131,7 +119,6 @@ router.get('/active', validateExecutionContext, async (req: Request, res: Respon
 router.get('/:pluginId/services', authenticateMiddleware, pluginAccessMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { pluginId } = req.params;
-    const tenantId = req.tenantId || 'default'; // Usar tenantId do middleware ou default
 
     if (!pluginId) {
       return res.status(400).json({
@@ -140,13 +127,13 @@ router.get('/:pluginId/services', authenticateMiddleware, pluginAccessMiddleware
       });
     }
 
-    // Verificar se plugin está ativo para o tenant
-    const activePlugins = pluginLoader.getActivePluginsForTenant(tenantId!);
+    // Verificar se plugin está ativo globalmente
+    const activePlugins = pluginLoader.getActivePluginsForTenant('default');
     const isActive = activePlugins.has(pluginId);
     if (!isActive) {
       return res.status(403).json({
         error: 'Plugin not active',
-        message: 'This plugin is not active for your tenant'
+        message: 'This plugin is not active'
       });
     }
 
@@ -171,7 +158,6 @@ router.get('/:pluginId/services', authenticateMiddleware, pluginAccessMiddleware
 
     res.json({
       pluginId,
-      tenantId,
       services,
       count: services.length
     });

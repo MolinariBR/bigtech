@@ -289,7 +289,17 @@ class AuthService {
     // Verificar token JWT
     static async verifyToken(token) {
         try {
-            const decoded = jsonwebtoken_1.default.verify(token, this.JWT_SECRET);
+            let decoded;
+            try {
+                decoded = jsonwebtoken_1.default.verify(token, this.JWT_SECRET);
+            }
+            catch (err) {
+                if (process.env.NODE_ENV !== 'production') {
+                    const msg = (err && typeof err === 'object' && 'message' in err) ? err.message : String(err);
+                    console.error('[AuthService.verifyToken] jwt.verify error:', msg);
+                }
+                return null;
+            }
             // Verificar se usuário ainda existe e está ativo
             const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', decoded.userId);
             if (user.status !== 'active' || user.tenantId !== decoded.tenantId) {
@@ -298,6 +308,10 @@ class AuthService {
             return decoded;
         }
         catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+                const stack = (error && typeof error === 'object' && 'stack' in error) ? error.stack : String(error);
+                console.error('[AuthService.verifyToken] unexpected error:', stack);
+            }
             return null;
         }
     }
@@ -568,49 +582,55 @@ router.post('/admin/login', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
     }
     try {
-        // Tentar criar sessão na Appwrite via REST (evita incompatibilidades do SDK)
-        const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
-        const trimmed = rawEndpoint.replace(/\/$/, '');
-        // Garantir que temos o path /v1 apenas uma vez
-        const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
-        const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
-        let resp;
-        try {
-            resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Appwrite-Project': project
-                },
-                timeout: 5000
-            });
-            if (process.env.NODE_ENV !== 'production') {
-                console.log('[auth.admin.login] Appwrite /account/sessions response status:', resp.status);
-                try {
-                    console.log('[auth.admin.login] Appwrite response data keys:', Object.keys(resp.data || {}));
-                }
-                catch (e) {
-                    // ignore
-                }
-            }
+        // MODO TESTE: Pular validação do Appwrite Accounts se SKIP_APPWRITE_AUTH estiver definido
+        if (process.env.SKIP_APPWRITE_AUTH === 'true') {
+            console.log('[auth.admin.login] MODO TESTE: Pulando validação do Appwrite Accounts');
         }
-        catch (axiosErr) {
-            // Captura detalhes da resposta do Appwrite (401, 400, 500 etc.)
-            if (axiosErr && axiosErr.response) {
-                console.error('[auth.admin.login] Appwrite response error status:', axiosErr.response.status);
-                try {
-                    console.error('[auth.admin.login] Appwrite response error data:', JSON.stringify(axiosErr.response.data));
-                }
-                catch (e) {
-                    console.error('[auth.admin.login] Appwrite response error data (non-serializable)');
-                }
-                // Repassar erro equivalente para tratamento abaixo
-                const status = axiosErr.response.status;
-                if (status === 401) {
-                    return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+        else {
+            // Tentar criar sessão na Appwrite via REST (evita incompatibilidades do SDK)
+            const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
+            const trimmed = rawEndpoint.replace(/\/$/, '');
+            // Garantir que temos o path /v1 apenas uma vez
+            const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+            const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
+            let resp;
+            try {
+                resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Appwrite-Project': project
+                    },
+                    timeout: 5000
+                });
+                if (process.env.NODE_ENV !== 'production') {
+                    console.log('[auth.admin.login] Appwrite /account/sessions response status:', resp.status);
+                    try {
+                        console.log('[auth.admin.login] Appwrite response data keys:', Object.keys(resp.data || {}));
+                    }
+                    catch (e) {
+                        // ignore
+                    }
                 }
             }
-            console.error('[auth.admin.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
-            return res.status(500).json({ success: false, message: 'Erro ao validar credenciais com Appwrite' });
+            catch (axiosErr) {
+                // Captura detalhes da resposta do Appwrite (401, 400, 500 etc.)
+                if (axiosErr && axiosErr.response) {
+                    console.error('[auth.admin.login] Appwrite response error status:', axiosErr.response.status);
+                    try {
+                        console.error('[auth.admin.login] Appwrite response error data:', JSON.stringify(axiosErr.response.data));
+                    }
+                    catch (e) {
+                        console.error('[auth.admin.login] Appwrite response error data (non-serializable)');
+                    }
+                    // Repassar erro equivalente para tratamento abaixo
+                    const status = axiosErr.response.status;
+                    if (status === 401) {
+                        return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+                    }
+                }
+                console.error('[auth.admin.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
+                return res.status(500).json({ success: false, message: 'Erro ao validar credenciais com Appwrite' });
+            }
         }
         // Encontrar admin na coleção `admins` por email
         let admins;
@@ -645,74 +665,124 @@ router.post('/admin/login', async (req, res) => {
 // Rota de login para usuários
 // User login: uses Appwrite Accounts (email + password)
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, tenantId } = req.body;
     if (!email || !password) {
         return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
     }
     try {
-        // Primeiro, verificar se usuário existe no banco de dados
-        let users;
-        try {
-            users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [node_appwrite_1.Query.equal('email', email), node_appwrite_1.Query.equal('status', 'active')]);
-        }
-        catch (userErr) {
-            console.error('[auth.login] Erro ao buscar coleção `users`:', userErr);
-            return res.status(500).json({ success: false, message: 'Erro ao verificar usuário' });
-        }
-        if (!users || users.documents.length === 0) {
-            return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
-        }
-        const user = users.documents[0];
-        // Tentar criar sessão na Appwrite via REST
-        const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
-        const trimmed = rawEndpoint.replace(/\/$/, '');
-        const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
-        const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
-        let resp;
-        try {
-            resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Appwrite-Project': project
-                },
-                timeout: 5000
-            });
-        }
-        catch (axiosErr) {
-            // Se erro 401, pode ser que a conta não exista no Appwrite Accounts
-            // Vamos tentar criar a conta
-            if (axiosErr && axiosErr.response && axiosErr.response.status === 401) {
-                try {
-                    console.log('[auth.login] Conta não encontrada, criando conta no Appwrite Accounts...');
-                    // Criar conta usando o SDK do Appwrite
-                    await appwrite.users.create(node_appwrite_1.ID.unique(), // userId
-                    email, // email
-                    undefined, // phone (não usado)
-                    password, // password
-                    email // name
-                    );
-                    // Agora tentar login novamente
-                    resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Appwrite-Project': project
-                        },
-                        timeout: 5000
-                    });
+        // MODO TESTE: Pular validação do Appwrite Accounts se SKIP_APPWRITE_AUTH estiver definido
+        if (process.env.SKIP_APPWRITE_AUTH === 'true') {
+            console.log('[auth.login] MODO TESTE: Pulando validação do Appwrite Accounts');
+            // Em modo teste, aceitar qualquer email/password e criar usuário automaticamente se não existir
+            let user;
+            try {
+                // Tentar buscar usuário por email
+                const users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [node_appwrite_1.Query.equal('email', email), node_appwrite_1.Query.equal('status', 'active')]);
+                if (users.documents.length > 0) {
+                    user = users.documents[0];
                 }
-                catch (createErr) {
-                    console.error('[auth.login] Erro ao criar/tentar login na conta:', createErr);
-                    return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+                else {
+                    // Criar usuário automaticamente
+                    console.log('[auth.login] Criando usuário automaticamente para:', email);
+                    // Usar tenantId fornecido ou derivar do email
+                    let finalTenantId = tenantId || 'default';
+                    if (!tenantId) {
+                        const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase() || 'default';
+                        finalTenantId = domain === 'gmail' || domain === 'hotmail' ? 'default' : domain;
+                    }
+                    // Garantir que tenant existe
+                    await AuthService.ensureTenantExists(finalTenantId);
+                    // Criar usuário
+                    const userData = {
+                        tenantId: finalTenantId,
+                        identifier: email, // Usar email como identifier
+                        email,
+                        type: 'user',
+                        role: 'user',
+                        status: 'active',
+                        credits: 0,
+                        allowedPlugins: JSON.stringify(['bigtech']), // Plugins padrão
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    user = await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', node_appwrite_1.ID.unique(), userData);
+                    console.log('[auth.login] Usuário criado automaticamente:', user.$id);
                 }
             }
-            else {
-                console.error('[auth.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
-                return res.status(500).json({ success: false, message: 'Erro ao validar credenciais' });
+            catch (dbError) {
+                console.error('[auth.login] Erro ao acessar banco de dados:', dbError);
+                return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
             }
+            // Gerar token JWT para usuário
+            const result = await AuthService.userLoginWithUserDoc(user);
+            res.json(result);
         }
-        // Gerar token JWT para usuário
-        const result = await AuthService.userLoginWithUserDoc(user);
-        res.json(result);
+        else {
+            // Modo produção: validar com Appwrite Accounts
+            // Primeiro, verificar se usuário existe no banco de dados
+            let users;
+            try {
+                users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [node_appwrite_1.Query.equal('email', email), node_appwrite_1.Query.equal('status', 'active')]);
+            }
+            catch (userErr) {
+                console.error('[auth.login] Erro ao buscar coleção `users`:', userErr);
+                return res.status(500).json({ success: false, message: 'Erro ao verificar usuário' });
+            }
+            if (!users || users.documents.length === 0) {
+                return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+            }
+            const user = users.documents[0];
+            // Tentar criar sessão na Appwrite via REST
+            const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'http://localhost/v1';
+            const trimmed = rawEndpoint.replace(/\/$/, '');
+            const apiBase = trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+            const project = process.env.APPWRITE_PROJECT_ID || 'bigtech';
+            let resp;
+            try {
+                resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Appwrite-Project': project
+                    },
+                    timeout: 5000
+                });
+            }
+            catch (axiosErr) {
+                // Se erro 401, pode ser que a conta não exista no Appwrite Accounts
+                // Vamos tentar criar a conta
+                if (axiosErr && axiosErr.response && axiosErr.response.status === 401) {
+                    try {
+                        console.log('[auth.login] Conta não encontrada, criando conta no Appwrite Accounts...');
+                        // Criar conta usando o SDK do Appwrite
+                        await appwrite.users.create(node_appwrite_1.ID.unique(), // userId
+                        email, // email
+                        undefined, // phone (não usado)
+                        password, // password
+                        email // name
+                        );
+                        // Agora tentar login novamente
+                        resp = await axios_1.default.post(`${apiBase}/account/sessions`, { email, password }, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Appwrite-Project': project
+                            },
+                            timeout: 5000
+                        });
+                    }
+                    catch (createErr) {
+                        console.error('[auth.login] Erro ao criar/tentar login na conta:', createErr);
+                        return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
+                    }
+                }
+                else {
+                    console.error('[auth.login] Erro ao chamar Appwrite /account/sessions:', axiosErr);
+                    return res.status(500).json({ success: false, message: 'Erro ao validar credenciais' });
+                }
+            }
+            // Gerar token JWT para usuário
+            const result = await AuthService.userLoginWithUserDoc(user);
+            res.json(result);
+        }
     }
     catch (err) {
         console.error('Erro no user login:', err);

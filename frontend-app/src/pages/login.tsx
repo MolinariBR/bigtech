@@ -31,8 +31,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-Id': 'default'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password }),
         credentials: 'include'

@@ -26,33 +26,30 @@ export function validatePluginAccess(pluginId: string) {
 
       const appwrite = AppwriteService.getInstance();
 
-      // Verificar se o plugin está ativo no tenant
-      const tenantDoc = await appwrite.databases.getDocument(
-        process.env.APPWRITE_DATABASE_ID!,
-        'tenants',
-        user.tenantId
-      );
-
-      const tenantPlugins = tenantDoc.plugins || [];
-      const pluginConfig = tenantPlugins.find((p: any) => p.pluginId === pluginId);
-
-      if (!pluginConfig || pluginConfig.status !== 'active') {
-        return res.status(403).json({
-          error: 'Plugin não disponível para este tenant'
-        });
-      }
-
       // Verificar se o usuário tem permissão individual
+      const userIdToFetch = (user as any).userId || req.userId || (user as any).id;
       const userDoc = await appwrite.databases.getDocument(
         process.env.APPWRITE_DATABASE_ID!,
         'users',
-        user.id
+        userIdToFetch
       );
 
-      const userAllowedPlugins = userDoc.allowedPlugins || [];
-      const userHasAccess = userAllowedPlugins.some((p: any) =>
-        p.pluginId === pluginId && p.allowed === true
-      );
+      // user.allowedPlugins pode ser: string JSON (ex: '["bigtech"]'), array de strings,
+      // ou array de objetos { pluginId, allowed }.
+      let userAllowedPlugins: any = userDoc.allowedPlugins || [];
+      try {
+        if (typeof userAllowedPlugins === 'string') {
+          userAllowedPlugins = JSON.parse(userAllowedPlugins);
+        }
+        if (Array.isArray(userAllowedPlugins) && userAllowedPlugins.length > 0 && typeof userAllowedPlugins[0] === 'string') {
+          // Converter ['bigtech'] -> [{ pluginId: 'bigtech', allowed: true }]
+          userAllowedPlugins = userAllowedPlugins.map((id: string) => ({ pluginId: id, allowed: true }));
+        }
+      } catch (e) {
+        userAllowedPlugins = [];
+      }
+
+      const userHasAccess = (userAllowedPlugins || []).some((p: any) => p && p.pluginId === pluginId && p.allowed === true);
 
       if (!userHasAccess) {
         return res.status(403).json({

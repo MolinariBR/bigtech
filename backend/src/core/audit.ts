@@ -6,7 +6,7 @@ import { AppwriteService } from '../lib/appwrite';
 import { Query } from 'appwrite';
 
 interface AuditEntry {
-  tenantId: string;
+  tenantId?: string; // Opcional após remoção de tenants
   userId?: string;
   action: string;
   resource: string;
@@ -54,7 +54,7 @@ export class AuditLogger {
     try {
       // Gravamos apenas os campos suportados pelo schema atual da collection
       const auditData = {
-        tenantId: entry.tenantId,
+        tenantId: entry.tenantId || null,
         userId: entry.userId || null,
         action: entry.action,
         resource: entry.resource,
@@ -77,7 +77,7 @@ export class AuditLogger {
   }
 
   async getLogs(
-    tenantId: string,
+    tenantId?: string,
     filters: {
       userId?: string;
       action?: string;
@@ -88,7 +88,8 @@ export class AuditLogger {
     } = {}
   ): Promise<any[]> {
     try {
-      const queries = [Query.equal('tenantId', tenantId)];
+      const queries = [];
+      if (tenantId) queries.push(Query.equal('tenantId', tenantId));
 
       if (filters.userId) queries.push(Query.equal('userId', filters.userId));
       if (filters.action) queries.push(Query.equal('action', filters.action));

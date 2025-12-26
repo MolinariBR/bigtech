@@ -1,7 +1,7 @@
 // API functions for billing management
 export interface BillingItem {
   $id: string;
-  tenantId: string;
+  tenantId?: string;
   userId: string;
   type: string;
   amount: number;

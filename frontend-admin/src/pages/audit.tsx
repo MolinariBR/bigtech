@@ -32,7 +32,6 @@ import * as api from '@/lib/api/audit';
 
 interface AuditLog {
   $id: string;
-  tenantId: string;
   userId?: string;
   action: string;
   resource: string;
@@ -61,7 +60,7 @@ export default function AuditPage() {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [tenantFilter, setTenantFilter] = useState('');
+
   const [userFilter, setUserFilter] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
@@ -74,7 +73,7 @@ export default function AuditPage() {
 
   useEffect(() => {
     loadAuditLogs();
-  }, [page, tenantFilter, userFilter, actionFilter, startDate, endDate]);
+  }, [page, userFilter, actionFilter, startDate, endDate]);
 
   const loadStats = async () => {
     try {
@@ -90,7 +89,6 @@ export default function AuditPage() {
     setLoading(true);
     try {
       const filters: any = {};
-      if (tenantFilter.trim()) filters.tenantId = tenantFilter.trim();
       if (userFilter.trim()) filters.userId = userFilter.trim();
       if (actionFilter !== 'all') filters.action = actionFilter;
       if (searchTerm.trim()) filters.search = searchTerm.trim();
@@ -112,7 +110,6 @@ export default function AuditPage() {
     setExporting(true);
     try {
       const filters: any = {};
-      if (tenantFilter.trim()) filters.tenantId = tenantFilter.trim();
       if (userFilter.trim()) filters.userId = userFilter.trim();
       if (actionFilter !== 'all') filters.action = actionFilter;
       if (searchTerm.trim()) filters.search = searchTerm.trim();
@@ -147,8 +144,6 @@ export default function AuditPage() {
       'billing_debit': 'bg-red-100 text-red-800',
       'plugin_enabled': 'bg-purple-100 text-purple-800',
       'plugin_disabled': 'bg-orange-100 text-orange-800',
-      'tenant_created': 'bg-indigo-100 text-indigo-800',
-      'tenant_updated': 'bg-yellow-100 text-yellow-800',
       'consulta_executada': 'bg-cyan-100 text-cyan-800',
       'admin_action': 'bg-red-100 text-red-800'
     };
@@ -172,7 +167,7 @@ export default function AuditPage() {
   };
 
   const isCriticalAction = (action: string) => {
-    const criticalActions = ['admin_action', 'billing_debit', 'tenant_deleted', 'user_deleted'];
+    const criticalActions = ['admin_action', 'billing_debit', 'user_deleted'];
     return criticalActions.includes(action);
   };
 
@@ -290,15 +285,6 @@ export default function AuditPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tenant-filter">Tenant ID</Label>
-              <Input
-                id="tenant-filter"
-                placeholder="Filtrar por tenant"
-                value={tenantFilter}
-                onChange={(e) => setTenantFilter(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="user-filter">User ID</Label>
               <Input
                 id="user-filter"
@@ -321,7 +307,6 @@ export default function AuditPage() {
                   <SelectItem value="billing_debit">Débito</SelectItem>
                   <SelectItem value="plugin_enabled">Plugin Habilitado</SelectItem>
                   <SelectItem value="plugin_disabled">Plugin Desabilitado</SelectItem>
-                  <SelectItem value="tenant_created">Tenant Criado</SelectItem>
                   <SelectItem value="consulta_executada">Consulta Executada</SelectItem>
                   <SelectItem value="admin_action">Ação Admin</SelectItem>
                 </SelectContent>
@@ -385,7 +370,6 @@ export default function AuditPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[180px]">Data/Hora</TableHead>
-                    <TableHead className="w-[120px]">Tenant</TableHead>
                     <TableHead className="w-[120px]">Usuário</TableHead>
                     <TableHead className="w-[150px]">Ação</TableHead>
                     <TableHead className="w-[200px]">Recurso</TableHead>
@@ -398,9 +382,6 @@ export default function AuditPage() {
                     <TableRow key={log.$id}>
                       <TableCell className="font-mono text-sm">
                         {formatDateTime(log.timestamp)}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {log.tenantId.substring(0, 8)}...
                       </TableCell>
                       <TableCell className="font-mono text-sm">
                         {log.userId ? log.userId.substring(0, 8) + '...' : '-'}
@@ -498,12 +479,6 @@ export default function AuditPage() {
                   <div className="mt-1">
                     {getActionBadge(selectedLog.action)}
                   </div>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Tenant ID</Label>
-                  <p className="text-sm font-mono text-muted-foreground">
-                    {selectedLog.tenantId}
-                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">User ID</Label>

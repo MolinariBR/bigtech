@@ -1,7 +1,7 @@
 // API functions for audit management
 export interface AuditLog {
   $id: string;
-  tenantId: string;
+  tenantId?: string;
   userId?: string;
   action: string;
   resource: string;

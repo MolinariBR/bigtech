@@ -1,6 +1,5 @@
 // Baseado em: 5.Pages.md v1.4, 4.Entities.md v1.5
 // Dashboard Administrativo: Exibe métricas globais e gráficos de uso (5.3.6)
-// Agregação de dados por tenant (4.5)
 // Relacionado: 2.Architecture.md (Appwrite para dados), 9.DesignSystem.md (componentes)
 
 import { useEffect, useState } from 'react';
@@ -49,7 +48,6 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 
 interface Metrics {
-  activeTenants: number;
   totalConsumption: number;
   totalUsers: number;
   totalQueries: number;
@@ -58,7 +56,6 @@ interface Metrics {
   errorRate: number;
   revenueToday: number;
   revenueThisMonth: number;
-  newTenantsToday: number;
   activePlugins: number;
   totalCreditsSold: number;
 }
@@ -68,7 +65,6 @@ interface AlertItem {
   message: string;
   type: 'error' | 'warning' | 'info';
   timestamp: string;
-  tenant?: string;
   severity: 'low' | 'medium' | 'high';
 }
 
@@ -77,7 +73,6 @@ interface ChartData {
   consumption: number;
   queries: number;
   revenue: number;
-  tenants: number;
 }
 
 interface SystemStatus {
@@ -91,7 +86,6 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metrics>({
-    activeTenants: 0,
     totalConsumption: 0,
     totalUsers: 0,
     totalQueries: 0,
@@ -100,7 +94,6 @@ export default function AdminDashboard() {
     errorRate: 0,
     revenueToday: 0,
     revenueThisMonth: 0,
-    newTenantsToday: 0,
     activePlugins: 0,
     totalCreditsSold: 0,
   });
@@ -181,7 +174,6 @@ export default function AdminDashboard() {
 
   const loadMockData = () => {
     setMetrics({
-      activeTenants: 15,
       totalConsumption: 1250.5,
       totalUsers: 120,
       totalQueries: 450,
@@ -190,7 +182,6 @@ export default function AdminDashboard() {
       errorRate: 0.8,
       revenueToday: 1250.50,
       revenueThisMonth: 18500.75,
-      newTenantsToday: 2,
       activePlugins: 8,
       totalCreditsSold: 1250,
     });
@@ -198,10 +189,9 @@ export default function AdminDashboard() {
     setAlerts([
       {
         id: '1',
-        message: 'Tenant XYZ excedeu limite de consultas (85% do limite)',
+        message: 'Usuário XYZ excedeu limite de consultas (85% do limite)',
         type: 'warning',
         timestamp: new Date().toISOString(),
-        tenant: 'XYZ Corp',
         severity: 'medium'
       },
       {
@@ -213,21 +203,20 @@ export default function AdminDashboard() {
       },
       {
         id: '3',
-        message: 'Novo tenant registrado: ABC Solutions',
+        message: 'Novo usuário registrado: ABC Solutions',
         type: 'info',
         timestamp: new Date().toISOString(),
-        tenant: 'ABC Solutions',
         severity: 'low'
       },
     ]);
 
     setChartData([
-      { name: 'Jan', consumption: 1200, queries: 4500, revenue: 18500, tenants: 12 },
-      { name: 'Fev', consumption: 1350, queries: 5200, revenue: 22100, tenants: 14 },
-      { name: 'Mar', consumption: 1180, queries: 4800, revenue: 19800, tenants: 13 },
-      { name: 'Abr', consumption: 1420, queries: 6100, revenue: 24500, tenants: 15 },
-      { name: 'Mai', consumption: 1680, queries: 7200, revenue: 28900, tenants: 16 },
-      { name: 'Jun', consumption: 1520, queries: 6800, revenue: 26700, tenants: 15 },
+      { name: 'Jan', consumption: 1200, queries: 4500, revenue: 18500 },
+      { name: 'Fev', consumption: 1350, queries: 5200, revenue: 22100 },
+      { name: 'Mar', consumption: 1180, queries: 4800, revenue: 19800 },
+      { name: 'Abr', consumption: 1420, queries: 6100, revenue: 24500 },
+      { name: 'Mai', consumption: 1680, queries: 7200, revenue: 28900 },
+      { name: 'Jun', consumption: 1520, queries: 6800, revenue: 26700 },
     ]);
 
     setSystemStatus({
@@ -397,14 +386,14 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tenants Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(metrics.activeTenants)}</div>
+            <div className="text-2xl font-bold">{formatNumber(metrics.totalUsers)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
-              +{metrics.newTenantsToday} hoje
+              +5 hoje
             </div>
           </CardContent>
         </Card>
@@ -521,10 +510,10 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link href="/tenants">
+            <Link href="/users">
               <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center space-y-2">
                 <Users className="h-6 w-6" />
-                <span className="text-sm">Gerenciar Tenants</span>
+                <span className="text-sm">Gerenciar Usuários</span>
               </Button>
             </Link>
             <Link href="/plugins">
@@ -598,7 +587,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChartIcon className="h-5 w-5" />
-              Distribuição de Tenants
+              Distribuição de Usuários
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -606,9 +595,8 @@ export default function AdminDashboard() {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Ativos', value: metrics.activeTenants, color: '#00C49F' },
-                    { name: 'Inativos', value: 5, color: '#FF8042' },
-                    { name: 'Trial', value: 3, color: '#FFBB28' },
+                    { name: 'Empresas', value: 85, color: '#00C49F' },
+                    { name: 'Usuários Finais', value: 35, color: '#FF8042' },
                   ]}
                   cx="50%"
                   cy="50%"
@@ -619,9 +607,8 @@ export default function AdminDashboard() {
                   dataKey="value"
                 >
                   {[
-                    { name: 'Ativos', value: metrics.activeTenants, color: '#00C49F' },
-                    { name: 'Inativos', value: 5, color: '#FF8042' },
-                    { name: 'Trial', value: 3, color: '#FFBB28' },
+                    { name: 'Empresas', value: 85, color: '#00C49F' },
+                    { name: 'Usuários Finais', value: 35, color: '#FF8042' },
                   ].map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -681,14 +668,6 @@ export default function AdminDashboard() {
                       </AlertDescription>
                       <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
                         <span>{new Date(alert.timestamp).toLocaleString('pt-BR')}</span>
-                        {alert.tenant && (
-                          <>
-                            <span>•</span>
-                            <Badge variant="outline" className="text-xs">
-                              {alert.tenant}
-                            </Badge>
-                          </>
-                        )}
                         <Badge
                           variant={alert.severity === 'high' ? 'destructive' :
                                   alert.severity === 'medium' ? 'default' : 'secondary'}

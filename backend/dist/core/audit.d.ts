@@ -1,5 +1,5 @@
 interface AuditEntry {
-    tenantId: string;
+    tenantId?: string;
     userId?: string;
     action: string;
     resource: string;
@@ -15,7 +15,7 @@ export declare class AuditLogger {
     static getInstance(): AuditLogger;
     initialize(): Promise<void>;
     log(entry: AuditEntry): Promise<void>;
-    getLogs(tenantId: string, filters?: {
+    getLogs(tenantId?: string, filters?: {
         userId?: string;
         action?: string;
         resource?: string;

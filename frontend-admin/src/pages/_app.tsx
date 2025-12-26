@@ -13,6 +13,15 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     // Verificar se já existe um token válido no localStorage
     const existingToken = localStorage.getItem('accessToken');
+    // Em desenvolvimento, permitir injetar token via NEXT_PUBLIC_DEV_TOKEN
+    if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_DEV_TOKEN) {
+      try {
+        localStorage.setItem('accessToken', process.env.NEXT_PUBLIC_DEV_TOKEN);
+      } catch (e) {
+        // ignore
+      }
+    }
+
     if (!existingToken) {
       // Se não há token, redirecionar para login apenas se não estiver na página de login
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
