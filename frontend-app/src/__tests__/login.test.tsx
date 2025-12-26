@@ -16,7 +16,7 @@ describe('LoginPage - Property-based Tests', () => {
   it('should have link to register page', () => {
     render(<LoginPage />);
 
-    const registerLink = screen.getByRole('link', { name: /registre-se/i });
+    const registerLink = screen.getByRole('link', { name: /criar conta/i });
     expect(registerLink).toBeInTheDocument();
     expect(registerLink).toHaveAttribute('href', '/register');
   });

@@ -15,12 +15,17 @@ const appwrite = LocalAppwriteService.getInstance();
 // GET /api/admin/tenants - Listar todos os tenants (admin vê todos)
 router.get('/', async (req, res) => {
   try {
+    console.log('[admin.tenants] Starting list tenants request');
+    console.log('[admin.tenants] Database ID:', process.env.APPWRITE_DATABASE_ID || 'bigtechdb');
+
     // Admin vê todos os tenants - isolamento global
     const tenants = await appwrite.databases.listDocuments(
       process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
       'tenants',
       [] // Sem filtros - admin vê tudo
     );
+
+    console.log('[admin.tenants] Found tenants:', tenants.documents.length);
 
     const formattedTenants = tenants.documents.map((doc: any) => ({
       id: doc.$id,
@@ -31,9 +36,12 @@ router.get('/', async (req, res) => {
       updatedAt: doc.$updatedAt,
     }));
 
+    console.log('[admin.tenants] Returning formatted tenants');
     res.json({ tenants: formattedTenants });
   } catch (error) {
-    console.error('Failed to list tenants:', error);
+    console.error('[admin.tenants] Failed to list tenants:', error);
+    console.error('[admin.tenants] Error details:', error instanceof Error ? error.message : String(error));
+    console.error('[admin.tenants] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({ error: 'Failed to load tenants' });
   }
 });

@@ -15,31 +15,37 @@ const appwrite = LocalAppwriteService.getInstance();
 // GET /api/admin/users - Listar todos os usuários (admin vê todos)
 router.get('/', async (req, res) => {
   try {
-    // Admin vê todos os usuários - isolamento global
+    console.log('[admin.users] Starting list users request');
+
+    // Listar usuários da collection 'users' no banco de dados
     const users = await appwrite.databases.listDocuments(
       process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
-      'users',
-      [] // Sem filtros - admin vê tudo
+      'users'
     );
 
-    const formattedUsers = users.documents.map((doc: any) => ({
-      id: doc.$id,
-      tenantId: doc.tenantId,
-      type: doc.type || 'user',
-      identifier: doc.identifier,
-      name: doc.name,
-      email: doc.email,
-      phone: doc.phone,
-      role: doc.role || 'viewer',
-      status: doc.status || 'active',
-      credits: doc.credits || 0,
-      createdAt: doc.$createdAt,
-      updatedAt: doc.$updatedAt,
+    console.log(`[admin.users] Found ${users.documents.length} users in database`);
+
+    const formattedUsers = users.documents.map((user: any) => ({
+      id: user.$id,
+      identifier: user.identifier || user.email, // Usar email como fallback se não houver identifier
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      tenantId: user.tenantId || 'default',
+      type: user.type || 'user',
+      role: user.role || 'viewer',
+      status: user.status || 'active',
+      credits: user.credits || 0,
+      createdAt: user.$createdAt,
+      updatedAt: user.$updatedAt,
     }));
 
+    console.log('[admin.users] Returning formatted users');
     res.json({ users: formattedUsers });
   } catch (error) {
-    console.error('Failed to list users:', error);
+    console.error('[admin.users] Failed to list users:', error);
+    console.error('[admin.users] Error details:', error instanceof Error ? error.message : String(error));
+    console.error('[admin.users] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({ error: 'Failed to load users' });
   }
 });

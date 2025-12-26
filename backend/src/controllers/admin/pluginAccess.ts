@@ -27,15 +27,16 @@ router.get('/tenants/:tenantId/plugins', async (req, res) => {
       return res.status(404).json({ error: 'Tenant not found' });
     }
 
-    // Retornar plugins do tenant
-    let tenantPlugins = [];
+    // Desserializar plugins do tenant de JSON string para array
+    let plugins = [];
     try {
-      tenantPlugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
+      plugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
     } catch (e) {
-      tenantPlugins = [];
+      plugins = [];
     }
 
-    res.json({ plugins: tenantPlugins });
+    // Retornar plugins do tenant como array
+    res.json({ plugins });
   } catch (error) {
     console.error('Failed to get tenant plugins:', error);
     res.status(500).json({ error: 'Failed to load tenant plugins' });
@@ -70,7 +71,7 @@ router.put('/tenants/:tenantId/plugins', async (req, res) => {
       return res.status(404).json({ error: 'Tenant not found' });
     }
 
-    // Atualizar plugins do tenant
+    // Atualizar plugins do tenant - serializar como JSON string
     const updatedTenant = await appwrite.databases.updateDocument(
       process.env.APPWRITE_DATABASE_ID || 'bigtechdb',
       'tenants',
@@ -118,14 +119,7 @@ router.put('/tenants/:tenantId/plugins', async (req, res) => {
       userId: (req as any).userId,
     });
 
-    let formattedPlugins = [];
-    try {
-      formattedPlugins = updatedTenant.plugins ? JSON.parse(updatedTenant.plugins) : [];
-    } catch (e) {
-      formattedPlugins = [];
-    }
-
-    res.json({ plugins: formattedPlugins });
+    res.json({ plugins });
   } catch (error) {
     console.error('Failed to update tenant plugins:', error);
     res.status(500).json({ error: 'Failed to update tenant plugins' });
@@ -155,6 +149,7 @@ router.get('/users/:userId/plugins', async (req, res) => {
       user.tenantId
     );
 
+    // Desserializar plugins do tenant de JSON string para array
     let tenantPlugins = [];
     try {
       tenantPlugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
@@ -213,12 +208,8 @@ router.put('/users/:userId/plugins', async (req, res) => {
       user.tenantId
     );
 
-    let tenantPlugins = [];
-    try {
-      tenantPlugins = tenant.plugins ? JSON.parse(tenant.plugins) : [];
-    } catch (e) {
-      tenantPlugins = [];
-    }
+    // Verificar plugins do tenant como array
+    let tenantPlugins = tenant.plugins || [];
     const activeTenantPluginIds = tenantPlugins
       .filter((tp: any) => tp.status === 'active')
       .map((tp: any) => tp.pluginId);

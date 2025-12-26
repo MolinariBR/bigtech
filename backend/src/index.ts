@@ -42,20 +42,25 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? ['https://app.bigtech.com.br', 'https://admin.bigtech.com.br']
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8080'],
   credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Aumentar limite para testes
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use(limiter);
 
 // Body parsing
 app.use(json({ limit: '10mb' }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
 // Endpoint para listar plugins disponíveis (antes do middleware multi-tenant)
 app.get('/api/plugins', (req, res) => {

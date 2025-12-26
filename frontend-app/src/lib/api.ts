@@ -12,7 +12,8 @@ export const API_CONFIG = {
     auth: {
       refresh: '/api/auth/refresh',
       me: {
-        plugins: '/api/auth/me/plugins'
+        plugins: '/api/auth/me/plugins',
+        profile: '/api/auth/me'
       }
     }
   }

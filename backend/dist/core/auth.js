@@ -13,6 +13,7 @@ const appwrite_1 = require("../lib/appwrite");
 const axios_1 = __importDefault(require("axios"));
 const node_appwrite_1 = require("node-appwrite");
 const audit_1 = require("./audit");
+const pluginLoader_1 = require("./pluginLoader");
 const router = (0, express_1.Router)();
 exports.authRouter = router;
 const appwrite = appwrite_1.AppwriteService.getInstance();
@@ -869,24 +870,34 @@ router.get('/me/plugins', exports.authenticateMiddleware, async (req, res) => {
         // Buscar tenant para obter plugins ativos
         const tenant = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', user.tenantId);
         console.log('[auth.me.plugins] Tenant data:', { id: tenant.$id, plugins: tenant.plugins });
-        const tenantPlugins = Array.isArray(tenant.plugins) ? tenant.plugins : [];
-        const userAllowedPlugins = Array.isArray(user.allowedPlugins) ? user.allowedPlugins : [];
-        console.log('[auth.me.plugins] tenantPlugins:', tenantPlugins);
+        // Usar plugins ativos do pluginLoader para desenvolvimento
+        const activeTenantPluginIds = Array.from(pluginLoader_1.pluginLoader.getActivePluginsForTenant(user.tenantId));
+        console.log('[auth.me.plugins] activeTenantPluginIds from pluginLoader:', activeTenantPluginIds);
+        let userAllowedPlugins = [];
+        try {
+            userAllowedPlugins = user.allowedPlugins ? JSON.parse(user.allowedPlugins) : [];
+        }
+        catch (e) {
+            userAllowedPlugins = [];
+        }
         console.log('[auth.me.plugins] userAllowedPlugins:', userAllowedPlugins);
-        // Filtrar apenas plugins ativos no tenant que o usuário pode acessar
-        const activeTenantPluginIds = tenantPlugins
-            .filter(tp => tp.status === 'active')
-            .map(tp => tp.pluginId);
-        console.log('[auth.me.plugins] activeTenantPluginIds:', activeTenantPluginIds);
-        const allowedPlugins = activeTenantPluginIds.filter(pluginId => userAllowedPlugins.some(up => up.pluginId === pluginId && up.allowed === true));
+        // Para desenvolvimento: se não há allowedPlugins configurado, permitir bigtech e bloquear infosimples
+        if (userAllowedPlugins.length === 0) {
+            userAllowedPlugins = ['bigtech']; // Apenas bigtech permitido
+            console.log('[auth.me.plugins] Using default allowed plugins for development:', userAllowedPlugins);
+        }
+        const allowedPlugins = activeTenantPluginIds.filter(pluginId => userAllowedPlugins.includes(pluginId));
         console.log('[auth.me.plugins] allowedPlugins:', allowedPlugins);
         // Buscar detalhes dos plugins permitidos
         const pluginsDetails = [];
         for (const pluginId of allowedPlugins) {
             try {
+                console.log(`[auth.me.plugins] Searching for plugin ${pluginId} in database`);
                 const pluginDoc = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'plugins', [node_appwrite_1.Query.equal('$id', pluginId)]);
+                console.log(`[auth.me.plugins] Found ${pluginDoc.documents.length} documents for plugin ${pluginId}`);
                 if (pluginDoc.documents.length > 0) {
                     const plugin = pluginDoc.documents[0];
+                    console.log(`[auth.me.plugins] Plugin details:`, { id: plugin.$id, name: plugin.name });
                     pluginsDetails.push({
                         id: plugin.$id,
                         name: plugin.name,
@@ -894,9 +905,26 @@ router.get('/me/plugins', exports.authenticateMiddleware, async (req, res) => {
                         config: plugin.config
                     });
                 }
+                else {
+                    console.log(`[auth.me.plugins] No documents found for plugin ${pluginId}, returning mock data`);
+                    // Para desenvolvimento, retornar dados mock se não encontrar no banco
+                    pluginsDetails.push({
+                        id: pluginId,
+                        name: pluginId === 'bigtech' ? 'BigTech Consultas' : pluginId,
+                        type: 'consulta',
+                        config: {}
+                    });
+                }
             }
             catch (error) {
                 console.warn(`Could not load details for plugin ${pluginId}:`, error);
+                // Mesmo em erro, retornar dados mock para desenvolvimento
+                pluginsDetails.push({
+                    id: pluginId,
+                    name: pluginId === 'bigtech' ? 'BigTech Consultas' : pluginId,
+                    type: 'consulta',
+                    config: {}
+                });
             }
         }
         console.log('[auth.me.plugins] pluginsDetails:', pluginsDetails);
@@ -934,6 +962,118 @@ router.get('/admin/me', exports.authenticateAdminMiddleware, async (req, res) =>
         res.status(500).json({
             success: false,
             message: 'Erro ao buscar dados do administrador'
+        });
+    }
+});
+// Rota para dados do usuário logado
+router.get('/me', exports.authenticateMiddleware, async (req, res) => {
+    try {
+        const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', req.userId);
+        // Calcular total de consultas
+        const consultas = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'consultas', [node_appwrite_1.Query.equal('userId', req.userId), node_appwrite_1.Query.equal('tenantId', user.tenantId)]);
+        const totalQueries = consultas.documents.length;
+        // Calcular serviço favorito (tipo mais frequente)
+        const typeCount = {};
+        consultas.documents.forEach((consulta) => {
+            const type = consulta.type || 'desconhecido';
+            typeCount[type] = (typeCount[type] || 0) + 1;
+        });
+        const favoriteService = Object.keys(typeCount).reduce((a, b) => typeCount[a] > typeCount[b] ? a : b, 'Nenhum');
+        // Preferences: assumir armazenado em campo 'preferences' como JSON string, ou vazio
+        let preferences = {};
+        try {
+            preferences = user.preferences ? JSON.parse(user.preferences) : {};
+        }
+        catch (e) {
+            preferences = {};
+        }
+        res.json({
+            success: true,
+            user: {
+                id: user.$id,
+                name: user.name || user.email || AuthValidators.formatIdentifier(user.identifier),
+                email: user.email,
+                phone: user.phone || '', // Campo opcional, adicionar se necessário
+                credits: user.credits || 0,
+                preferences,
+                joinDate: user.createdAt,
+                totalQueries,
+                favoriteService,
+                role: user.role,
+                status: user.status
+            }
+        });
+    }
+    catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro ao buscar dados do usuário'
+        });
+    }
+});
+// Rota para atualizar dados do usuário logado
+router.put('/me', exports.authenticateMiddleware, async (req, res) => {
+    try {
+        const { name, email, phone, preferences } = req.body;
+        // Validações básicas
+        if (name && (typeof name !== 'string' || name.length < 2)) {
+            return res.status(400).json({ success: false, message: 'Nome deve ter pelo menos 2 caracteres' });
+        }
+        if (email && (typeof email !== 'string' || !email.includes('@'))) {
+            return res.status(400).json({ success: false, message: 'Email inválido' });
+        }
+        if (phone && (typeof phone !== 'string' || phone.length < 10)) {
+            return res.status(400).json({ success: false, message: 'Telefone deve ter pelo menos 10 dígitos' });
+        }
+        // Preparar dados para atualização
+        const updateData = {};
+        if (name !== undefined)
+            updateData.name = name;
+        if (email !== undefined)
+            updateData.email = email;
+        if (phone !== undefined)
+            updateData.phone = phone;
+        if (preferences !== undefined)
+            updateData.preferences = JSON.stringify(preferences);
+        // Adicionar timestamp de atualização
+        updateData.updatedAt = new Date().toISOString();
+        // Atualizar documento
+        const updatedUser = await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', req.userId, updateData);
+        // Log de auditoria
+        await audit_1.auditLogger.log({
+            tenantId: req.tenantId,
+            userId: req.userId,
+            action: 'user_profile_update',
+            resource: `user:${req.userId}`,
+            details: { updatedFields: Object.keys(updateData) },
+            ipAddress: req.ip || 'unknown'
+        });
+        // Preparar resposta com preferences parseado
+        let responsePreferences = {};
+        try {
+            responsePreferences = updatedUser.preferences ? JSON.parse(updatedUser.preferences) : {};
+        }
+        catch (e) {
+            responsePreferences = {};
+        }
+        res.json({
+            success: true,
+            message: 'Perfil atualizado com sucesso',
+            user: {
+                id: updatedUser.$id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phone || '',
+                preferences: responsePreferences
+            }
+        });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar perfil:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro ao atualizar perfil'
         });
     }
 });

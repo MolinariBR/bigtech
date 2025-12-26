@@ -7,4 +7,11 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1984ms
+ ✓ Ready in 2.2s
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.4s (514 modules)
+ GET /_next/static/webpack/8b9b162988a0f030.webpack.hot-update.json 404 in 3193ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ○ Compiling /plugins ...
+ ✓ Compiled /plugins in 1625ms (590 modules)
+ GET /plugins 200 in 1865ms

@@ -9,3 +9,10 @@
      · webpackBuildWorker
 
  ✓ Ready in 2.3s
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.9s (210 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 382ms (161 modules)
+ ○ Compiling /minha-conta ...
+ ✓ Compiled /minha-conta in 1249ms (397 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload

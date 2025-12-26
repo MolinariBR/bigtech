@@ -43,48 +43,84 @@ Cypress.Commands.add('isAuthenticated', () => {
 Cypress.Commands.add('configureUserPlugins', (userEmail, allowedPlugins) => {
     cy.log(`🔧 Configurando plugins permitidos para ${userEmail}: ${allowedPlugins.join(', ')}`)
 
-    // Primeiro, fazer login como admin para obter token
-    cy.request('POST', 'http://localhost:8080/api/auth/admin/login', {
-        email: Cypress.env('ADMIN_EMAIL') || 'admin@bigtech.com',
-        password: Cypress.env('ADMIN_PASSWORD') || 'admin123'
-    }).then((adminResponse) => {
-        expect(adminResponse.status).to.eq(200)
-        const adminToken = adminResponse.body.token
+    // Verificar se já temos um token de admin armazenado
+    cy.window().then((win) => {
+        const storedAdminToken = win.localStorage.getItem('adminToken')
 
-        // Buscar todos os usuários e filtrar por email
-        cy.request({
-            method: 'GET',
-            url: 'http://localhost:8080/api/admin/users',
-            headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'x-tenant-id': 'default'
-            }
-        }).then((usersResponse) => {
-            expect(usersResponse.status).to.eq(200)
-            expect(usersResponse.body.users).to.have.length.greaterThan(0)
+        if (storedAdminToken) {
+            // Usar token armazenado
+            cy.log('🔄 Usando token de admin armazenado')
+            configurePluginsWithToken(storedAdminToken, userEmail, allowedPlugins)
+        } else {
+            // Fazer login como admin e armazenar token
+            cy.request('POST', 'http://localhost:8080/api/auth/login', {
+                email: Cypress.env('ADMIN_EMAIL') || 'test@bigtech.com',
+                password: Cypress.env('ADMIN_PASSWORD') || 'test12345'
+            }).then((adminResponse) => {
+                expect(adminResponse.status).to.eq(200)
+                const adminToken = adminResponse.body.token
 
-            // Encontrar usuário pelo email
-            const user = usersResponse.body.users.find(u => u.email === userEmail || u.identifier === userEmail)
-            expect(user).to.exist
+                // Armazenar token no localStorage para reutilização
+                cy.window().then((win) => {
+                    win.localStorage.setItem('adminToken', adminToken)
+                })
 
-            const userId = user.id
-
-            // Atualizar permissões do usuário
-            cy.request({
-                method: 'PUT',
-                url: `http://localhost:8080/api/admin/plugin-access/users/${userId}/plugins`,
-                headers: {
-                    'Authorization': `Bearer ${adminToken}`,
-                    'Content-Type': 'application/json',
-                    'x-tenant-id': 'default'
-                },
-                body: {
-                    allowedPlugins: allowedPlugins
-                }
-            }).then((updateResponse) => {
-                expect(updateResponse.status).to.eq(200)
-                cy.log(`✅ Permissões atualizadas para usuário ${userEmail}`)
+                configurePluginsWithToken(adminToken, userEmail, allowedPlugins)
             })
-        })
+        }
     })
 })
+
+/**
+ * Comando customizado para configurar plugins ativos no tenant
+ * @param {string} tenantId - ID do tenant
+ * @param {Array} plugins - Array de {pluginId: string, status: 'active'|'inactive'}
+ */
+Cypress.Commands.add('configureTenantPlugins', (tenantId, plugins) => {
+    cy.log(`🔧 Configurando plugins do tenant ${tenantId}: ${plugins.map(p => `${p.pluginId}:${p.status}`).join(', ')}`)
+
+    // Verificar se já temos um token de admin armazenado
+    cy.window().then((win) => {
+        const storedAdminToken = win.localStorage.getItem('adminToken')
+
+        if (storedAdminToken) {
+            configureTenantPluginsWithToken(storedAdminToken, tenantId, plugins)
+        } else {
+            // Fazer login como usuário normal (já que SKIP_APPWRITE_AUTH=true)
+            cy.request('POST', 'http://localhost:8080/api/auth/login', {
+                email: Cypress.env('ADMIN_EMAIL') || 'user@bigtech.com',
+                password: Cypress.env('ADMIN_PASSWORD') || 'user1234',
+                tenantId: 'default'
+            }).then((adminResponse) => {
+                expect(adminResponse.status).to.eq(200)
+                const adminToken = adminResponse.body.token
+
+                // Armazenar token
+                cy.window().then((win) => {
+                    win.localStorage.setItem('adminToken', adminToken)
+                })
+
+                configureTenantPluginsWithToken(adminToken, tenantId, plugins)
+            })
+        }
+    })
+})
+
+/**
+ * Função auxiliar para configurar plugins do tenant com token já obtido
+ */
+function configureTenantPluginsWithToken(adminToken, tenantId, plugins) {
+    cy.request({
+        method: 'PUT',
+        url: `http://localhost:8080/api/admin/plugin-access/tenants/${tenantId}/plugins`,
+        headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json',
+            'x-tenant-id': 'default'
+        },
+        body: { plugins }
+    }).then((response) => {
+        expect(response.status).to.eq(200)
+        cy.log(`✅ Plugins do tenant ${tenantId} atualizados`)
+    })
+}

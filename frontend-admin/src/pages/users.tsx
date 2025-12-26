@@ -236,6 +236,11 @@ export default function UsersPage() {
   };
 
   const formatIdentifier = (identifier: string) => {
+    // Verificar se identifier é válido
+    if (!identifier || typeof identifier !== 'string') {
+      return '-';
+    }
+
     // Formatar CPF/CNPJ
     const clean = identifier.replace(/\D/g, '');
     if (clean.length === 11) {

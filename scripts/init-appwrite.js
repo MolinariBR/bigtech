@@ -101,6 +101,8 @@ async function initAppwrite() {
     await createAttribute('users', 'identifier', 'string', 20, true);
     await createAttribute('users', 'type', 'string', 50, false, 'user');
     await createAttribute('users', 'email', 'string', 255, false);
+    await createAttribute('users', 'phone', 'string', 20, false);
+    await createAttribute('users', 'preferences', 'string', 2048, false);
     await createAttribute('users', 'role', 'string', 50, false, 'viewer');
     await createAttribute('users', 'status', 'string', 50, false, 'active');
     await createAttribute('users', 'credits', 'string', 50, false, '0');
