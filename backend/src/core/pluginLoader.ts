@@ -311,7 +311,14 @@ export class PluginLoader {
     const startTime = Date.now();
     let result: PluginResult;
 
+    // Mesclar temporariamente a configuração do contexto na config interna do plugin
+    const pluginAny: any = plugin as any;
+    const originalPluginConfig = pluginAny.config ? { ...pluginAny.config } : undefined;
     try {
+      if (context && context.config && typeof context.config === 'object') {
+        pluginAny.config = { ...(pluginAny.config || {}), ...context.config };
+      }
+
       result = await plugin.execute(context);
 
       // Auditoria automática para todas as operações
@@ -368,6 +375,16 @@ export class PluginLoader {
       };
 
       return result;
+    }
+    finally {
+      // Restaurar config original do plugin para evitar efeitos colaterais entre execuções
+      try {
+        if (originalPluginConfig !== undefined) {
+          pluginAny.config = originalPluginConfig;
+        }
+      } catch (e) {
+        // Não bloquear a execução se a restauração falhar
+      }
     }
   }
 

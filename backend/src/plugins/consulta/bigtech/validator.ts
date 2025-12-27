@@ -545,9 +545,19 @@ export class BigTechDataValidator {
       version: '1.0.0'
     };
 
-    // Padroniza campos de data
+    // Padroniza campos de data (verificar validade antes de toISOString)
     if (normalized.dataHora) {
-      normalized.dataHora = new Date(normalized.dataHora).toISOString();
+      try {
+        const parsed = new Date(normalized.dataHora);
+        if (!isNaN(parsed.getTime())) {
+          normalized.dataHora = parsed.toISOString();
+        } else {
+          // Se a data for inválida, remover o campo para evitar erros posteriores
+          delete normalized.dataHora;
+        }
+      } catch (e) {
+        delete normalized.dataHora;
+      }
     }
 
     // Padroniza campos booleanos

@@ -283,7 +283,13 @@ class PluginLoader {
         }
         const startTime = Date.now();
         let result;
+        // Mesclar temporariamente a configuração do contexto na config interna do plugin
+        const pluginAny = plugin;
+        const originalPluginConfig = pluginAny.config ? { ...pluginAny.config } : undefined;
         try {
+            if (context && context.config && typeof context.config === 'object') {
+                pluginAny.config = { ...(pluginAny.config || {}), ...context.config };
+            }
             result = await plugin.execute(context);
             // Auditoria automática para todas as operações
             await audit_1.auditLogger.log({
@@ -335,6 +341,17 @@ class PluginLoader {
                 error: `Plugin execution failed: ${err.message}`
             };
             return result;
+        }
+        finally {
+            // Restaurar config original do plugin para evitar efeitos colaterais entre execuções
+            try {
+                if (originalPluginConfig !== undefined) {
+                    pluginAny.config = originalPluginConfig;
+                }
+            }
+            catch (e) {
+                // Não bloquear a execução se a restauração falhar
+            }
         }
     }
     getAvailablePlugins() {

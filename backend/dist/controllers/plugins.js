@@ -44,10 +44,18 @@ router.post('/:pluginId/execute', auth_1.authenticateMiddleware, validateExecuti
                 details: 'pluginId parameter is missing from URL'
             });
         }
-        // Buscar config salva do plugin globalmente (simulação para desenvolvimento)
-        const savedConfig = pluginId ? global.pluginConfigStore?.['default']?.[pluginId] || {} : {};
-        // Mesclar config passada com config salva
-        const effectiveConfig = { ...savedConfig, ...config };
+        // Buscar entrada salva do plugin no store global (estrutura: { config, servicePrices, fallbackConfig, rateLimitConfig })
+        const savedEntry = pluginId ? global.pluginConfigStore?.['default']?.[pluginId] || {} : {};
+        // Extrair a configuração principal (salva em Appwrite como 'config')
+        const savedConfig = savedEntry.config || {};
+        // Mesclar config passada com config salva e propagar prices/fallbacks/rateLimit se presentes
+        const effectiveConfig = {
+            ...savedConfig,
+            ...(savedEntry.servicePrices ? { servicePrices: savedEntry.servicePrices } : {}),
+            ...(savedEntry.fallbackConfig ? { fallbackConfig: savedEntry.fallbackConfig } : {}),
+            ...(savedEntry.rateLimitConfig ? { rateLimitConfig: savedEntry.rateLimitConfig } : {}),
+            ...config
+        };
         // Criar contexto de execução global
         const context = {
             userId: userId,
