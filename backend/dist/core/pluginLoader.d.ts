@@ -6,6 +6,7 @@ export interface Plugin {
     enable(): Promise<void>;
     disable(): Promise<void>;
     execute(context: PluginContext): Promise<PluginResult>;
+    getAvailableServices?(context?: PluginContext): Promise<any[]> | any[];
 }
 export interface PluginContext {
     userId: string;
@@ -30,6 +31,8 @@ export declare class PluginLoader {
     private loadPlugins;
     private validatePlugin;
     private loadActivePlugins;
+    private loadGlobalPluginConfigs;
+    private decryptIfNeeded;
     getActivePlugins(): Promise<Plugin[]>;
     executePlugin(pluginId: string, context: PluginContext): Promise<PluginResult>;
     getAvailablePlugins(): {

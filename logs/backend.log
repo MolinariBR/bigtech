@@ -2,43 +2,7 @@
 > backend-core@1.0.0 dev
 > ts-node-dev --respawn --transpile-only src/index.ts
 
-[INFO] 22:02:07 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-🚀 BigTech CORE running on port 8080
-📊 Health check: http://localhost:8080/health
-[AuthService.verifyToken] jwt.verify error: jwt malformed
-[auth.middleware] Token verification failed for endpoint: /bigtech/execute
-[INFO] 22:04:17 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
-🛑 Shutting down CORE...
+[INFO] 11:53:44 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
 👂 Handler subscribed to event: query.executed
 👂 Handler subscribed to event: credits.purchased
 💰 Billing Engine initialized
@@ -72,14 +36,77 @@
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health
 [auth.me.plugins] User authenticated: user-bigtech
-[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech"]' }
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
 [auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] userAllowedPlugins: [ 'bigtech' ]
-[auth.me.plugins] allowedPlugins: [ 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
 [auth.me.plugins] Searching for plugin bigtech in database
 [auth.me.plugins] Found 0 documents for plugin bigtech
 [auth.me.plugins] No documents found for plugin bigtech, returning mock data
 [auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
+  {
+    id: 'bigtech',
+    name: 'BigTech Consultas',
+    type: 'consulta',
+    config: {}
+  }
+]
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: infosimples
+[auth.me.plugins] User authenticated: user-bigtech
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
+[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] Searching for plugin bigtech in database
+[auth.me.plugins] Found 0 documents for plugin bigtech
+[auth.me.plugins] No documents found for plugin bigtech, returning mock data
+[auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
+  {
+    id: 'bigtech',
+    name: 'BigTech Consultas',
+    type: 'consulta',
+    config: {}
+  }
+]
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: infosimples
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+[auth.me.plugins] User authenticated: user-bigtech
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
+[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] Searching for plugin bigtech in database
+[auth.me.plugins] Found 0 documents for plugin bigtech
+[auth.me.plugins] No documents found for plugin bigtech, returning mock data
+[auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
   {
     id: 'bigtech',
     name: 'BigTech Consultas',
@@ -88,14 +115,24 @@
   }
 ]
 [auth.me.plugins] User authenticated: user-bigtech
-[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech"]' }
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
 [auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] userAllowedPlugins: [ 'bigtech' ]
-[auth.me.plugins] allowedPlugins: [ 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
 [auth.me.plugins] Searching for plugin bigtech in database
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: infosimples
 [auth.me.plugins] Found 0 documents for plugin bigtech
 [auth.me.plugins] No documents found for plugin bigtech, returning mock data
 [auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
   {
     id: 'bigtech',
     name: 'BigTech Consultas',
@@ -104,86 +141,13 @@
   }
 ]
 [pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: infosimples
 [pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
-[admin.users] Starting list users request
-[admin.users] Found 3 users in database
-[admin.users] Returning formatted users
-[admin.users] Starting list users request
-[admin.users] Found 3 users in database
-[admin.users] Returning formatted users
-[auth.me.plugins] User authenticated: user-bigtech
-[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech"]' }
-[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] userAllowedPlugins: [ 'bigtech' ]
-[auth.me.plugins] allowedPlugins: [ 'bigtech' ]
-[auth.me.plugins] Searching for plugin bigtech in database
-[auth.me.plugins] Found 0 documents for plugin bigtech
-[auth.me.plugins] No documents found for plugin bigtech, returning mock data
-[auth.me.plugins] pluginsDetails: [
-  {
-    id: 'bigtech',
-    name: 'BigTech Consultas',
-    type: 'consulta',
-    config: {}
-  }
-]
-[auth.me.plugins] User authenticated: user-bigtech
-[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
-[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech"]' }
-[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] userAllowedPlugins: [ 'bigtech' ]
-[auth.me.plugins] allowedPlugins: [ 'bigtech' ]
-[auth.me.plugins] Searching for plugin bigtech in database
-[auth.me.plugins] Found 0 documents for plugin bigtech
-[auth.me.plugins] No documents found for plugin bigtech, returning mock data
-[auth.me.plugins] pluginsDetails: [
-  {
-    id: 'bigtech',
-    name: 'BigTech Consultas',
-    type: 'consulta',
-    config: {}
-  }
-]
-[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
-[INFO] 22:06:06 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
-🛑 Shutting down CORE...
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-🚀 BigTech CORE running on port 8080
-📊 Health check: http://localhost:8080/health
 [pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
 ⚠️ Falha no serviço BVSBasicaPF: Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA.
 ❌ Erro na execução BigTech: Error: Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA.
-    at BigTechPlugin.normalizeResponse (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:755:13)
-    at BigTechPlugin.executeWithFallbacks (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:1413:41)
+    at BigTechPlugin.normalizeResponse (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:754:13)
+    at BigTechPlugin.executeWithFallbacks (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:1412:41)
     at processTicksAndRejections (node:internal/process/task_queues:95:5)
     at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:92:22)
     at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:196:16)
@@ -193,43 +157,18 @@ AuditLogger: created audit document {
   userId: 'user-bigtech',
   action: 'plugin_execute',
   resource: 'plugin:bigtech',
-  details: '{"pluginId":"bigtech","input":{"serviceCode":"BVSBasicaPF","cpfCnpj":"09469124677"},"success":false,"cost":0,"duration":7081,"error":"Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA."}',
+  details: '{"pluginId":"bigtech","input":{"serviceCode":"BVSBasicaPF","cpfCnpj":"09469124677","tipoPessoa":"F"},"success":false,"cost":0,"duration":7164,"error":"Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA."}',
   ipAddress: 'system',
-  timestamp: '2025-12-27T01:06:45.115+00:00',
-  '$id': '694f312520c039ab0872',
+  timestamp: '2025-12-27T14:54:39.016+00:00',
+  '$id': '694ff32f06e14c988581',
   '$permissions': [],
-  '$createdAt': '2025-12-27T01:06:45.138+00:00',
-  '$updatedAt': '2025-12-27T01:06:45.138+00:00',
-  '$sequence': 1822,
+  '$createdAt': '2025-12-27T14:54:39.028+00:00',
+  '$updatedAt': '2025-12-27T14:54:39.028+00:00',
+  '$sequence': 1828,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }
-[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
-⚠️ Falha no serviço BVSBasicaPF: Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA.
-❌ Erro na execução BigTech: Error: Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA.
-    at BigTechPlugin.normalizeResponse (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:755:13)
-    at BigTechPlugin.executeWithFallbacks (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:1413:41)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:92:22)
-    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:196:16)
-    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:68:20
-AuditLogger: created audit document {
-  tenantId: 'default',
-  userId: 'user-bigtech',
-  action: 'plugin_execute',
-  resource: 'plugin:bigtech',
-  details: '{"pluginId":"bigtech","input":{"serviceCode":"BVSBasicaPF","cpfCnpj":"09469124677"},"success":false,"cost":0,"duration":6937,"error":"Consulta falhou: A CHAVE DE ACESSO INFORMADA E USADA SOMENTE PARA HOMOLOGACAO. OPERACAO IMPEDIDA."}',
-  ipAddress: 'system',
-  timestamp: '2025-12-27T01:07:29.415+00:00',
-  '$id': '694f3151920af4ccaa33',
-  '$permissions': [],
-  '$createdAt': '2025-12-27T01:07:29.599+00:00',
-  '$updatedAt': '2025-12-27T01:07:29.599+00:00',
-  '$sequence': 1823,
-  '$databaseId': 'bigtechdb',
-  '$collectionId': 'audits'
-}
-[INFO] 22:08:57 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+[INFO] 11:55:01 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
 🛑 Shutting down CORE...
 👂 Handler subscribed to event: query.executed
 👂 Handler subscribed to event: credits.purchased
@@ -263,38 +202,7 @@ AuditLogger: created audit document {
 ✅ CORE initialized successfully
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health
-[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
-❌ Erro na execução BigTech: RangeError: Invalid time value
-    at Date.toISOString (<anonymous>)
-    at Function.normalizeOutput (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/validator.ts:550:59)
-    at Validator.normalizeOutput (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/validator.ts:86:33)
-    at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:95:45)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:196:16)
-    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:68:20
-AuditLogger: created audit document {
-  tenantId: 'default',
-  userId: 'user-bigtech',
-  action: 'plugin_execute',
-  resource: 'plugin:bigtech',
-  details: '{"pluginId":"bigtech","input":{"serviceCode":"BVSBasicaPF","cpfCnpj":"09469124677","tipoPessoa":"F"},"success":false,"cost":0,"duration":8056,"error":"Invalid time value"}',
-  ipAddress: 'system',
-  timestamp: '2025-12-27T01:11:06.529+00:00',
-  '$id': '694f322c80545b5891dc',
-  '$permissions': [],
-  '$createdAt': '2025-12-27T01:11:08.526+00:00',
-  '$updatedAt': '2025-12-27T01:11:08.526+00:00',
-  '$sequence': 1824,
-  '$databaseId': 'bigtechdb',
-  '$collectionId': 'audits'
-}
-[admin.users] Starting list users request
-[admin.users] Found 3 users in database
-[admin.users] Returning formatted users
-[admin.users] Starting list users request
-[admin.users] Found 3 users in database
-[admin.users] Returning formatted users
-[INFO] 22:11:58 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+[INFO] 11:55:16 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
 🛑 Shutting down CORE...
 👂 Handler subscribed to event: query.executed
 👂 Handler subscribed to event: credits.purchased
@@ -326,5 +234,1076 @@ AuditLogger: created audit document {
 📡 Event Bus initialized
 💰 Billing Engine initialized
 ✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:55:20 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:55:31 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:55:42 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:55:49 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:56:02 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+Compilation error in /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(14,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(37,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(40,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(63,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(66,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(89,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(92,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(101,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(104,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(104,32): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(363,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(366,29): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,69): error TS1005: '(' expected.
+src/plugins/consulta/bigtech/config.ts(366,71): error TS1136: Property assignment expected.
+src/plugins/consulta/bigtech/config.ts(368,11): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(368,30): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(369,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(369,69): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(370,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(370,19): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(371,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(371,15): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(372,16): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(372,18): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(373,30): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(373,35): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(374,3): error TS1128: Declaration or statement expected.
+src/plugins/consulta/bigtech/config.ts(375,1): error TS1128: Declaration or statement expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:56:07 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(14,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(37,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(40,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(63,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(66,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(89,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(92,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(101,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(104,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(104,32): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(363,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(366,29): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,69): error TS1005: '(' expected.
+src/plugins/consulta/bigtech/config.ts(366,71): error TS1136: Property assignment expected.
+src/plugins/consulta/bigtech/config.ts(368,11): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(368,30): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(369,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(369,69): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(370,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(370,19): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(371,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(371,15): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(372,16): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(372,18): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(373,30): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(373,35): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(374,3): error TS1128: Declaration or statement expected.
+src/plugins/consulta/bigtech/config.ts(375,1): error TS1128: Declaration or statement expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 11:56:19 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(14,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(37,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(40,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(63,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(66,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(89,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(92,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(101,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(104,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(104,32): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(363,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(366,29): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,69): error TS1005: '(' expected.
+src/plugins/consulta/bigtech/config.ts(366,71): error TS1136: Property assignment expected.
+src/plugins/consulta/bigtech/config.ts(368,11): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(368,30): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(369,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(369,69): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(370,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(370,19): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(371,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(371,15): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(372,16): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(372,18): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(373,30): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(373,35): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(374,3): error TS1128: Declaration or statement expected.
+src/plugins/consulta/bigtech/config.ts(375,1): error TS1128: Declaration or statement expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[admin.users] Starting list users request
+[admin.users] Found 3 users in database
+[admin.users] Returning formatted users
+[admin.users] Starting list users request
+[admin.users] Found 3 users in database
+[admin.users] Returning formatted users
+[INFO] 12:01:03 Restarting: /home/mau/projeto/consulta/backend/src/core/pluginLoader.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(14,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(37,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(40,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(63,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(66,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(89,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(92,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(101,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(104,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(104,32): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(363,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(366,29): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,69): error TS1005: '(' expected.
+src/plugins/consulta/bigtech/config.ts(366,71): error TS1136: Property assignment expected.
+src/plugins/consulta/bigtech/config.ts(368,11): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(368,30): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(369,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(369,69): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(370,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(370,19): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(371,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(371,15): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(372,16): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(372,18): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(373,30): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(373,35): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(374,3): error TS1128: Declaration or statement expected.
+src/plugins/consulta/bigtech/config.ts(375,1): error TS1128: Declaration or statement expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+❌ Failed to initialize CORE: TypeError: this.loadGlobalPluginConfigs is not a function
+    at PluginLoader.initialize (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:58:16)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at initializeCore (/home/mau/projeto/consulta/backend/src/index.ts:102:5)
+[INFO] 12:01:12 Restarting: /home/mau/projeto/consulta/backend/src/core/pluginLoader.ts has been modified
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(14,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(37,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(40,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(63,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(66,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(89,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(92,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(101,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(104,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(104,32): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(363,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(366,29): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,69): error TS1005: '(' expected.
+src/plugins/consulta/bigtech/config.ts(366,71): error TS1136: Property assignment expected.
+src/plugins/consulta/bigtech/config.ts(368,11): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(368,30): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(369,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(369,69): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(370,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(370,19): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(371,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(371,15): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(372,16): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(372,18): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(373,30): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(373,35): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(374,3): error TS1128: Declaration or statement expected.
+src/plugins/consulta/bigtech/config.ts(375,1): error TS1128: Declaration or statement expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:110828) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:01:19 Restarting: /home/mau/projeto/consulta/backend/src/core/pluginLoader.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(14,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(37,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(40,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(63,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(66,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(89,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(92,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(101,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(104,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(104,32): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(363,2): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,14): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(366,29): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(366,69): error TS1005: '(' expected.
+src/plugins/consulta/bigtech/config.ts(366,71): error TS1136: Property assignment expected.
+src/plugins/consulta/bigtech/config.ts(368,11): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(368,30): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(369,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(369,69): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(370,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(370,19): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(371,14): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(371,15): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(372,16): error TS1003: Identifier expected.
+src/plugins/consulta/bigtech/config.ts(372,18): error TS1005: ':' expected.
+src/plugins/consulta/bigtech/config.ts(373,30): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(373,35): error TS1005: ',' expected.
+src/plugins/consulta/bigtech/config.ts(374,3): error TS1128: Declaration or statement expected.
+src/plugins/consulta/bigtech/config.ts(375,1): error TS1128: Declaration or statement expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:111105) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:01:44 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+Compilation error in /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(40,25): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(41,26): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(42,28): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(43,18): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(46,21): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(47,20): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(48,35): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(49,35): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(50,33): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(51,23): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(52,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(53,21): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(54,33): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(57,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(58,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(59,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(60,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(61,1): error TS1109: Expression expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:111356) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:01:52 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+❌ Failed to load plugin consulta-bigtech: Error: ⨯ Unable to compile TypeScript:
+src/plugins/consulta/bigtech/config.ts(40,25): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(41,26): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(42,28): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(43,18): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(46,21): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(47,20): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(48,35): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(49,35): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(50,33): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(51,23): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(52,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(53,21): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(54,33): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(57,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(58,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(59,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(60,16): error TS1005: ';' expected.
+src/plugins/consulta/bigtech/config.ts(61,1): error TS1109: Expression expected.
+
+    at Object.<anonymous> (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts:1:7)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._compile (/home/mau/projeto/consulta/backend/node_modules/source-map-support/source-map-support.js:521:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-7498673101551432.js:69:33)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-7498673101551432.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-7498673101551432.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/mau/projeto/consulta/backend/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:111457) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:02:20 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:111747) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:02:26 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:111825) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:02:46 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/config.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112104) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:02:50 Restarting: /home/mau/projeto/consulta/backend/src/core/pluginLoader.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112161) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:02:54 Restarting: /home/mau/projeto/consulta/backend/src/core/pluginLoader.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112219) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:02:57 Restarting: /home/mau/projeto/consulta/backend/src/core/pluginLoader.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112240) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:03:03 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112303) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:03:21 Restarting: /home/mau/projeto/consulta/backend/src/controllers/admin/plugins.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112606) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+🚀 BigTech CORE running on port 8080
+📊 Health check: http://localhost:8080/health
+[INFO] 12:03:31 Restarting: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts has been modified
+🛑 Shutting down CORE...
+👂 Handler subscribed to event: query.executed
+👂 Handler subscribed to event: credits.purchased
+💰 Billing Engine initialized
+📡 Event Bus initialized
+🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
+🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
+🔄 Importing plugin: consulta-bigtech
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+✅ Plugin validation passed for: bigtech
+✅ Plugin loaded: consulta-bigtech v1.0.0
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
+🔄 Importing plugin: consulta-infosimples
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+✅ Plugin validation passed for: infosimples
+✅ Plugin loaded: consulta-infosimples v1.0.0
+🔍 Found plugins in pagamentos: [ 'asaas' ]
+🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
+🔄 Importing plugin: pagamentos-asaas
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+✅ Plugin validation passed for: pagamento-asaas
+✅ Plugin loaded: pagamentos-asaas v1.0.0
+[DEV] Skipping active plugins load from database
+🔄 Loading global plugin configurations from Appwrite...
+✅ Loaded global config for plugin: infosimples
+✅ Loaded global config for plugin: bigtech
+✅ Loaded 2 global plugin configurations
+✅ Plugins infosimples e bigtech ativados por padrão
+📡 Event Bus initialized
+💰 Billing Engine initialized
+✅ CORE initialized successfully
+(node:112726) [DEP0106] DeprecationWarning: crypto.createDecipher is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health

@@ -7,9 +7,13 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 3.4s
+ ✓ Ready in 7.7s
  ○ Compiling /users ...
- ✓ Compiled /users in 2.2s (566 modules)
- GET /users 200 in 1245ms
+ ✓ Compiled /users in 22.4s (570 modules)
+ GET /_next/static/webpack/e778fadeb946f695.webpack.hot-update.json 404 in 22788ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /users 200 in 22768ms
+ GET /users 200 in 24ms
  ○ Compiling /plugins ...
- ✓ Compiled /plugins in 4.5s (574 modules)
+ ✓ Compiled /plugins in 2.5s (597 modules)
+ GET /plugins 200 in 254ms

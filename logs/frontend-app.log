@@ -8,11 +8,10 @@
    - Experiments (use at your own risk):
      · webpackBuildWorker
 
- ✓ Ready in 2.4s
- ○ Compiling /consulta/credito ...
- ✓ Compiled /consulta/credito in 4.1s (370 modules)
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- ✓ Compiled /api/auth/me/plugins in 438ms (174 modules)
+ ✓ Ready in 7s
  ○ Compiling /_error ...
- ✓ Compiled /_error in 699ms (370 modules)
- ✓ Compiled /api/auth/me/plugins in 145ms (175 modules)
+ ✓ Compiled /api/auth/me/plugins in 16.9s (412 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ○ Compiling /consulta/credito ...
+ ✓ Compiled /consulta/credito in 2s (430 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload

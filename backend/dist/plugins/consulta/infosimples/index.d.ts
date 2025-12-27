@@ -29,6 +29,10 @@ export declare class InfosimplesPlugin implements Plugin {
     private normalizeResponse;
     private normalizeData;
     private calculateCost;
+    /**
+     * Calcula custo do serviço usando preços customizados se disponíveis
+     */
+    private calculateCostWithContext;
     private executeFallback;
     private executeBrasilApiFallback;
     private executeViaCepFallback;
@@ -38,7 +42,7 @@ export declare class InfosimplesPlugin implements Plugin {
     private getDescriptionFromSummary;
     private getHardcodedServices;
     private formatBirthdate;
-    getAvailableServices(): Promise<any[]>;
+    getAvailableServices(context?: PluginContext): Promise<any[]>;
 }
 export default InfosimplesPlugin;
 //# sourceMappingURL=index.d.ts.map

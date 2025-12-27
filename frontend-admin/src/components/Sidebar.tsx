@@ -18,7 +18,8 @@ import {
   LogOut,
   ChevronRight,
   Activity,
-  BarChart3
+  BarChart3,
+  DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +59,12 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       icon: Puzzle,
       badge: '8',
       description: 'Serviços disponíveis'
+    },
+    {
+      name: 'Preços de Serviços',
+      href: '/plugins/pricing',
+      icon: DollarSign,
+      description: 'Configurar preços por serviço'
     },
     {
       name: 'Billing',

@@ -11,17 +11,19 @@ import { pluginLoader } from '../../core/pluginLoader';
 const router = Router();
 const appwrite = LocalAppwriteService.getInstance();
 
-// GET /api/admin/plugins/available - Listar todos plugins de consulta disponíveis no sistema
+// GET /api/admin/plugins/available - Listar todos plugins disponíveis no sistema
 router.get('/plugins/available', async (req, res) => {
   try {
-    // Buscar plugins de consulta disponíveis no pluginLoader
+    // Buscar todos os plugins disponíveis no pluginLoader
     const allPlugins = pluginLoader.getAvailablePlugins();
-    const consultaPlugins = allPlugins.filter(p => p.type === 'consulta');
 
     // Mapear para o formato esperado pelo frontend
-    const availablePlugins = consultaPlugins.map(plugin => ({
+    const availablePlugins = allPlugins.map(plugin => ({
       id: plugin.id,
-      name: plugin.id === 'bigtech' ? 'BigTech' : plugin.id === 'infosimples' ? 'InfoSimples' : plugin.id,
+      name: plugin.id === 'bigtech' ? 'BigTech' :
+            plugin.id === 'infosimples' ? 'InfoSimples' :
+            plugin.id === 'pagamento-asaas' ? 'Asaas Pagamentos' :
+            plugin.id,
       type: plugin.type,
       version: plugin.version,
       config: {}

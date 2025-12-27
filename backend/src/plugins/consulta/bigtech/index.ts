@@ -94,9 +94,8 @@ export class BigTechPlugin implements Plugin {
       // Normalizar saída usando o validador
       const normalizedData = this.validator.normalizeOutput(serviceCode, result.data);
 
-      // Calcular custo
-      const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
-      const cost = servicePrices[category as keyof typeof servicePrices];
+      // Calcular custo usando preços customizados se disponíveis
+      const cost = await this.calculateCost(serviceCode, context);
 
       const duration = Date.now() - startTime;
 
@@ -699,6 +698,7 @@ export class BigTechPlugin implements Plugin {
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': 'BigTech-Plugin/1.0.0',
+            ...(this.config.apiKey ? { 'X-API-Key': this.config.apiKey } : {}),
           },
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(timeout),
@@ -1508,25 +1508,159 @@ export class BigTechPlugin implements Plugin {
   }
 
   /**
-   * Lista todos os serviços disponíveis
+   * Calcula custo do serviço usando preços customizados se disponíveis
    */
-  getAvailableServices(): any[] {
+  private async calculateCost(serviceCode: string, context: PluginContext): Promise<number> {
+    // Primeiro tentar obter preço customizado do contexto
+    if (context.config?.servicePrices && context.config.servicePrices[serviceCode]) {
+      return context.config.servicePrices[serviceCode];
+    }
+
+    // Fallback para preços padrão por categoria
+    const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
+    return servicePrices[category as keyof typeof servicePrices] || 0;
+  }
+
+  /**
+   * Gera resposta mock para desenvolvimento
+   */
+  private generateMockResponse(serviceCode: string, input: any): any {
+    const mockResponse = {
+      HEADER: {
+        INFORMACOES_RETORNO: {
+          VERSAO: "1.0",
+          STATUS_RETORNO: {
+            CODIGO: "1",
+            DESCRICAO: "Consulta realizada com sucesso"
+          },
+          CHAVE_CONSULTA: `mock-${Date.now()}`,
+          PRODUTO: serviceCode,
+          CLIENTE: "Mock Client",
+          DATA_HORA_CONSULTA: new Date().toISOString(),
+          SOLICITANTE: "Mock User",
+          TEMPO_RESPOSTA: {
+            INICIO: new Date().toISOString(),
+            FINAL: new Date().toISOString(),
+            INTERVALO: "00:00:01"
+          }
+        },
+        PARAMETROS: {},
+        DADOS_RETORNADOS: {},
+        CONTROLE: {
+          QUANTIDADE_OCORRENCIAS: "1",
+          OCORRENCIAS: [{
+            CONTEUDO: "Mock data",
+            FONTE: "Mock Source",
+            STATUS: "OK"
+          }]
+        }
+      },
+      CREDCADASTRAL: {},
+      VEICULAR: {}
+    };
+
+    // Preencher parâmetros baseado no serviço
+    switch (serviceCode) {
+      case '1539-bvs-basica-pf':
+      case 'BVSBasicaPF':
+        mockResponse.HEADER.PARAMETROS = {
+          TIPO_PESSOA: "F",
+          CPFCNPJ: input.cpfCnpj
+        };
+        mockResponse.HEADER.DADOS_RETORNADOS = {
+          DADOS_RECEITA_FEDERAL: "1",
+          INFORMACOES_ALERTAS_RESTRICOES: "1",
+          DADOS_AGENCIA_BANCARIA: "1",
+          PENDENCIAS_FINANCEIRAS: "1",
+          PROTESTO_ANALITICO: "1",
+          RECHEQUE: "1",
+          CONTUMACIA: "1",
+          ENDERECO_DO_CEP: "1"
+        };
+        mockResponse.CREDCADASTRAL = {
+          DADOS_PESSOAIS: {
+            NOME: "João Silva",
+            CPF: input.cpfCnpj,
+            DATA_NASCIMENTO: "1980-01-01"
+          },
+          ENDERECOS: [{
+            LOGRADOURO: "Rua das Flores, 123",
+            BAIRRO: "Centro",
+            CIDADE: "São Paulo",
+            UF: "SP",
+            CEP: "01234-567"
+          }],
+          TELEFONES: [{
+            DDD: "11",
+            NUMERO: "99999-9999",
+            TIPO: "CELULAR"
+          }]
+        };
+        break;
+
+      case '11-bvs-basica-pj':
+        mockResponse.HEADER.PARAMETROS = {
+          TIPO_PESSOA: "J",
+          CPFCNPJ: input.cpfCnpj
+        };
+        mockResponse.HEADER.DADOS_RETORNADOS = {
+          DADOS_RECEITA_FEDERAL: "1",
+          INFORMACOES_ALERTAS_RESTRICOES: "1",
+          DADOS_AGENCIA_BANCARIA: "1",
+          PENDENCIAS_FINANCEIRAS: "1",
+          PROTESTO_ANALITICO: "1",
+          RECHEQUE: "1",
+          CONTUMACIA: "1",
+          ENDERECO_DO_CEP: "1"
+        };
+        mockResponse.CREDCADASTRAL = {
+          DADOS_EMPRESA: {
+            RAZAO_SOCIAL: "Empresa Exemplo Ltda",
+            CNPJ: input.cpfCnpj,
+            DATA_FUNDACAO: "2010-01-01"
+          },
+          ENDERECOS: [{
+            LOGRADOURO: "Av. Paulista, 1000",
+            BAIRRO: "Bela Vista",
+            CIDADE: "São Paulo",
+            UF: "SP",
+            CEP: "01310-100"
+          }]
+        };
+        break;
+
+      default:
+        // Mock genérico
+        mockResponse.HEADER.PARAMETROS = input;
+        mockResponse.HEADER.DADOS_RETORNADOS = {
+          DADOS_DISPONIVEIS: "1"
+        };
+    }
+
+    return mockResponse;
+  }
+  getAvailableServices(context?: PluginContext): any[] {
     const services = Object.keys(bigTechServices);
     return services.map(serviceCode => {
       const category = serviceCategories[serviceCode as keyof typeof serviceCategories];
-      const price = servicePrices[category as keyof typeof servicePrices];
+      const defaultPrice = servicePrices[category as keyof typeof servicePrices];
+
+      // Verificar se há preço customizado no contexto
+      const customPrice = context?.config?.servicePrices?.[serviceCode];
+      const price = customPrice !== undefined ? customPrice : defaultPrice;
+      const isCustomPrice = customPrice !== undefined;
 
       // Mapeamento de nomes e descrições dos serviços
       const serviceNames: Record<string, string> = {
         '320-contatos-por-cep': 'Contatos por CEP',
         '327-quod-cadastral-pf': 'QUOD Cadastral PF',
-        '424-validid-localizacao': 'ValidaID - Localização',
+        '424-validacao-localizacao': 'ValidaID - Localização',
         '431-dados-cnh': 'Dados de CNH',
         '36-busca-nome-uf': 'Busca por Nome+UF',
         '39-teleconfirma': 'TeleConfirma',
         '41-protesto-sintetico-nacional': 'Protesto Sintético Nacional',
         '304-positivo-define-risco-cnpj': 'Positivo Define Risco CNPJ',
-        'positivo-acerta-essencial-pf': 'Positivo Acerta Essencial PF',
+        '370-positivo-acerta-essencial-pf': 'Positivo Acerta Essencial PF',
         '1539-bvs-basica-pf': 'BVS Básica PF',
         'BVSBasicaPF': 'BVS Básica PF',
         '11-bvs-basica-pj': 'BVS Básica PJ',
@@ -1540,13 +1674,13 @@ export class BigTechPlugin implements Plugin {
       const serviceDescriptions: Record<string, string> = {
         '320-contatos-por-cep': 'Consulta informações de contatos associados a um CEP específico',
         '327-quod-cadastral-pf': 'Consulta completa de dados cadastrais de pessoa física',
-        '424-validid-localizacao': 'Validação de identidade com localização geográfica',
+        '424-validacao-localizacao': 'Validação de identidade com localização geográfica',
         '431-dados-cnh': 'Consulta dados da Carteira Nacional de Habilitação',
         '36-busca-nome-uf': 'Busca de informações de crédito por nome e estado',
         '39-teleconfirma': 'Confirmação de titularidade de telefone',
         '41-protesto-sintetico-nacional': 'Consulta de protestos em todo território nacional',
         '304-positivo-define-risco-cnpj': 'Análise de risco para pessoa jurídica',
-        'positivo-acerta-essencial-pf': 'Relatório essencial de crédito pessoa física',
+        '370-positivo-acerta-essencial-pf': 'Relatório essencial de crédito pessoa física',
         '1539-bvs-basica-pf': 'Relatório básico BVS para pessoa física',
         'BVSBasicaPF': 'Relatório básico BVS para pessoa física',
         '11-bvs-basica-pj': 'Relatório básico BVS para pessoa jurídica',
@@ -1563,6 +1697,7 @@ export class BigTechPlugin implements Plugin {
         description: serviceDescriptions[serviceCode] || `Serviço ${serviceCode}`,
         category: category,
         price: price,
+        isCustomPrice: isCustomPrice,
         active: true // Todos os serviços estão ativos por padrão
       };
     });
@@ -1582,17 +1717,6 @@ export class BigTechPlugin implements Plugin {
     const stats: Record<string, BigTechRateLimitEntry> = {};
     for (const [key, entry] of this.rateLimitMap.entries()) {
       stats[key] = { ...entry };
-    }
-    return stats;
-  }
-
-  /**
-   * Obtém estatísticas do circuit breaker
-   */
-  getCircuitBreakerStats(): Record<string, BigTechCircuitBreakerState> {
-    const stats: Record<string, BigTechCircuitBreakerState> = {};
-    for (const [key, state] of this.circuitBreakerMap.entries()) {
-      stats[key] = { ...state };
     }
     return stats;
   }

@@ -8,13 +8,13 @@ export const defaultConfig: BigTechConfig = {
   homologationUrl: 'https://api.consultasbigtech.com.br/json/homologa.aspx',
   useHomologation: true, // false = produção, true = homologação
   apiKey: 'ZzM67lS3CL7SSW6680p9fEcNPcD5wE88aSQa/D3EnDeL6cnwsrkpmrCsSt4dssftiiooSega',
-  timeout: 30000, // 30 segundos
-  retries: 3, // Aumentar retries para lidar com rate limiting
-  retryDelayMs: 5000, // Aumentar delay base entre retries
-  fallbackSources: ['internal'], // Fontes de fallback (provedores internos)
-  rateLimitPerMinute: 10, // Limitar a 10 requisições por minuto
-  rateLimitWindowMs: 60000, // Janela de 1 minuto para rate limiting
-  minRequestInterval: 6000, // Mínimo 6 segundos entre requisições
+  timeout: 30000,
+  retries: 3,
+  retryDelayMs: 1000,
+  rateLimitPerMinute: 10,
+  rateLimitWindowMs: 60000,
+  minRequestInterval: 100,
+  fallbackSources: [],
 };
 
 // Mapeamento de códigos para endpoints BigTech

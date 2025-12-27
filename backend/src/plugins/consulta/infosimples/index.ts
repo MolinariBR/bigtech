@@ -91,7 +91,7 @@ export class InfosimplesPlugin implements Plugin {
       return {
         success: true,
         data: normalized,
-        cost: this.calculateCost(type),
+        cost: await this.calculateCostWithContext(type, context),
       };
     } catch (error) {
       // Tentar fallback se configurado
@@ -450,12 +450,25 @@ export class InfosimplesPlugin implements Plugin {
 
   private calculateCost(type: string): number {
     // Custos baseados em 9.paginas.md
-    const costs = {
+    const defaultCosts = {
       credito: 1.80,
       cadastral: 1.00,
       veicular: 3.00,
     };
-    return costs[type as keyof typeof costs] || 0;
+    return defaultCosts[type as keyof typeof defaultCosts] || 0;
+  }
+
+  /**
+   * Calcula custo do serviço usando preços customizados se disponíveis
+   */
+  private async calculateCostWithContext(type: string, context: PluginContext): Promise<number> {
+    // Primeiro tentar obter preço customizado do contexto
+    if (context.config?.servicePrices && context.config.servicePrices[type]) {
+      return context.config.servicePrices[type];
+    }
+
+    // Fallback para preços padrão
+    return this.calculateCost(type);
   }
 
   private async executeFallback(context: PluginContext, originalError: unknown): Promise<PluginResult> {
@@ -657,7 +670,26 @@ export class InfosimplesPlugin implements Plugin {
     }
   }
 
-  private getPriceForCategory(category: string): number {
+  private getPriceForCategory(category: string, context?: PluginContext): number {
+    // Primeiro tentar obter preço customizado do contexto baseado na categoria
+    if (context?.config?.servicePrices) {
+      // Mapear categoria para tipos de serviço
+      const categoryToTypes: Record<string, string[]> = {
+        cadastral: ['cadastral'],
+        credito: ['credito'],
+        veicular: ['veicular'],
+        endereco: ['endereco'],
+        outros: ['outros']
+      };
+
+      const types = categoryToTypes[category] || [];
+      for (const type of types) {
+        if (context.config.servicePrices[type]) {
+          return context.config.servicePrices[type];
+        }
+      }
+    }
+
     // Preços padrão por categoria baseados em 9.paginas.md
     const prices: Record<string, number> = {
       cadastral: 1.00,
@@ -690,26 +722,68 @@ export class InfosimplesPlugin implements Plugin {
     return `Consulta ${title.toLowerCase()} através da API InfoSimples`;
   }
 
-  private getHardcodedServices(): any[] {
+  private getHardcodedServices(context?: PluginContext): any[] {
     // Fallback hardcoded se o parser falhar
     const services = [];
 
     // Crédito
     services.push(
-      { id: 'cenprot_protestos_sp', name: 'CENPROT Protestos SP', description: 'Consulta de protestos em cartório no estado de São Paulo', price: 2.50, category: 'credito', active: true },
-      { id: 'serasa_score', name: 'Serasa Score', description: 'Consulta de score de crédito Serasa', price: 1.80, category: 'credito', active: true }
+      {
+        id: 'cenprot_protestos_sp',
+        name: 'CENPROT Protestos SP',
+        description: 'Consulta de protestos em cartório no estado de São Paulo',
+        price: context?.config?.servicePrices?.credito || 2.50,
+        category: 'credito',
+        active: true
+      },
+      {
+        id: 'serasa_score',
+        name: 'Serasa Score',
+        description: 'Consulta de score de crédito Serasa',
+        price: context?.config?.servicePrices?.credito || 1.80,
+        category: 'credito',
+        active: true
+      }
     );
 
     // Cadastral
     services.push(
-      { id: 'receita_federal_cpf', name: 'Receita Federal CPF', description: 'Consulta de dados cadastrais na Receita Federal', price: 1.00, category: 'cadastral', active: true },
-      { id: 'receita_federal_cnpj', name: 'Receita Federal CNPJ', description: 'Consulta de dados cadastrais de empresa', price: 1.20, category: 'cadastral', active: true }
+      {
+        id: 'receita_federal_cpf',
+        name: 'Receita Federal CPF',
+        description: 'Consulta de dados cadastrais na Receita Federal',
+        price: context?.config?.servicePrices?.cadastral || 1.00,
+        category: 'cadastral',
+        active: true
+      },
+      {
+        id: 'receita_federal_cnpj',
+        name: 'Receita Federal CNPJ',
+        description: 'Consulta de dados cadastrais de empresa',
+        price: context?.config?.servicePrices?.cadastral || 1.20,
+        category: 'cadastral',
+        active: true
+      }
     );
 
     // Veicular
     services.push(
-      { id: 'serpro_radar_veiculo', name: 'SERPRO Radar Veículo', description: 'Consulta de dados veiculares no SERPRO', price: 3.00, category: 'veicular', active: true },
-      { id: 'detran_rj_veiculo', name: 'DETRAN RJ Veículo', description: 'Consulta de veículo no DETRAN Rio de Janeiro', price: 4.50, category: 'veicular', active: true }
+      {
+        id: 'serpro_radar_veiculo',
+        name: 'SERPRO Radar Veículo',
+        description: 'Consulta de dados veiculares no SERPRO',
+        price: context?.config?.servicePrices?.veicular || 3.00,
+        category: 'veicular',
+        active: true
+      },
+      {
+        id: 'detran_rj_veiculo',
+        name: 'DETRAN RJ Veículo',
+        description: 'Consulta de veículo no DETRAN Rio de Janeiro',
+        price: context?.config?.servicePrices?.veicular || 4.50,
+        category: 'veicular',
+        active: true
+      }
     );
 
     return services;
@@ -736,17 +810,17 @@ export class InfosimplesPlugin implements Plugin {
     return birthdate;
   }
 
-  async getAvailableServices(): Promise<any[]> {
+  async getAvailableServices(context?: PluginContext): Promise<any[]> {
     try {
       const schemas = this.getSchemas();
       if (schemas.length === 0) {
         console.warn('Nenhum schema encontrado, usando fallback hardcoded');
-        return this.getHardcodedServices();
+        return this.getHardcodedServices(context);
       }
 
       const services = schemas.map(schema => {
         const category = this.inferCategory(schema.endpoint);
-        const price = this.getPriceForCategory(category);
+        const price = this.getPriceForCategory(category, context);
         const description = this.getDescriptionFromSummary(schema.form.title);
 
         return {
@@ -764,7 +838,7 @@ export class InfosimplesPlugin implements Plugin {
       return services;
     } catch (error) {
       console.error('Erro ao obter serviços disponíveis:', error);
-      return this.getHardcodedServices();
+      return this.getHardcodedServices(context);
     }
   }
 }
