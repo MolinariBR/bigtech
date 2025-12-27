@@ -43,3 +43,11 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# Project specific exclusions
+documentos/
+tests/
+backup/
+novoplugin/
+scripts/
+shared/
