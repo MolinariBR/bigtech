@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,8 +21,7 @@ import {
   Calendar,
   CheckCircle,
   XCircle,
-  Clock,
-  AlertTriangle
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as api from '@/lib/api/billing';
@@ -59,15 +58,6 @@ export default function BillingPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  useEffect(() => {
-    loadStats();
-    loadBillingItems();
-  }, []);
-
-  useEffect(() => {
-    loadBillingItems();
-  }, [page, statusFilter, typeFilter]);
-
   const loadStats = async () => {
     try {
       const statsData = await api.getBillingStats();
@@ -78,10 +68,10 @@ export default function BillingPage() {
     }
   };
 
-  const loadBillingItems = async () => {
+  const loadBillingItems = useCallback(async () => {
     setLoading(true);
     try {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (statusFilter !== 'all') filters.status = statusFilter;
       if (typeFilter !== 'all') filters.type = typeFilter;
       if (searchTerm.trim()) filters.search = searchTerm.trim();
@@ -95,7 +85,16 @@ export default function BillingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, typeFilter, searchTerm, page]);
+
+  useEffect(() => {
+    loadStats();
+    loadBillingItems();
+  }, []);
+
+  useEffect(() => {
+    loadBillingItems();
+  }, [page, statusFilter, typeFilter, loadBillingItems]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -131,7 +130,7 @@ export default function BillingPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; icon: React.ReactNode; label: string }> = {
+    const variants: Record<string, { variant: 'default' | 'destructive' | 'outline' | 'secondary'; icon: React.ReactNode; label: string }> = {
       pending: { variant: 'secondary', icon: <Clock className="h-3 w-3" />, label: 'Pendente' },
       completed: { variant: 'default', icon: <CheckCircle className="h-3 w-3" />, label: 'Concluído' },
       failed: { variant: 'destructive', icon: <XCircle className="h-3 w-3" />, label: 'Falhou' },

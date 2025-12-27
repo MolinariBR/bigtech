@@ -1,12 +1,18 @@
 // Hook para gerenciar tema dark/light/auto
 import { useState, useEffect } from 'react'
 
+declare global {
+  interface Window {
+    __initialTheme?: 'light' | 'dark' | 'auto'
+  }
+}
+
 export function useTheme() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('light')
 
   useEffect(() => {
     // Verificar tema salvo no localStorage ou na variável global definida no _document.tsx
-    const savedTheme = (window as any).__initialTheme || localStorage.getItem('theme') as 'light' | 'dark' | 'auto' | null
+    const savedTheme = window.__initialTheme || (localStorage.getItem('theme') as 'light' | 'dark' | 'auto' | null)
     if (savedTheme) {
       setTheme(savedTheme)
       // Aplicar classe no documentElement para o Tailwind funcionar

@@ -2,7 +2,7 @@
 // Precedência: 1.Project → 2.Architecture → 4.Entities → 5.Pages → 8.DesignSystem
 // Decisão: Página de auditoria melhorada para compliance (conforme US-012, TASK-015)
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -22,8 +22,6 @@ import {
   User,
   Activity,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
   MoreHorizontal,
   Filter
 } from 'lucide-react';
@@ -35,7 +33,7 @@ interface AuditLog {
   userId?: string;
   action: string;
   resource: string;
-  details: any;
+  details: Record<string, unknown>;
   ipAddress: string;
   timestamp: string;
   createdAt: string;
@@ -66,15 +64,6 @@ export default function AuditPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  useEffect(() => {
-    loadStats();
-    loadAuditLogs();
-  }, []);
-
-  useEffect(() => {
-    loadAuditLogs();
-  }, [page, userFilter, actionFilter, startDate, endDate]);
-
   const loadStats = async () => {
     try {
       const statsData = await api.getAuditStats();
@@ -85,10 +74,10 @@ export default function AuditPage() {
     }
   };
 
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (userFilter.trim()) filters.userId = userFilter.trim();
       if (actionFilter !== 'all') filters.action = actionFilter;
       if (searchTerm.trim()) filters.search = searchTerm.trim();
@@ -104,12 +93,21 @@ export default function AuditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userFilter, actionFilter, searchTerm, startDate, endDate, page]);
+
+  useEffect(() => {
+    loadStats();
+    loadAuditLogs();
+  }, []);
+
+  useEffect(() => {
+    loadAuditLogs();
+  }, [page, userFilter, actionFilter, startDate, endDate, loadAuditLogs]);
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (userFilter.trim()) filters.userId = userFilter.trim();
       if (actionFilter !== 'all') filters.action = actionFilter;
       if (searchTerm.trim()) filters.search = searchTerm.trim();

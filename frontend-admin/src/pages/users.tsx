@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Edit, Power, PowerOff, MoreHorizontal, CheckCircle, XCircle, Loader2, User, Mail, Shield, Phone } from 'lucide-react';
+import { Plus, Edit, Power, PowerOff, MoreHorizontal, Loader2, User, Shield, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface User {
@@ -29,7 +29,7 @@ interface User {
 interface UserPlugin {
   pluginId: string;
   allowed: boolean;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 interface AvailablePlugin {
@@ -37,7 +37,7 @@ interface AvailablePlugin {
   name: string;
   type: string;
   version: string;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export default function UsersPage() {
@@ -67,8 +67,8 @@ export default function UsersPage() {
       if (!res.ok) throw new Error('Failed to load users');
       const data = await res.json();
       setUsers(data.users || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+    } catch {
+      setError('Unknown error');
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export default function UsersPage() {
       const token = localStorage.getItem('accessToken');
       
       // Preparar dados para atualização
-      const updateData: any = {
+      const updateData: Record<string, string | number | boolean | undefined> = {
         email: editingUser.email,
         role: editingUser.role,
         status: editingUser.status
@@ -152,7 +152,7 @@ export default function UsersPage() {
       setIsDialogOpen(false);
       setEditingUser(null);
       loadUsers();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao atualizar usuário');
     } finally {
       setSaving(false);
@@ -178,7 +178,7 @@ export default function UsersPage() {
 
       toast.success(`Usuário ${newStatus === 'active' ? 'ativado' : 'desativado'} com sucesso`);
       loadUsers();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao alterar status do usuário');
     } finally {
       setTogglingStatus(null);
@@ -217,7 +217,7 @@ export default function UsersPage() {
       setIsPluginsDialogOpen(false);
       setManagingPluginsUser(null);
       setUserPlugins([]);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao atualizar plugins do usuário');
     } finally {
       setSavingPlugins(false);

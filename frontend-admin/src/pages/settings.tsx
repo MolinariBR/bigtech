@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,9 +16,7 @@ import {
   RefreshCw,
   CheckCircle,
   AlertTriangle,
-  Info,
-  Shield,
-  Zap
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -74,42 +72,7 @@ const SettingsPage: React.FC = () => {
   const [auditId, setAuditId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  useEffect(() => {
-    // Check for changes
-    const hasChanges = originalSettings && JSON.stringify(settings) !== JSON.stringify(originalSettings);
-    setStatus(prev => ({ ...prev, hasChanges: !!hasChanges }));
-
-    // Validate settings
-    const isValid = validate();
-    setStatus(prev => ({ ...prev, isValid }));
-  }, [settings, originalSettings]);
-
-  const fetchSettings = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/admin/system-settings');
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data);
-        setOriginalSettings(data);
-        setStatus(prev => ({ ...prev, lastUpdated: new Date().toISOString() }));
-        toast.success('Configurações carregadas com sucesso');
-      } else {
-        toast.error('Erro ao carregar configurações');
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configurações', error);
-      toast.error('Erro ao carregar configurações');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const validate = (): boolean => {
+  const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
     // Billing validation
@@ -165,6 +128,45 @@ const SettingsPage: React.FC = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  }, [settings]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  useEffect(() => {
+    // Check for changes
+    const hasChanges = originalSettings && JSON.stringify(settings) !== JSON.stringify(originalSettings);
+    setStatus(prev => ({ ...prev, hasChanges: !!hasChanges }));
+
+    // Validate settings
+    const isValid = validate();
+    setStatus(prev => ({ ...prev, isValid }));
+  }, [settings, originalSettings, validate]);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/system-settings');
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+        setOriginalSettings(data);
+        setStatus(prev => ({
+          ...prev,
+          lastUpdated: data.lastUpdated || null,
+          isValid: true,
+          hasChanges: false
+        }));
+      } else {
+        toast.error('Erro ao carregar configurações');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+      toast.error('Erro ao carregar configurações');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -213,13 +215,13 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const updateSettings = (path: string, value: any) => {
+  const updateSettings = (path: string, value: string | number | boolean) => {
     setSettings(prev => {
       const keys = path.split('.');
       const newSettings = { ...prev };
-      let current: any = newSettings;
+      let current: Record<string, unknown> = newSettings;
       for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
+        current = current[keys[i]] as Record<string, unknown>;
       }
       current[keys[keys.length - 1]] = value;
       return newSettings;

@@ -1,4 +1,4 @@
-export async function listPlugins() {
+export async function listPlugins(): Promise<unknown[]> {
   const res = await fetch('http://localhost:8080/api/admin/plugins', {
     method: 'GET',
     credentials: 'include',
@@ -9,7 +9,7 @@ export async function listPlugins() {
   return body.data || body.plugins || body || [];
 }
 
-export async function togglePlugin(pluginKey: string, action: 'enable' | 'disable') {
+export async function togglePlugin(pluginKey: string, action: 'enable' | 'disable'): Promise<unknown> {
   const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/toggle`, {
     method: 'POST',
     credentials: 'include',
@@ -20,7 +20,7 @@ export async function togglePlugin(pluginKey: string, action: 'enable' | 'disabl
   return await res.json();
 }
 
-export async function configurePlugin(pluginKey: string, config: any) {
+export async function configurePlugin(pluginKey: string, config: Record<string, unknown>): Promise<unknown> {
   const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}/config`, {
     method: 'PUT',
     credentials: 'include',
@@ -31,7 +31,7 @@ export async function configurePlugin(pluginKey: string, config: any) {
   return await res.json();
 }
 
-export async function installPlugin(payload: { name: string; type: string; version: string }) {
+export async function installPlugin(payload: { name: string; type: string; version: string }): Promise<unknown> {
   const res = await fetch('http://localhost:8080/api/admin/plugins', {
     method: 'POST',
     credentials: 'include',
@@ -42,7 +42,7 @@ export async function installPlugin(payload: { name: string; type: string; versi
   return await res.json();
 }
 
-export async function removePlugin(pluginKey: string) {
+export async function removePlugin(pluginKey: string): Promise<unknown> {
   const res = await fetch(`http://localhost:8080/api/admin/plugins/${encodeURIComponent(pluginKey)}`, {
     method: 'DELETE',
     credentials: 'include',

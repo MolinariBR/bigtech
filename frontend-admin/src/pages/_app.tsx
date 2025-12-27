@@ -3,12 +3,10 @@ import type { AppProps } from 'next/app';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { useState, useEffect } from 'react';
-import { useTheme } from '@/hooks/useTheme';
 import { Toaster } from 'sonner';
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     // Verificar se já existe um token válido no localStorage
@@ -17,7 +15,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_DEV_TOKEN) {
       try {
         localStorage.setItem('accessToken', process.env.NEXT_PUBLIC_DEV_TOKEN);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -30,7 +28,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     }
   }, []);
 
-  const noLayout = (Component as any).noLayout;
+  const noLayout = (Component as { noLayout?: boolean }).noLayout;
 
   // If the page opts out of the default layout (login), render minimal wrapper.
   if (noLayout) {

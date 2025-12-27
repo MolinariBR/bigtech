@@ -32,7 +32,7 @@ function AdminLoginPage() {
       } else {
         setError(data?.message || 'Erro no login do administrador');
       }
-    } catch (err) {
+    } catch {
       setError('Erro de conexão');
     } finally {
       setLoading(false);
@@ -85,6 +85,6 @@ function AdminLoginPage() {
   );
 }
 
-(AdminLoginPage as any).noLayout = true;
+(AdminLoginPage as { noLayout?: boolean }).noLayout = true;
 
 export default AdminLoginPage;

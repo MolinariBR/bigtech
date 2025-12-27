@@ -49,7 +49,7 @@ export default function AccountPage() {
       language: 'pt-BR',
       systemAlerts: true
     })
-  }, [])
+  }, [theme])
 
   const handleSave = () => {
     // TODO: Salvar alterações via API

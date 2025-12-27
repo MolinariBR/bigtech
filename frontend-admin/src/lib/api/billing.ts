@@ -19,7 +19,7 @@ export interface BillingStats {
   monthlyRevenue: number;
 }
 
-export async function listBillingItems(page: number = 1, perPage: number = 20, filters?: any): Promise<{ items: BillingItem[]; total: number }> {
+export async function listBillingItems(page: number = 1, perPage: number = 20, filters?: Record<string, string>): Promise<{ items: BillingItem[]; total: number }> {
   try {
     const queryParams = new URLSearchParams({
       page: page.toString(),

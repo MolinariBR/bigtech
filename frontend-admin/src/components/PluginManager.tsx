@@ -245,7 +245,7 @@ export default function PluginManager() {
 
                   <div className="flex items-center space-x-2">
                     <Switch
-                      checked={editingPlugin.config?.useHomologation || false}
+                      checked={(editingPlugin.config?.useHomologation as boolean) || false}
                       onCheckedChange={(checked) => setEditingPlugin({
                         ...editingPlugin,
                         config: {

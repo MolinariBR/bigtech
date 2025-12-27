@@ -380,7 +380,7 @@ export default function PluginPricingPage() {
                 <strong>3.</strong> Preços personalizados têm prioridade sobre os preços padrão do plugin.
               </p>
               <p>
-                <strong>4.</strong> Clique em "Salvar Preços" para persistir as alterações no sistema.
+                <strong>4.</strong> Clique em &quot;Salvar Preços&quot; para persistir as alterações no sistema.
               </p>
               <p>
                 <strong>5.</strong> As configurações são salvas por tenant e afetam apenas este ambiente.

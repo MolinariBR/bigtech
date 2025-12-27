@@ -5,7 +5,7 @@ export interface AuditLog {
   userId?: string;
   action: string;
   resource: string;
-  details: any;
+  details: Record<string, unknown>;
   ipAddress: string;
   timestamp: string;
   createdAt: string;
@@ -67,7 +67,7 @@ export async function getAuditStats(): Promise<AuditStats> {
   }
 }
 
-export async function exportAuditLogs(filters?: any): Promise<{ jobId: string }> {
+export async function exportAuditLogs(filters?: Record<string, unknown>): Promise<{ jobId: string }> {
   try {
     const response = await fetch('/api/admin/audit/export', {
       method: 'POST',

@@ -104,12 +104,12 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             ...(token ? { Authorization: `Bearer ${token}` } : {})
           }
         });
-      } catch (e) {
+      } catch {
         // ignore
       }
       try {
         localStorage.removeItem('accessToken');
-      } catch (e) {}
+      } catch {}
       router.replace('/login');
     })();
   };

@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Puzzle, CheckCircle, Loader2, Settings, MoreHorizontal, Play, Pause, Trash2, Zap, Package, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Puzzle, CheckCircle, Loader2, Settings, MoreHorizontal, Trash2, Zap, Package, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Plugin {
@@ -19,7 +19,7 @@ interface Plugin {
   name: string;
   type: string;
   version: string;
-  config?: any;
+  config?: Record<string, unknown>;
 }
 
 interface GlobalPlugin {
@@ -55,7 +55,7 @@ export default function PluginsPage() {
   const [editingPlugin, setEditingPlugin] = useState<Plugin | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('config');
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Record<string, unknown>[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
   const [uninstallingPlugin, setUninstallingPlugin] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export default function PluginsPage() {
     return globalPlugin.status as 'installed' | 'configured';
   };
 
-  const getPluginConfig = (pluginId: string): any => {
+  const getPluginConfig = (pluginId: string): Record<string, unknown> | null => {
     const globalPlugin = globalPlugins.find(p => p.pluginId === pluginId);
     if (!globalPlugin) return null;
     try {
@@ -145,9 +145,9 @@ export default function PluginsPage() {
 
       // Merge with existing custom prices from plugin config
       const customPrices = editingPlugin?.config?.servicePrices || {};
-      const servicesWithPrices = data.services.map((service: any) => ({
+      const servicesWithPrices = data.services.map((service: Record<string, unknown>) => ({
         ...service,
-        customPrice: customPrices[service.id] || 0
+        customPrice: customPrices[String(service.id)] || 0
       }));
 
       setServices(servicesWithPrices);
@@ -195,8 +195,9 @@ export default function PluginsPage() {
       // Prepare servicePrices object
       const servicePrices: { [key: string]: number } = {};
       services.forEach(service => {
-        if (service.customPrice && service.customPrice > 0) {
-          servicePrices[service.id] = service.customPrice;
+        const customPrice = service.customPrice as number;
+        if (customPrice && customPrice > 0) {
+          servicePrices[String(service.id)] = customPrice;
         }
       });
 
@@ -252,7 +253,7 @@ export default function PluginsPage() {
       }
 
       setConnectionResults(prev => ({ ...prev, [pluginId]: result }));
-    } catch (err) {
+    } catch {
       toast.error('Erro ao testar conexão');
     } finally {
       setTestingConnection(null);
@@ -543,7 +544,7 @@ export default function PluginsPage() {
               Configurar Plugin Global
             </DialogTitle>
             <DialogDescription>
-              Configure as opções do plugin "{editingPlugin?.name}" para uso global no sistema.
+              Configure as opções do plugin &quot;{editingPlugin?.name}&quot; para uso global no sistema.
             </DialogDescription>
           </DialogHeader>
 
@@ -566,7 +567,7 @@ export default function PluginsPage() {
                         <Input
                           id="baseUrl"
                           placeholder="https://api.exemplo.com"
-                          value={editingPlugin.config?.baseUrl || ''}
+                          value={String(editingPlugin.config?.baseUrl || '')}
                           onChange={(e) => setEditingPlugin({
                             ...editingPlugin,
                             config: {
@@ -586,7 +587,7 @@ export default function PluginsPage() {
                         <Input
                           id="homologationUrl"
                           placeholder="https://homologacao.api.exemplo.com"
-                          value={editingPlugin.config?.homologationUrl || ''}
+                          value={String(editingPlugin.config?.homologationUrl || '')}
                           onChange={(e) => setEditingPlugin({
                             ...editingPlugin,
                             config: {
@@ -602,7 +603,7 @@ export default function PluginsPage() {
 
                       <div className="flex items-center space-x-2">
                         <Switch
-                          checked={editingPlugin.config?.useHomologation || false}
+                          checked={Boolean(editingPlugin.config?.useHomologation) || false}
                           onCheckedChange={(checked) => setEditingPlugin({
                             ...editingPlugin,
                             config: {
@@ -626,7 +627,7 @@ export default function PluginsPage() {
                         id="apiKey"
                         type="password"
                         placeholder="Digite a chave da API"
-                        value={editingPlugin.config?.apiKey || ''}
+                        value={String(editingPlugin.config?.apiKey || '')}
                         onChange={(e) => setEditingPlugin({
                           ...editingPlugin,
                           config: {
@@ -654,7 +655,7 @@ export default function PluginsPage() {
                         <Input
                           id="baseUrl"
                           placeholder="https://api.gateway.com"
-                          value={editingPlugin.config?.baseUrl || ''}
+                          value={String(editingPlugin.config?.baseUrl || '')}
                           onChange={(e) => setEditingPlugin({
                             ...editingPlugin,
                             config: {
@@ -672,7 +673,7 @@ export default function PluginsPage() {
                           id="apiKey"
                           type="password"
                           placeholder="Digite a chave da API"
-                          value={editingPlugin.config?.apiKey || ''}
+                          value={String(editingPlugin.config?.apiKey || '')}
                           onChange={(e) => setEditingPlugin({
                             ...editingPlugin,
                             config: {
@@ -721,13 +722,13 @@ export default function PluginsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {services.map((service: any) => (
-                            <TableRow key={service.id}>
+                          {services.map((service: Record<string, unknown>) => (
+                            <TableRow key={String(service.id)}>
                               <TableCell className="font-medium">
-                                {service.name}
+                                {String(service.name)}
                               </TableCell>
                               <TableCell className="text-muted-foreground">
-                                {service.defaultPrice?.toFixed(2) || 'N/A'}
+                                {(service.defaultPrice as number)?.toFixed(2) || 'N/A'}
                               </TableCell>
                               <TableCell>
                                 <Input
@@ -735,7 +736,7 @@ export default function PluginsPage() {
                                   step="0.01"
                                   min="0"
                                   placeholder="0.00"
-                                  value={service.customPrice || ''}
+                                  value={String(service.customPrice || '')}
                                   onChange={(e) => {
                                     const value = parseFloat(e.target.value) || 0;
                                     setServices(prev => prev.map(s =>
@@ -817,7 +818,7 @@ export default function PluginsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Desinstalação</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja desinstalar o plugin "{uninstallingPlugin}" globalmente?
+              Tem certeza que deseja desinstalar o plugin &quot;{uninstallingPlugin}&quot; globalmente?
               Esta ação não pode ser desfeita e afetará todos os tenants que usam este plugin.
             </AlertDialogDescription>
           </AlertDialogHeader>

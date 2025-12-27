@@ -2,15 +2,13 @@
 // Dashboard Administrativo: Exibe métricas globais e gráficos de uso (5.3.6)
 // Relacionado: 2.Architecture.md (Appwrite para dados), 9.DesignSystem.md (componentes)
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -82,8 +80,6 @@ interface SystemStatus {
   billing: 'healthy' | 'warning' | 'error';
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metrics>({
     totalConsumption: 0,
@@ -123,13 +119,7 @@ export default function AdminDashboard() {
     setAuthChecking(false);
   }, [router]);
 
-  useEffect(() => {
-    if (!authChecking) {
-      fetchDashboardData();
-    }
-  }, [authChecking]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch metrics from API
@@ -170,7 +160,13 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!authChecking) {
+      fetchDashboardData();
+    }
+  }, [authChecking, fetchDashboardData]);
 
   const loadMockData = () => {
     setMetrics({

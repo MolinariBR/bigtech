@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  output: 'export',
+  trailingSlash: true,
   experimental: {
     optimizePackageImports: [],
     webpackBuildWorker: true,
@@ -9,11 +11,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  env: {
+    APPWRITE_URL: process.env.APPWRITE_URL || 'http://localhost:8080',
+  },
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8080/api/:path*',
+        destination: `${process.env.APPWRITE_URL || 'http://localhost:8080'}/api/:path*`,
       },
     ]
   },

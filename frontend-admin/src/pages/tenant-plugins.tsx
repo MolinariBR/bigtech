@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Puzzle, CheckCircle, Loader2, Settings, MoreHorizontal, Play, Pause, Trash2, Zap, Package, AlertCircle, Wifi, WifiOff, DollarSign, Edit, ChevronDown, ChevronRight } from 'lucide-react';
@@ -20,7 +18,7 @@ interface Plugin {
   type: string;
   version: string;
   status: string;
-  config?: any;
+  config?: Record<string, unknown>;
   installedAt: string;
   updatedAt: string;
 }
@@ -33,12 +31,6 @@ interface Service {
   price: number;
   isCustomPrice: boolean;
   active: boolean;
-}
-
-interface TenantPluginConfig {
-  pluginId: string;
-  tenantId: string;
-  services: Service[];
 }
 
 export default function TenantPluginsPage() {
@@ -57,7 +49,7 @@ export default function TenantPluginsPage() {
   const [saving, setSaving] = useState(false);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
   const [removingPlugin, setRemovingPlugin] = useState<string | null>(null);
-  const [connectionResults, setConnectionResults] = useState<Record<string, any>>({});
+  const [connectionResults, setConnectionResults] = useState<Record<string, unknown>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -100,7 +92,7 @@ export default function TenantPluginsPage() {
     if (tenantId) {
       loadPlugins();
     }
-  }, [tenantId]);
+  }, [tenantId, loadPlugins]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -280,7 +272,7 @@ export default function TenantPluginsPage() {
       }
 
       setConnectionResults(prev => ({ ...prev, [pluginId]: result }));
-    } catch (err) {
+    } catch {
       toast.error('Erro ao testar conexão');
     } finally {
       setTestingConnection(null);
@@ -312,7 +304,8 @@ export default function TenantPluginsPage() {
     const result = connectionResults[pluginId];
     if (!result) return null;
 
-    return result.status === 'connected' ? (
+    const status = (result as { status: string }).status;
+    return status === 'connected' ? (
       <div className="flex items-center gap-1 text-green-600">
         <Wifi className="h-4 w-4" />
         <span className="text-sm">Conectado</span>
@@ -544,7 +537,7 @@ export default function TenantPluginsPage() {
               Configurar Plugin
             </DialogTitle>
             <DialogDescription>
-              Configure as opções do plugin "{editingPlugin?.id}" para este tenant.
+              Configure as opções do plugin &quot;{editingPlugin?.id}&quot; para este tenant.
             </DialogDescription>
           </DialogHeader>
 
@@ -561,7 +554,7 @@ export default function TenantPluginsPage() {
                       <Input
                         id="baseUrl"
                         placeholder="https://api.exemplo.com"
-                        value={editingPlugin.config?.baseUrl || ''}
+                        value={String(editingPlugin.config?.baseUrl || '')}
                         onChange={(e) => setEditingPlugin({
                           ...editingPlugin,
                           config: {
@@ -579,7 +572,7 @@ export default function TenantPluginsPage() {
                         id="apiKey"
                         type="password"
                         placeholder="Digite a chave da API"
-                        value={editingPlugin.config?.apiKey || ''}
+                        value={String(editingPlugin.config?.apiKey || '')}
                         onChange={(e) => setEditingPlugin({
                           ...editingPlugin,
                           config: {
@@ -605,7 +598,7 @@ export default function TenantPluginsPage() {
                       <Input
                         id="baseUrl"
                         placeholder="https://api.gateway.com"
-                        value={editingPlugin.config?.baseUrl || ''}
+                        value={String(editingPlugin.config?.baseUrl || '')}
                         onChange={(e) => setEditingPlugin({
                           ...editingPlugin,
                           config: {
@@ -623,7 +616,7 @@ export default function TenantPluginsPage() {
                         id="apiKey"
                         type="password"
                         placeholder="Digite a chave da API"
-                        value={editingPlugin.config?.apiKey || ''}
+                        value={String(editingPlugin.config?.apiKey || '')}
                         onChange={(e) => setEditingPlugin({
                           ...editingPlugin,
                           config: {
@@ -677,7 +670,7 @@ export default function TenantPluginsPage() {
               Configurar Preços dos Serviços
             </DialogTitle>
             <DialogDescription>
-              Configure preços customizados para os serviços do plugin "{selectedPlugin}".
+              Configure preços customizados para os serviços do plugin &quot;{selectedPlugin}&quot;.
             </DialogDescription>
           </DialogHeader>
 
@@ -853,7 +846,7 @@ export default function TenantPluginsPage() {
                   <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md mt-3">
                     <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
                     <p className="text-sm text-blue-800">
-                      Preços marcados como "Custom" substituirão os valores padrão do plugin.
+                      Preços marcados como &quot;Custom&quot; substituirão os valores padrão do plugin.
                       Clique no ícone de edição para reverter ao preço padrão.
                     </p>
                   </div>
@@ -882,7 +875,7 @@ export default function TenantPluginsPage() {
               ) : (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Salvar Preços
+                  &quot;Salvar Preços&quot;
                 </>
               )}
             </Button>
@@ -896,7 +889,7 @@ export default function TenantPluginsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover o plugin "{removingPlugin}" deste tenant?
+              Tem certeza que deseja remover o plugin &quot;{removingPlugin}&quot; deste tenant?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
