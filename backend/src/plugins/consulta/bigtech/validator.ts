@@ -698,14 +698,27 @@ export class BigTechDataValidator {
           break;
 
         case '1539-bvs-basica-pf':
-          if (!input.cpf) {
+          if (!input.cpfCnpj) {
             errors.push('CPF é obrigatório');
           } else {
-            const cpfValidation = BigTechDataValidator.validateAndNormalizeCPF(input.cpf);
+            const cpfValidation = BigTechDataValidator.validateAndNormalizeCPF(input.cpfCnpj);
             if (!cpfValidation.isValid) {
               errors.push(`CPF inválido: ${cpfValidation.error}`);
             } else {
-              sanitizedInput.cpf = cpfValidation.normalized;
+              sanitizedInput.cpfCnpj = cpfValidation.normalized;
+            }
+          }
+          break;
+
+        case 'BVSBasicaPF':
+          if (!input.cpfCnpj) {
+            errors.push('CPF é obrigatório');
+          } else {
+            const cpfValidation = BigTechDataValidator.validateAndNormalizeCPF(input.cpfCnpj);
+            if (!cpfValidation.isValid) {
+              errors.push(`CPF inválido: ${cpfValidation.error}`);
+            } else {
+              sanitizedInput.cpfCnpj = cpfValidation.normalized;
             }
           }
           break;

@@ -6,7 +6,8 @@ import { BigTechConfig, BigTechServiceValidation, BigTechValidationRule, BigTech
 export const defaultConfig: BigTechConfig = {
   baseUrl: 'https://api.consultasbigtech.com.br/json/service.aspx',
   homologationUrl: 'https://api.consultasbigtech.com.br/json/homologa.aspx',
-  useHomologation: false, // false = produção, true = homologação
+  useHomologation: true, // false = produção, true = homologação
+  apiKey: 'ZzM67lS3CL7SSW6680p9fEcNPcD5wE88aSQa/D3EnDeL6cnwsrkpmrCsSt4dssftiiooSega',
   timeout: 30000, // 30 segundos
   retries: 3, // Aumentar retries para lidar com rate limiting
   retryDelayMs: 5000, // Aumentar delay base entre retries

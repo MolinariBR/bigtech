@@ -7,4 +7,9 @@
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 3s
+ ✓ Ready in 3.4s
+ ○ Compiling /users ...
+ ✓ Compiled /users in 2.2s (566 modules)
+ GET /users 200 in 1245ms
+ ○ Compiling /plugins ...
+ ✓ Compiled /plugins in 4.5s (574 modules)

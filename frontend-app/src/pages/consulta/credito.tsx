@@ -139,13 +139,16 @@ export default function ConsultaCredito() {
 
     try {
       // Executar consulta via plugin
+      const documentValue = getField('document')?.value?.replace(/\D/g, '') || ''
+      const isCPF = documentValue.length === 11
+      
       const data = await apiCall(API_CONFIG.endpoints.plugins.execute(selectedQuery.plugin), {
         method: 'POST',
         body: JSON.stringify({
           input: {
-            serviceCode: selectedQuery.id,
-            cpfCnpj: getField('document')?.value?.replace(/\D/g, ''),
-            tipoPessoa: getField('document')?.value?.replace(/\D/g, '').length === 11 ? 'F' : 'J',
+            serviceCode: isCPF ? 'BVSBasicaPF' : '11-bvs-basica-pj', // Usar código correto baseado no tipo de documento
+            cpfCnpj: documentValue,
+            tipoPessoa: isCPF ? 'F' : 'J',
           }
         })
       })
