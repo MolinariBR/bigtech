@@ -1,5 +1,4 @@
 interface BillingTransaction {
-    tenantId: string;
     userId?: string;
     type: 'credit_purchase' | 'query_debit' | 'refund';
     amount: number;
@@ -57,7 +56,6 @@ export declare class BillingEngine {
         }[];
     }>;
     refundTransaction(billingId: string, amount?: number, reason?: string, auditMeta?: {
-        tenantId: string;
         userId?: string;
         auditId?: string;
     }): Promise<{

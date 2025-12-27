@@ -139,10 +139,9 @@ export const PAYMENT_STATUSES = {
   AWAITING_RISK_ANALYSIS: 'AWAITING_RISK_ANALYSIS'
 } as const;
 
-// Função helper para obter configuração do tenant
-export async function getTenantConfig(tenantId: string): Promise<AsaasPluginConfig> {
-  // Em produção, buscar configuração específica do tenant do banco
-  // Por enquanto, retorna configuração padrão
+// Função helper para obter configuração (agora sem tenant)
+export async function getTenantConfig(): Promise<AsaasPluginConfig> {
+  // Para single-tenant, sempre retorna configuração padrão
   return defaultConfig;
 }
 

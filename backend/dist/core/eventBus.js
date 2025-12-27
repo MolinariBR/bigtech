@@ -33,7 +33,7 @@ class EventBus {
             ...event,
             timestamp: new Date()
         };
-        console.log(`📡 Event published: ${event.type} for tenant ${event.tenantId}`);
+        console.log(`📡 Event published: ${event.type}`);
         // Emitir para todos os listeners registrados
         this.emitter.emit(event.type, fullEvent);
         // Também emitir para handlers específicos registrados
@@ -66,17 +66,15 @@ class EventBus {
         }
     }
     // Aguardar por um evento específico (útil para testes)
-    async waitForEvent(eventType, tenantId, timeout = 5000) {
+    async waitForEvent(eventType, timeout = 5000) {
         return new Promise((resolve, reject) => {
             const timeoutId = setTimeout(() => {
                 reject(new Error(`Timeout waiting for event ${eventType}`));
             }, timeout);
             const handler = (event) => {
-                if (!tenantId || event.tenantId === tenantId) {
-                    clearTimeout(timeoutId);
-                    this.emitter.off(eventType, handler);
-                    resolve(event);
-                }
+                clearTimeout(timeoutId);
+                this.emitter.off(eventType, handler);
+                resolve(event);
             };
             this.emitter.on(eventType, handler);
         });

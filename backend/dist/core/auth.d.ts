@@ -3,7 +3,6 @@ declare const router: import("express-serve-static-core").Router;
 declare global {
     namespace Express {
         interface Request {
-            tenantId?: string;
             userId?: string;
             user?: any;
             isAdmin?: boolean;
@@ -30,20 +29,19 @@ export declare class AuthService {
     private static readonly REFRESH_SECRET;
     private static readonly REFRESH_EXPIRES_IN;
     private static readonly BCRYPT_ROUNDS;
-    static login(identifier: string, tenantId: string): Promise<AuthResponse>;
+    static login(identifier: string): Promise<AuthResponse>;
     private static createUser;
-    static ensureTenantExists(tenantId: string): Promise<boolean>;
     static generateToken(user: any): string;
     static generateRefreshToken(user: any): Promise<string>;
     static verifyToken(token: string): Promise<any | null>;
     static verifyRefreshToken(token: string): Promise<any | null>;
-    static logout(userId: string, tenantId: string): Promise<void>;
+    static logout(userId: string): Promise<void>;
     static adminLogin(identifier: string): Promise<AuthResponse>;
     static adminLoginWithAdminDoc(admin: any): Promise<AuthResponse>;
     static userLoginWithUserDoc(user: any): Promise<AuthResponse>;
     private static generateAdminToken;
 }
-export declare const authenticateMiddleware: (req: Request, res: Response, next: any) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const authenticateMiddleware: (req: Request, res: Response, next: any) => Promise<any>;
 export declare const authenticateAdminMiddleware: (req: Request, res: Response, next: any) => Promise<Response<any, Record<string, any>> | undefined>;
 export { router as authRouter };
 export default AuthService;

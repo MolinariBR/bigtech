@@ -7,7 +7,6 @@ import { eventBus } from './eventBus';
 import { auditLogger } from './audit';
 
 interface BillingTransaction {
-  tenantId: string;
   userId?: string;
   type: 'credit_purchase' | 'query_debit' | 'refund';
   amount: number;
@@ -81,7 +80,6 @@ export class BillingEngine {
     eventBus.subscribe('query.executed', async (event) => {
       if (event.payload.cost && event.payload.cost > 0) {
         await this.debitCredits({
-          tenantId: event.tenantId,
           userId: event.userId,
           type: 'query_debit',
           amount: -event.payload.cost,
@@ -94,7 +92,6 @@ export class BillingEngine {
 
     eventBus.subscribe('credits.purchased', async (event) => {
       await this.creditPurchase({
-        tenantId: event.tenantId,
         userId: event.userId,
         type: 'credit_purchase',
         amount: event.payload.amount,
@@ -129,7 +126,7 @@ export class BillingEngine {
 
         // Criar transação
         const billingData = {
-          tenantId: transaction.tenantId,
+          tenantId: 'default', // Single-tenant: usar 'default'
           userId: uid,
           type: transaction.type,
           amount: this.normalizeAmount(transaction.amount),
@@ -161,7 +158,6 @@ export class BillingEngine {
 
         // Log de auditoria
         await auditLogger.log({
-          tenantId: transaction.tenantId,
           userId: uid,
           action: 'billing_debit',
           resource: `billing:${billingDoc.$id}`,
@@ -198,7 +194,7 @@ export class BillingEngine {
       try {
         // Criar transação
         const billingData = {
-          tenantId: transaction.tenantId,
+          tenantId: 'default', // Single-tenant: usar 'default'
           userId: uid,
           type: transaction.type,
           amount: this.normalizeAmount(transaction.amount),
@@ -236,7 +232,6 @@ export class BillingEngine {
 
         // Log de auditoria
         await auditLogger.log({
-          tenantId: transaction.tenantId,
           userId: uid,
           action: 'billing_credit',
           resource: `billing:${billingDoc.$id}`,
@@ -363,7 +358,7 @@ export class BillingEngine {
     }
   }
 
-  async refundTransaction(billingId: string, amount?: number, reason?: string, auditMeta?: { tenantId: string; userId?: string; auditId?: string }) {
+  async refundTransaction(billingId: string, amount?: number, reason?: string, auditMeta?: { userId?: string; auditId?: string }) {
     try {
       // Buscar transação original
       const original = await this.appwrite.databases.getDocument(
@@ -381,7 +376,7 @@ export class BillingEngine {
         'billings',
         'unique()',
         {
-          tenantId: original.tenantId,
+          tenantId: 'default', // Single-tenant: usar 'default'
           userId: original.userId || null,
           type: 'refund',
           amount: refundAmount,
@@ -424,7 +419,6 @@ export class BillingEngine {
 
       // Audit
       await auditLogger.log({
-        tenantId: original.tenantId,
         userId: auditMeta?.userId,
         action: 'billing_refund',
         resource: `billing:${billingId}`,
@@ -433,7 +427,7 @@ export class BillingEngine {
       });
 
       // Emit event
-      await eventBus.publish({ tenantId: original.tenantId, userId: original.userId, type: 'billing.refund.initiated', payload: { billingId, refundId: refundDoc.$id } });
+      await eventBus.publish({ userId: original.userId, type: 'billing.refund.initiated', payload: { billingId, refundId: refundDoc.$id } });
 
       return { success: true, refundId: refundDoc.$id };
     } catch (error) {

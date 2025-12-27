@@ -12,8 +12,8 @@ export declare class InfosimplesPlugin implements Plugin {
     private readonly minRequestInterval;
     constructor(config?: Partial<InfosimplesConfig>);
     install(): Promise<void>;
-    enable(tenantId: string): Promise<void>;
-    disable(tenantId: string): Promise<void>;
+    enable(): Promise<void>;
+    disable(): Promise<void>;
     private getSchemas;
     private getSchemaForService;
     private getEndpointForService;

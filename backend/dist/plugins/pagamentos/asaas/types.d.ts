@@ -3,12 +3,11 @@ export interface Plugin {
     type: 'consulta' | 'pagamento' | 'mercado' | 'funcional';
     version: string;
     install(): Promise<void>;
-    enable(tenantId: string): Promise<void>;
-    disable(tenantId: string): Promise<void>;
+    enable(): Promise<void>;
+    disable(): Promise<void>;
     execute(context: PluginContext): Promise<PluginResult>;
 }
 export interface PluginContext {
-    tenantId: string;
     userId: string;
     input: any;
     config: any;
@@ -20,7 +19,6 @@ export interface PluginResult {
     cost?: number;
 }
 export interface PaymentContext {
-    tenantId: string;
     userId: string;
     amount: number;
     creditAmount: number;

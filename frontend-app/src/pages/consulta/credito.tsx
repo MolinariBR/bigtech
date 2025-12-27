@@ -143,22 +143,21 @@ export default function ConsultaCredito() {
         method: 'POST',
         body: JSON.stringify({
           input: {
-            type: selectedQuery.id,
-            input: {
-              cpf: getField('document')?.value?.replace(/\D/g, '').length === 11 ? getField('document')?.value?.replace(/\D/g, '') : undefined,
-              cnpj: getField('document')?.value?.replace(/\D/g, '').length === 14 ? getField('document')?.value?.replace(/\D/g, '') : undefined,
-            }
+            serviceCode: selectedQuery.id,
+            cpfCnpj: getField('document')?.value?.replace(/\D/g, ''),
+            tipoPessoa: getField('document')?.value?.replace(/\D/g, '').length === 11 ? 'F' : 'J',
           }
         })
       })
 
       if (data.success) {
         // Extrair dados reais da resposta normalizada
-        const consultaData = data.data?.output?.data || {}
+        const consultaData = data.data || {}
         setResult({
           status: 'success',
           data: consultaData,
-          raw: data.data
+          raw: data.data,
+          pluginId: selectedQuery.plugin
         })
       } else {
         setResult({
@@ -325,7 +324,7 @@ export default function ConsultaCredito() {
                   )}
 
                   {result && (
-                    <ModalResult result={result} inputValue={getField('document')?.value || ''} />
+                    <ModalResult result={result} inputValue={getField('document')?.value || ''} pluginId={selectedQuery?.plugin} />
                   )}
                 </div>
               </Modal>

@@ -14,6 +14,12 @@ export interface AuthenticatedRequest extends Request {
 export function validatePluginAccess(pluginId: string) {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      // MODO DESENVOLVIMENTO: Permitir acesso se SKIP_AUTH ou SKIP_APPWRITE_AUTH estiver definido
+      if (process.env.SKIP_AUTH === 'true' || process.env.SKIP_APPWRITE_AUTH === 'true') {
+        console.log('[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin:', pluginId);
+        return next();
+      }
+
       const user = req.user;
       if (!user) {
         return res.status(401).json({ error: 'Usuário não autenticado' });
@@ -47,6 +53,12 @@ export function validatePluginAccess(pluginId: string) {
         }
       } catch (e) {
         userAllowedPlugins = [];
+      }
+
+      // Para desenvolvimento: se não há allowedPlugins configurado, permitir bigtech por padrão
+      if ((!userAllowedPlugins || userAllowedPlugins.length === 0) && process.env.NODE_ENV !== 'production') {
+        console.log('[pluginAccess.middleware] Desenvolvimento: Usando plugins padrão para usuário sem configuração');
+        userAllowedPlugins = [{ pluginId: 'bigtech', allowed: true }];
       }
 
       const userHasAccess = (userAllowedPlugins || []).some((p: any) => p && p.pluginId === pluginId && p.allowed === true);

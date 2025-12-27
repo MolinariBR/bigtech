@@ -55,7 +55,8 @@ export type BigTechInputType =
   | 'placa'
   | 'telefone'
   | 'email'
-  | 'cnh';
+  | 'cnh'
+  | 'string';
 
 export interface BigTechService {
   code: string;
@@ -174,7 +175,6 @@ export interface BigTechCacheEntry {
 }
 
 export interface BigTechRateLimitEntry {
-  tenantId: string;
   serviceCode: string;
   requests: number;
   windowStart: number;

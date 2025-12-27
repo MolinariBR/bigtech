@@ -14,13 +14,12 @@ export interface Plugin {
   type: 'consulta' | 'pagamento' | 'mercado' | 'funcional';
   version: string;
   install(): Promise<void>;
-  enable(tenantId: string): Promise<void>;
-  disable(tenantId: string): Promise<void>;
+  enable(): Promise<void>;
+  disable(): Promise<void>;
   execute(context: PluginContext): Promise<PluginResult>;
 }
 
 export interface PluginContext {
-  tenantId: string;
   userId: string;
   input: any;
   config: any;
@@ -37,7 +36,7 @@ export class PluginLoader {
   private static instance: PluginLoader;
   private appwrite = AppwriteService.getInstance();
   private plugins: Map<string, Plugin> = new Map();
-  private activePlugins: Map<string, Set<string>> = new Map(); // tenantId -> Set<pluginIds>
+  private activePlugins: Set<string> = new Set(); // Apenas plugins ativos (single-tenant)
 
   private constructor() {}
 
@@ -57,9 +56,9 @@ export class PluginLoader {
     await this.loadPlugins();
     await this.loadActivePlugins();
 
-    // Para desenvolvimento: ativar plugin infosimples por padrão
-    this.activePlugins.set('default', new Set(['infosimples', 'bigtech']));
-    console.log('✅ Plugins infosimples e bigtech ativados por padrão para tenant default');
+    // Para desenvolvimento: ativar plugins por padrão
+    this.activePlugins = new Set(['infosimples', 'bigtech']);
+    console.log('✅ Plugins infosimples e bigtech ativados por padrão');
   }
 
   async shutdown(): Promise<void> {
@@ -156,13 +155,10 @@ export class PluginLoader {
     }
   }
 
-  async getActivePlugins(tenantId: string): Promise<Plugin[]> {
-    const activePluginIds = this.activePlugins.get(tenantId) || new Set();
+  async getActivePlugins(): Promise<Plugin[]> {
     const activePlugins: Plugin[] = [];
 
-    for (const pluginId of Array.from(activePluginIds)) {
-      // Map plugin database ID to plugin instance
-      // This is a simplified mapping - in reality you'd need proper mapping
+    for (const pluginId of Array.from(this.activePlugins)) {
       const plugin = Array.from(this.plugins.values()).find(p => p.id === pluginId);
       if (plugin) {
         activePlugins.push(plugin);
@@ -185,12 +181,11 @@ export class PluginLoader {
       };
     }
 
-    // Check if plugin is active for tenant
-    const activePlugins = this.activePlugins.get(context.tenantId) || new Set();
-    if (!activePlugins.has(pluginId)) {
+    // Check if plugin is active
+    if (!this.activePlugins.has(pluginId)) {
       return {
         success: false,
-        error: `Plugin ${pluginId} not active for tenant ${context.tenantId}`
+        error: `Plugin ${pluginId} not active`
       };
     }
 
@@ -202,7 +197,6 @@ export class PluginLoader {
 
       // Auditoria automática para todas as operações
       await auditLogger.log({
-        tenantId: context.tenantId,
         userId: context.userId,
         action: 'plugin_execute',
         resource: `plugin:${pluginId}`,
@@ -220,7 +214,6 @@ export class PluginLoader {
       // Publicar evento para billing se houver custo
       if (result.success && result.cost && result.cost > 0) {
         await eventBus.publish({
-          tenantId: context.tenantId,
           userId: context.userId,
           type: 'plugin.executed',
           payload: {
@@ -238,7 +231,6 @@ export class PluginLoader {
 
       // Auditoria para falhas também
       await auditLogger.log({
-        tenantId: context.tenantId,
         userId: context.userId,
         action: 'plugin_execute_failed',
         resource: `plugin:${pluginId}`,
@@ -268,8 +260,8 @@ export class PluginLoader {
     }));
   }
 
-  getActivePluginsForTenant(tenantId: string): Set<string> {
-    return this.activePlugins.get(tenantId) || new Set();
+  getActivePluginsForTenant(): Set<string> {
+    return this.activePlugins;
   }
 
   getPlugin(pluginId: string): Plugin | undefined {

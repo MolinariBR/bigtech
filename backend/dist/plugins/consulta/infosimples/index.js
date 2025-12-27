@@ -61,13 +61,13 @@ class InfosimplesPlugin {
         }
         // Poderia validar conectividade, etc.
     }
-    async enable(tenantId) {
-        // Ativar para tenant específico
-        console.log(`Plugin Infosimples habilitado para tenant ${tenantId}`);
+    async enable() {
+        // Ativar plugin
+        console.log(`Plugin Infosimples habilitado`);
     }
-    async disable(tenantId) {
-        // Desativar para tenant
-        console.log(`Plugin Infosimples desabilitado para tenant ${tenantId}`);
+    async disable() {
+        // Desativar plugin
+        console.log(`Plugin Infosimples desabilitado`);
     }
     getSchemas() {
         if (!this.schemasCache) {
@@ -92,7 +92,7 @@ class InfosimplesPlugin {
         return schema ? schema.endpoint : null;
     }
     async execute(context) {
-        const { tenantId, userId, input: contextInput, config: contextConfig } = context;
+        const { userId, input: contextInput, config: contextConfig } = context;
         const { type, input } = contextInput;
         // Usar config do context se disponível, senão this.config
         const effectiveConfig = contextConfig && Object.keys(contextConfig).length > 0 ? { ...this.config, ...contextConfig } : this.config;

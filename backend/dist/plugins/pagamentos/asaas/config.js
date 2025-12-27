@@ -101,10 +101,9 @@ exports.PAYMENT_STATUSES = {
     DUNNING_RECEIVED: 'DUNNING_RECEIVED',
     AWAITING_RISK_ANALYSIS: 'AWAITING_RISK_ANALYSIS'
 };
-// Função helper para obter configuração do tenant
-async function getTenantConfig(tenantId) {
-    // Em produção, buscar configuração específica do tenant do banco
-    // Por enquanto, retorna configuração padrão
+// Função helper para obter configuração (agora sem tenant)
+async function getTenantConfig() {
+    // Para single-tenant, sempre retorna configuração padrão
     return exports.defaultConfig;
 }
 // Função helper para merge de configurações

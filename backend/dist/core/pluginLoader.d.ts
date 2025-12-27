@@ -3,12 +3,11 @@ export interface Plugin {
     type: 'consulta' | 'pagamento' | 'mercado' | 'funcional';
     version: string;
     install(): Promise<void>;
-    enable(tenantId: string): Promise<void>;
-    disable(tenantId: string): Promise<void>;
+    enable(): Promise<void>;
+    disable(): Promise<void>;
     execute(context: PluginContext): Promise<PluginResult>;
 }
 export interface PluginContext {
-    tenantId: string;
     userId: string;
     input: any;
     config: any;
@@ -31,14 +30,14 @@ export declare class PluginLoader {
     private loadPlugins;
     private validatePlugin;
     private loadActivePlugins;
-    getActivePlugins(tenantId: string): Promise<Plugin[]>;
+    getActivePlugins(): Promise<Plugin[]>;
     executePlugin(pluginId: string, context: PluginContext): Promise<PluginResult>;
     getAvailablePlugins(): {
         id: string;
         type: string;
         version: string;
     }[];
-    getActivePluginsForTenant(tenantId: string): Set<string>;
+    getActivePluginsForTenant(): Set<string>;
     getPlugin(pluginId: string): Plugin | undefined;
     private sanitizeAuditData;
     private extractConsultaId;

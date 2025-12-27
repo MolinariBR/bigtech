@@ -32,6 +32,7 @@ export const bigTechServices = {
   '304-positivo-define-risco-cnpj': '/consultas/credito/positivo-risco-cnpj',
   'positivo-acerta-essencial-pf': '/consultas/credito/positivo-essencial-pf',
   '1539-bvs-basica-pf': '/consultas/credito/bvs-basica-pf',
+  'BVSBasicaPF': '/consultas/credito/bvs-basica-pf',
   '11-bvs-basica-pj': '/consultas/credito/bvs-basica-pj',
   '1003-scr-premium-integracoes': '/consultas/credito/scr-premium-integracoes',
 
@@ -57,6 +58,7 @@ export const bigTechProductCodes = {
   '304-positivo-define-risco-cnpj': '1518',
   'positivo-acerta-essencial-pf': '1519',
   '1539-bvs-basica-pf': '1539',
+  'BVSBasicaPF': '1539',
   '11-bvs-basica-pj': '11',
   '1003-scr-premium-integracoes': '1003',
 
@@ -82,6 +84,7 @@ export const serviceCategories = {
   '304-positivo-define-risco-cnpj': 'credito',
   'positivo-acerta-essencial-pf': 'credito',
   '1539-bvs-basica-pf': 'credito',
+  'BVSBasicaPF': 'credito',
   '11-bvs-basica-pj': 'credito',
   '1003-scr-premium-integracoes': 'credito',
 
@@ -118,7 +121,7 @@ export const serviceValidations: BigTechServiceValidation = {
   ],
   '327-quod-cadastral-pf': [
     {
-      field: 'cpf',
+      field: 'cpfCnpj',
       type: 'cpf',
       required: true,
       pattern: /^\d{11}$/,
@@ -142,11 +145,18 @@ export const serviceValidations: BigTechServiceValidation = {
         if (remainder === 10 || remainder === 11) remainder = 0;
         return remainder === parseInt(cpf.charAt(10));
       }
+    },
+    {
+      field: 'tipoPessoa',
+      type: 'string',
+      required: true,
+      pattern: /^[FJ]$/,
+      customValidator: (value: string) => ['F', 'J'].includes(value)
     }
   ],
   '424-validid-localizacao': [
     {
-      field: 'id',
+      field: 'cpf',
       type: 'cpf',
       required: true,
       minLength: 11,
@@ -155,8 +165,8 @@ export const serviceValidations: BigTechServiceValidation = {
   ],
   '431-dados-cnh': [
     {
-      field: 'cnh',
-      type: 'cnh',
+      field: 'cpf',
+      type: 'cpf',
       required: true,
       minLength: 11,
       maxLength: 11,
@@ -167,7 +177,7 @@ export const serviceValidations: BigTechServiceValidation = {
   // Crédito
   '36-busca-nome-uf': [
     {
-      field: 'nome',
+      field: 'nomeCompleto',
       type: 'nome',
       required: true,
       minLength: 3,
@@ -194,66 +204,49 @@ export const serviceValidations: BigTechServiceValidation = {
   ],
   '41-protesto-sintetico-nacional': [
     {
-      field: 'cpf',
+      field: 'cpfCnpj',
       type: 'cpf',
       required: false
     },
     {
-      field: 'cnpj',
-      type: 'cnpj',
-      required: false,
-      customValidator: (value: string) => {
-        const cnpj = value.replace(/\D/g, '');
-        if (cnpj.length !== 14) return false;
-        // Validação de CNPJ básica
-        let sum = 0;
-        let multiplier = 5;
-        for (let i = 0; i < 12; i++) {
-          sum += parseInt(cnpj.charAt(i)) * multiplier;
-          multiplier = multiplier === 2 ? 9 : multiplier - 1;
-        }
-        let remainder = sum % 11;
-        if (remainder < 2) remainder = 0;
-        else remainder = 11 - remainder;
-        if (remainder !== parseInt(cnpj.charAt(12))) return false;
-
-        sum = 0;
-        multiplier = 6;
-        for (let i = 0; i < 13; i++) {
-          sum += parseInt(cnpj.charAt(i)) * multiplier;
-          multiplier = multiplier === 2 ? 9 : multiplier - 1;
-        }
-        remainder = sum % 11;
-        if (remainder < 2) remainder = 0;
-        else remainder = 11 - remainder;
-        return remainder === parseInt(cnpj.charAt(13));
-      }
+      field: 'tipoPessoa',
+      type: 'string',
+      required: true,
+      pattern: /^[FJ]$/,
+      customValidator: (value: string) => ['F', 'J'].includes(value)
     }
   ],
   '304-positivo-define-risco-cnpj': [
     {
-      field: 'cnpj',
+      field: 'cpfCnpj',
       type: 'cnpj',
       required: true
     }
   ],
   'positivo-acerta-essencial-pf': [
     {
-      field: 'cpf',
+      field: 'cpfCnpj',
       type: 'cpf',
       required: true
     }
   ],
   '1539-bvs-basica-pf': [
     {
-      field: 'cpf',
+      field: 'cpfCnpj',
+      type: 'cpf',
+      required: true
+    }
+  ],
+  'BVSBasicaPF': [
+    {
+      field: 'cpfCnpj',
       type: 'cpf',
       required: true
     }
   ],
   '11-bvs-basica-pj': [
     {
-      field: 'cnpj',
+      field: 'cpfCnpj',
       type: 'cnpj',
       required: true,
       customValidator: (value: string) => {

@@ -47,7 +47,7 @@ class PluginLoader {
     static instance;
     appwrite = appwrite_1.AppwriteService.getInstance();
     plugins = new Map();
-    activePlugins = new Map(); // tenantId -> Set<pluginIds>
+    activePlugins = new Set(); // Apenas plugins ativos (single-tenant)
     constructor() { }
     static getInstance() {
         if (!PluginLoader.instance) {
@@ -62,9 +62,9 @@ class PluginLoader {
         await eventBus_1.eventBus.initialize();
         await this.loadPlugins();
         await this.loadActivePlugins();
-        // Para desenvolvimento: ativar plugin infosimples por padrão
-        this.activePlugins.set('default', new Set(['infosimples', 'bigtech']));
-        console.log('✅ Plugins infosimples e bigtech ativados por padrão para tenant default');
+        // Para desenvolvimento: ativar plugins por padrão
+        this.activePlugins = new Set(['infosimples', 'bigtech']);
+        console.log('✅ Plugins infosimples e bigtech ativados por padrão');
     }
     async shutdown() {
         // Cleanup plugins if needed
@@ -150,12 +150,9 @@ class PluginLoader {
             console.warn('Failed to load active plugins from database:', error);
         }
     }
-    async getActivePlugins(tenantId) {
-        const activePluginIds = this.activePlugins.get(tenantId) || new Set();
+    async getActivePlugins() {
         const activePlugins = [];
-        for (const pluginId of Array.from(activePluginIds)) {
-            // Map plugin database ID to plugin instance
-            // This is a simplified mapping - in reality you'd need proper mapping
+        for (const pluginId of Array.from(this.activePlugins)) {
             const plugin = Array.from(this.plugins.values()).find(p => p.id === pluginId);
             if (plugin) {
                 activePlugins.push(plugin);
@@ -171,12 +168,11 @@ class PluginLoader {
                 error: `Plugin ${pluginId} not found`
             };
         }
-        // Check if plugin is active for tenant
-        const activePlugins = this.activePlugins.get(context.tenantId) || new Set();
-        if (!activePlugins.has(pluginId)) {
+        // Check if plugin is active
+        if (!this.activePlugins.has(pluginId)) {
             return {
                 success: false,
-                error: `Plugin ${pluginId} not active for tenant ${context.tenantId}`
+                error: `Plugin ${pluginId} not active`
             };
         }
         const startTime = Date.now();
@@ -185,7 +181,6 @@ class PluginLoader {
             result = await plugin.execute(context);
             // Auditoria automática para todas as operações
             await audit_1.auditLogger.log({
-                tenantId: context.tenantId,
                 userId: context.userId,
                 action: 'plugin_execute',
                 resource: `plugin:${pluginId}`,
@@ -202,7 +197,6 @@ class PluginLoader {
             // Publicar evento para billing se houver custo
             if (result.success && result.cost && result.cost > 0) {
                 await eventBus_1.eventBus.publish({
-                    tenantId: context.tenantId,
                     userId: context.userId,
                     type: 'plugin.executed',
                     payload: {
@@ -219,7 +213,6 @@ class PluginLoader {
             const err = error instanceof Error ? error : new Error(String(error));
             // Auditoria para falhas também
             await audit_1.auditLogger.log({
-                tenantId: context.tenantId,
                 userId: context.userId,
                 action: 'plugin_execute_failed',
                 resource: `plugin:${pluginId}`,
@@ -245,8 +238,8 @@ class PluginLoader {
             version: plugin.version
         }));
     }
-    getActivePluginsForTenant(tenantId) {
-        return this.activePlugins.get(tenantId) || new Set();
+    getActivePluginsForTenant() {
+        return this.activePlugins;
     }
     getPlugin(pluginId) {
         // Primeiro tentar chave direta (ex: 'consulta-infosimples')

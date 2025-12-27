@@ -104,7 +104,7 @@ class AuthService {
     static REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '7d';
     static BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
     // Login de usuário
-    static async login(identifier, tenantId) {
+    static async login(identifier) {
         try {
             // Validar formato do identificador
             if (!AuthValidators.isValidIdentifier(identifier)) {
@@ -113,30 +113,25 @@ class AuthService {
                     message: 'CPF/CNPJ inválido'
                 };
             }
-            // Verificar se tenant existe, se não existir, criar automaticamente (auto-onboarding)
-            const tenantExists = await this.ensureTenantExists(tenantId);
             // Buscar usuário no Appwrite
             const users = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [
-                node_appwrite_1.Query.equal('tenantId', tenantId),
                 node_appwrite_1.Query.equal('identifier', identifier),
                 node_appwrite_1.Query.equal('status', 'active')
             ]);
             if (users.documents.length === 0) {
                 // Usuário não existe - criar automaticamente para MVP
-                const newUser = await this.createUser(identifier, tenantId);
+                const newUser = await this.createUser(identifier);
                 // Gerar token JWT
                 const token = this.generateToken(newUser);
                 // Gerar refresh token e salvar no usuário
                 const refreshToken = await this.generateRefreshToken(newUser);
                 // Log de auditoria
                 await audit_1.auditLogger.log({
-                    tenantId,
                     userId: newUser.$id,
-                    action: tenantExists ? 'user_login_first_time' : 'user_login_tenant_created',
+                    action: 'user_login_first_time',
                     resource: `user:${newUser.$id}`,
                     details: {
-                        identifier: AuthValidators.formatIdentifier(identifier),
-                        tenantCreated: !tenantExists
+                        identifier: AuthValidators.formatIdentifier(identifier)
                     },
                     ipAddress: 'system' // Será preenchido pelo middleware
                 });
@@ -151,7 +146,7 @@ class AuthService {
                         role: newUser.role,
                         credits: newUser.credits
                     },
-                    tenantCreated: !tenantExists // Flag para indicar se tenant foi criado
+                    tenantCreated: false
                 };
             }
             const user = users.documents[0];
@@ -168,7 +163,6 @@ class AuthService {
             const refreshToken = await this.generateRefreshToken(user);
             // Log de auditoria
             await audit_1.auditLogger.log({
-                tenantId,
                 userId: user.$id,
                 action: 'user_login',
                 resource: `user:${user.$id}`,
@@ -198,9 +192,8 @@ class AuthService {
         }
     }
     // Criar novo usuário
-    static async createUser(identifier, tenantId) {
+    static async createUser(identifier) {
         const userData = {
-            tenantId,
             identifier,
             type: 'user',
             email: null,
@@ -213,48 +206,10 @@ class AuthService {
         return await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', 'unique()', // Auto-generate ID
         userData);
     }
-    // Garantir que tenant existe, criar se necessário (auto-onboarding)
-    static async ensureTenantExists(tenantId) {
-        try {
-            // Tentar buscar tenant
-            await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', tenantId);
-            return true; // Tenant já existe
-        }
-        catch (error) {
-            // Se erro for "document not found", criar tenant
-            if (error.code === 404 || error.message?.includes('not found')) {
-                try {
-                    const tenantData = {
-                        name: tenantId, // Usar tenantId como nome base
-                        status: 'active', // Status ativo para permitir uso imediato
-                        plugins: '[]' // Plugins padrão como string JSON
-                    };
-                    await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', tenantId, // Usar tenantId como ID do documento
-                    tenantData);
-                    // Log de auditoria para criação de tenant
-                    await audit_1.auditLogger.log({
-                        tenantId,
-                        action: 'tenant_auto_created',
-                        resource: `tenant:${tenantId}`,
-                        details: { name: tenantId, status: 'active', source: 'auto_onboarding' },
-                        ipAddress: 'system'
-                    });
-                    return false; // Tenant foi criado
-                }
-                catch (createError) {
-                    console.error('Erro ao criar tenant automaticamente:', createError);
-                    throw createError;
-                }
-            }
-            // Outro erro, relançar
-            throw error;
-        }
-    }
     // Gerar token JWT
     static generateToken(user) {
         const payload = {
             userId: user.$id,
-            tenantId: user.tenantId,
             identifier: user.identifier,
             type: user.type,
             role: user.role,
@@ -270,7 +225,6 @@ class AuthService {
     static async generateRefreshToken(user) {
         const payload = {
             userId: user.$id,
-            tenantId: user.tenantId,
             iat: Math.floor(Date.now() / 1000)
         };
         const options = {
@@ -302,7 +256,7 @@ class AuthService {
             }
             // Verificar se usuário ainda existe e está ativo
             const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', decoded.userId);
-            if (user.status !== 'active' || user.tenantId !== decoded.tenantId) {
+            if (user.status !== 'active') {
                 return null;
             }
             return decoded;
@@ -341,7 +295,7 @@ class AuthService {
         }
     }
     // Logout (apenas log de auditoria)
-    static async logout(userId, tenantId) {
+    static async logout(userId) {
         // Limpar refresh token armazenado
         try {
             await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', userId, { refreshToken: null });
@@ -350,7 +304,6 @@ class AuthService {
             console.error('Erro ao limpar refresh token no logout:', err);
         }
         await audit_1.auditLogger.log({
-            tenantId,
             userId,
             action: 'user_logout',
             resource: `user:${userId}`,
@@ -388,11 +341,10 @@ class AuthService {
                     message: 'Acesso negado: permissões insuficientes'
                 };
             }
-            // Gerar token JWT para admin (tenantId especial para isolamento global)
+            // Gerar token JWT para admin
             const token = this.generateAdminToken(admin);
             // Log de auditoria
             await audit_1.auditLogger.log({
-                tenantId: 'admin', // Tenant especial para admins
                 userId: admin.$id,
                 action: 'admin_login',
                 resource: `user:${admin.$id}`,
@@ -429,7 +381,6 @@ class AuthService {
             const token = this.generateAdminToken(admin);
             // Log de auditoria
             await audit_1.auditLogger.log({
-                tenantId: 'admin',
                 userId: admin.$id,
                 action: 'admin_login',
                 resource: `admin:${admin.$id}`,
@@ -462,7 +413,6 @@ class AuthService {
             const token = this.generateToken(user);
             // Log de auditoria
             await audit_1.auditLogger.log({
-                tenantId: user.tenantId || 'default',
                 userId: user.$id,
                 action: 'user_login',
                 resource: `user:${user.$id}`,
@@ -490,7 +440,6 @@ class AuthService {
     static generateAdminToken(admin) {
         const payload = {
             userId: admin.$id,
-            tenantId: 'admin', // Tenant especial para admins
             identifier: admin.identifier,
             type: admin.type,
             role: admin.role,
@@ -508,6 +457,20 @@ exports.AuthService = AuthService;
 // Middleware de autenticação
 const authenticateMiddleware = async (req, res, next) => {
     try {
+        // MODO DESENVOLVIMENTO: Pular autenticação se SKIP_AUTH estiver definido
+        if (process.env.SKIP_AUTH === 'true') {
+            console.log('[auth.middleware] MODO DESENVOLVIMENTO: Pulando autenticação para endpoint:', req.path);
+            // Simular usuário de teste
+            req.userId = 'test-user-id';
+            req.user = {
+                userId: 'test-user-id',
+                identifier: 'test@example.com',
+                type: 'user',
+                role: 'user',
+                isAdmin: false
+            };
+            return next();
+        }
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({
@@ -665,7 +628,7 @@ router.post('/admin/login', async (req, res) => {
 // Rota de login para usuários
 // User login: uses Appwrite Accounts (email + password)
 router.post('/login', async (req, res) => {
-    const { email, password, tenantId } = req.body;
+    const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios' });
     }
@@ -684,17 +647,8 @@ router.post('/login', async (req, res) => {
                 else {
                     // Criar usuário automaticamente
                     console.log('[auth.login] Criando usuário automaticamente para:', email);
-                    // Usar tenantId fornecido ou derivar do email
-                    let finalTenantId = tenantId || 'default';
-                    if (!tenantId) {
-                        const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase() || 'default';
-                        finalTenantId = domain === 'gmail' || domain === 'hotmail' ? 'default' : domain;
-                    }
-                    // Garantir que tenant existe
-                    await AuthService.ensureTenantExists(finalTenantId);
                     // Criar usuário
                     const userData = {
-                        tenantId: finalTenantId,
                         identifier: email, // Usar email como identifier
                         email,
                         type: 'user',
@@ -702,6 +656,7 @@ router.post('/login', async (req, res) => {
                         status: 'active',
                         credits: 0,
                         allowedPlugins: JSON.stringify(['bigtech']), // Plugins padrão
+                        tenantId: 'default', // Single-tenant: usar 'default'
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     };
@@ -791,73 +746,46 @@ router.post('/login', async (req, res) => {
 });
 // Rota de registro para usuários
 router.post('/register', async (req, res) => {
-    const { name, email, password, company } = req.body;
+    const { name, email, password } = req.body;
     if (!name || !email || !password) {
         return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
     }
     try {
-        // Derivar tenantId com lógica melhorada
-        let tenantId = 'default';
-        if (company && company.trim()) {
-            // Se empresa fornecida, usar ela (sanitize)
-            tenantId = company.toLowerCase().replace(/[^a-z0-9]/g, '');
-        }
-        else {
-            // Se não há empresa, verificar se domínio é corporativo
-            const domain = email.split('@')[1]?.split('.')[0]?.toLowerCase();
-            // Lista de domínios pessoais comuns que não devem criar tenants separados
-            const personalDomains = ['gmail', 'hotmail', 'outlook', 'yahoo', 'icloud', 'live', 'protonmail', 'aol', 'yandex'];
-            if (domain && !personalDomains.includes(domain)) {
-                // Domínio parece corporativo, usar como tenantId
-                tenantId = domain;
-            }
-            else {
-                // Domínio pessoal - usar tenant padrão compartilhado
-                tenantId = 'default';
-            }
-        }
         // Verificar se usuário já existe
         const existingUsers = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', [node_appwrite_1.Query.equal('email', email)]);
         if (existingUsers.documents.length > 0) {
             return res.status(409).json({ success: false, message: 'Email já cadastrado' });
         }
-        // Garantir que tenant existe (auto-onboarding com status ativo)
-        const tenantExists = await AuthService.ensureTenantExists(tenantId);
         // Criar documento na coleção users
         const userId = node_appwrite_1.ID.unique();
         console.log('[auth.register] Generated userId:', userId, 'type:', typeof userId);
         const userData = {
             email,
             identifier: email.substring(0, 20), // Truncar para 20 chars conforme schema
-            tenantId,
             type: 'user',
             role: 'viewer',
             status: 'active',
-            credits: '0' // Como string conforme schema
+            credits: '0', // Como string conforme schema
+            tenantId: 'default', // Single-tenant: usar 'default'
+            allowedPlugins: JSON.stringify(['bigtech']) // Plugins padrão para novos usuários
         };
         console.log('[auth.register] Creating document with userId:', userId, 'userData:', userData);
         const newUser = await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', userId, userData);
-        console.log('[auth.register] Novo usuário registrado:', newUser?.$id, 'tenant:', tenantId);
+        console.log('[auth.register] Novo usuário registrado:', newUser?.$id);
         // Log de auditoria
         await audit_1.auditLogger.log({
-            tenantId,
             userId: newUser.$id,
-            action: tenantExists ? 'user_register' : 'user_register_tenant_created',
+            action: 'user_register',
             resource: `user:${newUser.$id}`,
             details: {
                 email,
-                name,
-                company: company || null,
-                tenantCreated: !tenantExists,
-                tenantId
+                name
             },
             ipAddress: 'system'
         });
         res.json({
             success: true,
-            message: 'Conta criada com sucesso',
-            tenantCreated: !tenantExists,
-            tenantId
+            message: 'Conta criada com sucesso'
         });
     }
     catch (err) {
@@ -927,7 +855,7 @@ router.post('/refresh', async (req, res) => {
     }
 });
 router.post('/logout', exports.authenticateMiddleware, async (req, res) => {
-    await AuthService.logout(req.userId, req.tenantId);
+    await AuthService.logout(req.userId);
     // Limpar cookie de refresh token no cliente
     res.clearCookie('refreshToken');
     res.json({ success: true, message: 'Logout realizado com sucesso' });
@@ -936,12 +864,9 @@ router.get('/me/plugins', exports.authenticateMiddleware, async (req, res) => {
     try {
         console.log('[auth.me.plugins] User authenticated:', req.userId);
         const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', req.userId);
-        console.log('[auth.me.plugins] User data:', { id: user.$id, tenantId: user.tenantId, allowedPlugins: user.allowedPlugins });
-        // Buscar tenant para obter plugins ativos
-        const tenant = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', user.tenantId);
-        console.log('[auth.me.plugins] Tenant data:', { id: tenant.$id, plugins: tenant.plugins });
+        console.log('[auth.me.plugins] User data:', { id: user.$id, allowedPlugins: user.allowedPlugins });
         // Usar plugins ativos do pluginLoader para desenvolvimento
-        const activeTenantPluginIds = Array.from(pluginLoader_1.pluginLoader.getActivePluginsForTenant(user.tenantId));
+        const activeTenantPluginIds = Array.from(pluginLoader_1.pluginLoader.getActivePluginsForTenant());
         console.log('[auth.me.plugins] activeTenantPluginIds from pluginLoader:', activeTenantPluginIds);
         let userAllowedPlugins = [];
         try {
@@ -1040,7 +965,7 @@ router.get('/me', exports.authenticateMiddleware, async (req, res) => {
     try {
         const user = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', req.userId);
         // Calcular total de consultas
-        const consultas = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'consultas', [node_appwrite_1.Query.equal('userId', req.userId), node_appwrite_1.Query.equal('tenantId', user.tenantId)]);
+        const consultas = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'consultas', [node_appwrite_1.Query.equal('userId', req.userId)]);
         const totalQueries = consultas.documents.length;
         // Calcular serviço favorito (tipo mais frequente)
         const typeCount = {};
@@ -1112,7 +1037,6 @@ router.put('/me', exports.authenticateMiddleware, async (req, res) => {
         const updatedUser = await appwrite.databases.updateDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'users', req.userId, updateData);
         // Log de auditoria
         await audit_1.auditLogger.log({
-            tenantId: req.tenantId,
             userId: req.userId,
             action: 'user_profile_update',
             resource: `user:${req.userId}`,

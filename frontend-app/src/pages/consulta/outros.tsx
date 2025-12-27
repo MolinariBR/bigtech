@@ -157,8 +157,8 @@ export default function ConsultaOutros() {
           input: {
             type: selectedQuery.id, // Usar o ID do serviço como tipo
             input: {
-              cpf: getField('document')?.value?.replace(/\D/g, '').length === 11 ? getField('document')?.value?.replace(/\D/g, '') : undefined,
-              cnpj: getField('document')?.value?.replace(/\D/g, '').length === 14 ? getField('document')?.value?.replace(/\D/g, '') : undefined,
+              cpfCnpj: getField('document')?.value?.replace(/\D/g, ''),
+              tipoPessoa: getField('document')?.value?.replace(/\D/g, '').length === 11 ? 'PF' : 'PJ',
             }
           }
         })

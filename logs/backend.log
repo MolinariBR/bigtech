@@ -2,7 +2,7 @@
 > backend-core@1.0.0 dev
 > ts-node-dev --respawn --transpile-only src/index.ts
 
-[INFO] 18:40:48 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[INFO] 21:27:33 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
 👂 Handler subscribed to event: query.executed
 👂 Handler subscribed to event: credits.purchased
 💰 Billing Engine initialized
@@ -29,125 +29,12 @@
 ✅ Plugin validation passed for: pagamento-asaas
 ✅ Plugin loaded: pagamentos-asaas v1.0.0
 [DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
+✅ Plugins infosimples e bigtech ativados por padrão
 📡 Event Bus initialized
 💰 Billing Engine initialized
 ✅ CORE initialized successfully
 🚀 BigTech CORE running on port 8080
 📊 Health check: http://localhost:8080/health
-[INFO] 18:41:58 Restarting: /home/mau/projeto/consulta/backend/src/controllers/plugins.ts has been modified
-🛑 Shutting down CORE...
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-Error: listen EADDRINUSE: address already in use :::8080
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at Server.listen (node:net:2067:7)
-    at Function.listen (/home/mau/projeto/consulta/backend/node_modules/express/lib/application.js:635:24)
-    at /home/mau/projeto/consulta/backend/src/index.ts:124:9
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-[ERROR] 18:41:58 Error: listen EADDRINUSE: address already in use :::8080
-[INFO] 18:42:04 Restarting: /home/mau/projeto/consulta/backend/src/controllers/plugins.ts has been modified
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-🚀 BigTech CORE running on port 8080
-📊 Health check: http://localhost:8080/health
-[auth.login] MODO TESTE: Pulando validação do Appwrite Accounts
-[auth.login] Criando usuário automaticamente para: test@example.com
-Erro ao criar tenant automaticamente: AppwriteException: Invalid document structure: Missing required attribute "createdAt"
-    at _Client.call (/home/mau/projeto/consulta/backend/node_modules/node-appwrite/src/client.ts:370:12)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at Function.ensureTenantExists (/home/mau/projeto/consulta/backend/src/core/auth.ts:292:11)
-    at /home/mau/projeto/consulta/backend/src/core/auth.ts:844:11 {
-  code: 400,
-  type: 'document_invalid_structure',
-  response: '{"message":"Invalid document structure: Missing required attribute \\"createdAt\\"","code":400,"type":"document_invalid_structure","version":"1.8.0"}'
-}
-[auth.login] Erro ao acessar banco de dados: AppwriteException: Invalid document structure: Missing required attribute "createdAt"
-    at _Client.call (/home/mau/projeto/consulta/backend/node_modules/node-appwrite/src/client.ts:370:12)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at Function.ensureTenantExists (/home/mau/projeto/consulta/backend/src/core/auth.ts:292:11)
-    at /home/mau/projeto/consulta/backend/src/core/auth.ts:844:11 {
-  code: 400,
-  type: 'document_invalid_structure',
-  response: '{"message":"Invalid document structure: Missing required attribute \\"createdAt\\"","code":400,"type":"document_invalid_structure","version":"1.8.0"}'
-}
-[auth.login] MODO TESTE: Pulando validação do Appwrite Accounts
-[auth.login] Criando usuário automaticamente para: test@example.com
-Erro ao criar tenant automaticamente: AppwriteException: Invalid document structure: Missing required attribute "createdAt"
-    at _Client.call (/home/mau/projeto/consulta/backend/node_modules/node-appwrite/src/client.ts:370:12)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at Function.ensureTenantExists (/home/mau/projeto/consulta/backend/src/core/auth.ts:292:11)
-    at /home/mau/projeto/consulta/backend/src/core/auth.ts:844:11 {
-  code: 400,
-  type: 'document_invalid_structure',
-  response: '{"message":"Invalid document structure: Missing required attribute \\"createdAt\\"","code":400,"type":"document_invalid_structure","version":"1.8.0"}'
-}
-[auth.login] Erro ao acessar banco de dados: AppwriteException: Invalid document structure: Missing required attribute "createdAt"
-    at _Client.call (/home/mau/projeto/consulta/backend/node_modules/node-appwrite/src/client.ts:370:12)
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at Function.ensureTenantExists (/home/mau/projeto/consulta/backend/src/core/auth.ts:292:11)
-    at /home/mau/projeto/consulta/backend/src/core/auth.ts:844:11 {
-  code: 400,
-  type: 'document_invalid_structure',
-  response: '{"message":"Invalid document structure: Missing required attribute \\"createdAt\\"","code":400,"type":"document_invalid_structure","version":"1.8.0"}'
-}
 [auth.login] MODO TESTE: Pulando validação do Appwrite Accounts
 AuditLogger: created audit document {
   tenantId: 'default',
@@ -156,271 +43,74 @@ AuditLogger: created audit document {
   resource: 'user:user-bigtech',
   details: '{"email":"user@bigtech.com"}',
   ipAddress: 'system',
-  timestamp: '2025-12-26T21:43:25.701+00:00',
-  '$id': '694f017dc979ea7a1058',
+  timestamp: '2025-12-27T00:29:09.415+00:00',
+  '$id': '694f28556b763334405e',
   '$permissions': [],
-  '$createdAt': '2025-12-26T21:43:25.825+00:00',
-  '$updatedAt': '2025-12-26T21:43:25.825+00:00',
-  '$sequence': 1781,
+  '$createdAt': '2025-12-27T00:29:09.440+00:00',
+  '$updatedAt': '2025-12-27T00:29:09.440+00:00',
+  '$sequence': 1813,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }
-[INFO] 18:43:44 Restarting: /home/mau/projeto/consulta/backend/src/controllers/plugins.ts has been modified
-🛑 Shutting down CORE...
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-Error: listen EADDRINUSE: address already in use :::8080
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at Server.listen (node:net:2067:7)
-    at Function.listen (/home/mau/projeto/consulta/backend/node_modules/express/lib/application.js:635:24)
-    at /home/mau/projeto/consulta/backend/src/index.ts:124:9
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+⚠️ Falha no serviço 11-serasa-consumidor: Consulta falhou: NAO EXISTEM PARAMETROS PARA PESQUISA. OPERACAO IMPEDIDA.
+❌ Erro na execução BigTech: Error: Consulta falhou: NAO EXISTEM PARAMETROS PARA PESQUISA. OPERACAO IMPEDIDA.
+    at BigTechPlugin.normalizeResponse (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:755:13)
+    at BigTechPlugin.executeWithFallbacks (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:1413:41)
     at processTicksAndRejections (node:internal/process/task_queues:95:5)
-[ERROR] 18:43:45 Error: listen EADDRINUSE: address already in use :::8080
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      [INFO] 18:41:58 Restarting: /home/mau/projeto/consulta/backend/src/controllers/plugins.ts has been modified
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-Error: listen EADDRINUSE: address already in use :::8080
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at Server.listen (node:net:2067:7)
-    at Function.listen (/home/mau/projeto/consulta/backend/node_modules/express/lib/application.js:635:24)
-    at /home/mau/projeto/consulta/backend/src/index.ts:124:9
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-[ERROR] 18:41:58 Error: listen EADDRINUSE: address already in use :::8080
-[INFO] 18:42:04 Restarting: /home/mau/projeto/consulta/backend/src/controllers/plugins.ts has been modified
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-Error: listen EADDRINUSE: address already in use :::8080
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at Server.listen (node:net:2067:7)
-    at Function.listen (/home/mau/projeto/consulta/backend/node_modules/express/lib/application.js:635:24)
-    at /home/mau/projeto/consulta/backend/src/index.ts:124:9
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-[ERROR] 18:42:05 Error: listen EADDRINUSE: address already in use :::8080
-[INFO] 18:43:44 Restarting: /home/mau/projeto/consulta/backend/src/controllers/plugins.ts has been modified
-👂 Handler subscribed to event: query.executed
-👂 Handler subscribed to event: credits.purchased
-💰 Billing Engine initialized
-📡 Event Bus initialized
-🔍 Found plugin types: [ 'consulta', 'pagamentos' ]
-🔍 Found plugins in consulta: [ 'bigtech', 'infosimples' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts
-🔄 Importing plugin: consulta-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-Error: listen EADDRINUSE: address already in use :::8080
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at Server.listen (node:net:2067:7)
-    at Function.listen (/home/mau/projeto/consulta/backend/node_modules/express/lib/application.js:635:24)
-    at /home/mau/projeto/consulta/backend/src/index.ts:124:9
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
-[ERROR] 18:43:45 Error: listen EADDRINUSE: address already in use :::8080
-bigtech
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-✅ Plugin validation passed for: bigtech
-✅ Plugin loaded: consulta-bigtech v1.0.0
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/consulta/infosimples/index.ts
-🔄 Importing plugin: consulta-infosimples
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-✅ Plugin validation passed for: infosimples
-✅ Plugin loaded: consulta-infosimples v1.0.0
-🔍 Found plugins in pagamentos: [ 'asaas' ]
-🔍 Checking plugin path: /home/mau/projeto/consulta/backend/src/plugins/pagamentos/asaas/index.ts
-🔄 Importing plugin: pagamentos-asaas
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-✅ Plugin validation passed for: pagamento-asaas
-✅ Plugin loaded: pagamentos-asaas v1.0.0
-[DEV] Skipping active plugins load from database
-✅ Plugins infosimples e bigtech ativados por padrão para tenant default
-📡 Event Bus initialized
-💰 Billing Engine initialized
-✅ CORE initialized successfully
-🚀 BigTech CORE running on port 8080
-📊 Health check: http://localhost:8080/health
-❌ Erro na execução BigTech: Error: serviceCode é obrigatório
-    at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:82:15)
-    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:201:29)
-    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:69:39
-    at Layer.handle [as handle_request] (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/route.js:149:13)
-    at /home/mau/projeto/consulta/backend/src/middleware/pluginAccess.ts:61:7
-    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:92:22)
+    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:196:16)
+    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:68:20
 AuditLogger: created audit document {
   tenantId: 'default',
   userId: 'user-bigtech',
   action: 'plugin_execute',
   resource: 'plugin:bigtech',
-  details: '{"pluginId":"bigtech","input":{"cpf":"[REDACTED]"},"success":false,"cost":0,"duration":78,"error":"serviceCode é obrigatório"}',
+  details: '{"pluginId":"bigtech","input":{"serviceCode":"11-serasa-consumidor","cpfCnpj":"09469124677","tipoPessoa":"F"},"success":false,"cost":0,"duration":7401,"error":"Consulta falhou: NAO EXISTEM PARAMETROS PARA PESQUISA. OPERACAO IMPEDIDA."}',
   ipAddress: 'system',
-  timestamp: '2025-12-26T21:43:47.801+00:00',
-  '$id': '694f0193d653ac63b2f4',
+  timestamp: '2025-12-27T00:29:21.214+00:00',
+  '$id': '694f286140b17046d92e',
   '$permissions': [],
-  '$createdAt': '2025-12-26T21:43:47.878+00:00',
-  '$updatedAt': '2025-12-26T21:43:47.878+00:00',
-  '$sequence': 1782,
+  '$createdAt': '2025-12-27T00:29:21.265+00:00',
+  '$updatedAt': '2025-12-27T00:29:21.265+00:00',
+  '$sequence': 1814,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }
-❌ Erro na execução BigTech: ValidationError: NomeCompleto é obrigatório e deve ter pelo menos 3 caracteres
-    at Validator.validateInput (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/validator.ts:78:13)
-    at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:86:22)
-    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:201:29)
-    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:69:39
-    at Layer.handle [as handle_request] (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/layer.js:95:5)
-    at next (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/route.js:149:13)
-    at /home/mau/projeto/consulta/backend/src/middleware/pluginAccess.ts:61:7
-    at processTicksAndRejections (node:internal/process/task_queues:95:5) {
-  field: 'input'
-}
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+⚠️ Falha no serviço 11-serasa-consumidor: Consulta falhou: NAO EXISTEM PARAMETROS PARA PESQUISA. OPERACAO IMPEDIDA.
+❌ Erro na execução BigTech: Error: Consulta falhou: NAO EXISTEM PARAMETROS PARA PESQUISA. OPERACAO IMPEDIDA.
+    at BigTechPlugin.normalizeResponse (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:755:13)
+    at BigTechPlugin.executeWithFallbacks (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:1413:41)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:92:22)
+    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:196:16)
+    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:68:20
 AuditLogger: created audit document {
   tenantId: 'default',
   userId: 'user-bigtech',
   action: 'plugin_execute',
   resource: 'plugin:bigtech',
-  details: '{"pluginId":"bigtech","input":{"serviceCode":"36-busca-nome-uf","nome":"João Silva","uf":"SP"},"success":false,"cost":0,"duration":4,"error":"NomeCompleto é obrigatório e deve ter pelo menos 3 caracteres"}',
+  details: '{"pluginId":"bigtech","input":{"serviceCode":"11-serasa-consumidor","cpfCnpj":"09469124677","tipoPessoa":"F"},"success":false,"cost":0,"duration":6868,"error":"Consulta falhou: NAO EXISTEM PARAMETROS PARA PESQUISA. OPERACAO IMPEDIDA."}',
   ipAddress: 'system',
-  timestamp: '2025-12-26T21:43:52.006+00:00',
-  '$id': '694f019803fea347f664',
+  timestamp: '2025-12-27T00:29:43.155+00:00',
+  '$id': '694f2877325a9037e873',
   '$permissions': [],
-  '$createdAt': '2025-12-26T21:43:52.016+00:00',
-  '$updatedAt': '2025-12-26T21:43:52.016+00:00',
-  '$sequence': 1783,
+  '$createdAt': '2025-12-27T00:29:43.206+00:00',
+  '$updatedAt': '2025-12-27T00:29:43.206+00:00',
+  '$sequence': 1815,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }
 [auth.me.plugins] User authenticated: user-bigtech
-[auth.me.plugins] User data: {
-  id: 'user-bigtech',
-  tenantId: 'default',
-  allowedPlugins: '["bigtech","infosimples"]'
-}
-[auth.me.plugins] Tenant data: { id: 'default', plugins: [ 'bigtech' ] }
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech"]' }
 [auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
-[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] Searching for plugin infosimples in database
-[auth.me.plugins] Found 0 documents for plugin infosimples
-[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech' ]
+[auth.me.plugins] allowedPlugins: [ 'bigtech' ]
 [auth.me.plugins] Searching for plugin bigtech in database
 [auth.me.plugins] Found 0 documents for plugin bigtech
 [auth.me.plugins] No documents found for plugin bigtech, returning mock data
 [auth.me.plugins] pluginsDetails: [
-  {
-    id: 'infosimples',
-    name: 'infosimples',
-    type: 'consulta',
-    config: {}
-  },
   {
     id: 'bigtech',
     name: 'BigTech Consultas',
@@ -429,28 +119,15 @@ AuditLogger: created audit document {
   }
 ]
 [auth.me.plugins] User authenticated: user-bigtech
-[auth.me.plugins] User data: {
-  id: 'user-bigtech',
-  tenantId: 'default',
-  allowedPlugins: '["bigtech","infosimples"]'
-}
-[auth.me.plugins] Tenant data: { id: 'default', plugins: [ 'bigtech' ] }
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech"]' }
 [auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
-[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
-[auth.me.plugins] Searching for plugin infosimples in database
-[auth.me.plugins] Found 0 documents for plugin infosimples
-[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech' ]
+[auth.me.plugins] allowedPlugins: [ 'bigtech' ]
 [auth.me.plugins] Searching for plugin bigtech in database
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
 [auth.me.plugins] Found 0 documents for plugin bigtech
 [auth.me.plugins] No documents found for plugin bigtech, returning mock data
 [auth.me.plugins] pluginsDetails: [
-  {
-    id: 'infosimples',
-    name: 'infosimples',
-    type: 'consulta',
-    config: {}
-  },
   {
     id: 'bigtech',
     name: 'BigTech Consultas',
@@ -458,15 +135,19 @@ AuditLogger: created audit document {
     config: {}
   }
 ]
-❌ Erro na execução BigTech: ValidationError: NomeCompleto é obrigatório e deve ter pelo menos 3 caracteres
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+❌ Erro na execução BigTech: ValidationError: CPF é obrigatório
     at Validator.validateInput (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/validator.ts:78:13)
     at BigTechPlugin.execute (/home/mau/projeto/consulta/backend/src/plugins/consulta/bigtech/index.ts:86:22)
-    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:201:29)
-    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:69:39
+    at PluginLoader.executePlugin (/home/mau/projeto/consulta/backend/src/core/pluginLoader.ts:196:29)
+    at /home/mau/projeto/consulta/backend/src/controllers/plugins.ts:68:39
     at Layer.handle [as handle_request] (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/layer.js:95:5)
     at next (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/route.js:149:13)
-    at /home/mau/projeto/consulta/backend/src/middleware/pluginAccess.ts:61:7
-    at processTicksAndRejections (node:internal/process/task_queues:95:5) {
+    at /home/mau/projeto/consulta/backend/src/middleware/pluginAccess.ts:20:16
+    at pluginAccessMiddleware (/home/mau/projeto/consulta/backend/src/controllers/plugins.ts:36:10)
+    at Layer.handle [as handle_request] (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/mau/projeto/consulta/backend/node_modules/express/lib/router/route.js:149:13) {
   field: 'input'
 }
 AuditLogger: created audit document {
@@ -474,14 +155,14 @@ AuditLogger: created audit document {
   userId: 'user-bigtech',
   action: 'plugin_execute',
   resource: 'plugin:bigtech',
-  details: '{"pluginId":"bigtech","input":{"serviceCode":"36-busca-nome-uf","nome":"João Silva Santos","uf":"SP"},"success":false,"cost":0,"duration":3,"error":"NomeCompleto é obrigatório e deve ter pelo menos 3 caracteres"}',
+  details: '{"pluginId":"bigtech","input":{"serviceCode":"1539-bvs-basica-pf","cpfCnpj":"09469124677","tipoPessoa":"F"},"success":false,"cost":0,"duration":13,"error":"CPF é obrigatório"}',
   ipAddress: 'system',
-  timestamp: '2025-12-26T21:44:03.066+00:00',
-  '$id': '694f01a314d495dafc45',
+  timestamp: '2025-12-27T00:30:43.643+00:00',
+  '$id': '694f28b3a2180cd8f28a',
   '$permissions': [],
-  '$createdAt': '2025-12-26T21:44:03.085+00:00',
-  '$updatedAt': '2025-12-26T21:44:03.085+00:00',
-  '$sequence': 1784,
+  '$createdAt': '2025-12-27T00:30:43.666+00:00',
+  '$updatedAt': '2025-12-27T00:30:43.666+00:00',
+  '$sequence': 1816,
   '$databaseId': 'bigtechdb',
   '$collectionId': 'audits'
 }

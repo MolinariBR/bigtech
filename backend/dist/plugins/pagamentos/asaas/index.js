@@ -22,31 +22,21 @@ const plugin = {
         }
         console.log('✅ Plugin Asaas instalado com sucesso');
     },
-    async enable(tenantId) {
-        console.log(`Habilitando plugin Asaas para tenant ${tenantId}...`);
-        // Verificar se o tenant tem configurações válidas
-        const appwrite = appwrite_1.AppwriteService.getInstance();
-        try {
-            const tenantConfig = await appwrite.databases.getDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'tenants', tenantId);
-            if (!tenantConfig.pluginConfig?.asaas) {
-                throw new Error('Configuração Asaas não encontrada para o tenant');
-            }
-            console.log(`✅ Plugin Asaas habilitado para tenant ${tenantId}`);
-        }
-        catch (error) {
-            console.error(`❌ Erro ao habilitar plugin Asaas para tenant ${tenantId}:`, error);
-            throw error;
-        }
+    async enable() {
+        console.log(`Habilitando plugin Asaas...`);
+        // Plugin habilitado sem configurações específicas de tenant
+        console.log(`✅ Plugin Asaas habilitado`);
     },
-    async disable(tenantId) {
-        console.log(`Desabilitando plugin Asaas para tenant ${tenantId}...`);
+    async disable() {
+        console.log(`Desabilitando plugin Asaas...`);
         // Cleanup se necessário
-        console.log(`✅ Plugin Asaas desabilitado para tenant ${tenantId}`);
+        console.log(`✅ Plugin Asaas desabilitado`);
     },
     async execute(context) {
         try {
             const paymentContext = context.input;
-            const config = await getAsaasConfig(paymentContext.tenantId);
+            // Obter configuração (agora sem tenantId)
+            const config = await getAsaasConfig();
             // Validar valor mínimo e máximo
             if (paymentContext.amount < config.minAmount || paymentContext.amount > config.maxAmount) {
                 return {
@@ -92,14 +82,27 @@ const plugin = {
     }
 };
 // Métodos auxiliares
-async function getAsaasConfig(tenantId) {
-    const config = await (0, config_1.getTenantConfig)(tenantId);
-    // Validar configuração
-    const validation = (0, config_1.validateConfig)(config);
-    if (!validation.valid) {
-        throw new Error(`Configuração Asaas inválida: ${validation.errors.join(', ')}`);
+async function getAsaasConfig() {
+    // Para single-tenant, usar configuração padrão ou buscar de uma coleção global
+    const appwrite = appwrite_1.AppwriteService.getInstance();
+    try {
+        // Buscar configuração global (não por tenant)
+        const configs = await appwrite.databases.listDocuments(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'system_settings', [node_appwrite_1.Query.equal('key', 'asaas_config')]);
+        if (configs.documents.length === 0) {
+            throw new Error('Configuração Asaas não encontrada');
+        }
+        const config = JSON.parse(configs.documents[0].value);
+        // Validar configuração
+        const validation = (0, config_1.validateConfig)(config);
+        if (!validation.valid) {
+            throw new Error(`Configuração Asaas inválida: ${validation.errors.join(', ')}`);
+        }
+        return config;
     }
-    return config;
+    catch (error) {
+        console.error('Erro ao obter configuração Asaas:', error);
+        throw error;
+    }
 }
 async function getOrCreateCustomer(context, config) {
     const baseUrl = config_1.ASAAS_URLS[config.environment];
@@ -171,7 +174,6 @@ async function registerBillingTransaction(context, payment) {
     try {
         await appwrite.databases.createDocument(process.env.APPWRITE_DATABASE_ID || 'bigtechdb', 'billing', 'unique()', // ID único
         {
-            tenantId: context.tenantId,
             userId: context.userId,
             type: 'credit_purchase',
             amount: context.amount,

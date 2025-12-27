@@ -54,7 +54,7 @@ export class AuditLogger {
     try {
       // Gravamos apenas os campos suportados pelo schema atual da collection
       const auditData = {
-        tenantId: entry.tenantId || null,
+        tenantId: 'default', // Single-tenant: usar 'default'
         userId: entry.userId || null,
         action: entry.action,
         resource: entry.resource,

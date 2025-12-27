@@ -1,5 +1,4 @@
 interface EventData {
-    tenantId: string;
     userId?: string;
     type: string;
     payload: any;
@@ -17,7 +16,7 @@ export declare class EventBus {
     publish(event: Omit<EventData, 'timestamp'>): Promise<void>;
     subscribe(eventType: string, handler: EventHandler): void;
     unsubscribe(eventType: string, handler: EventHandler): void;
-    waitForEvent(eventType: string, tenantId?: string, timeout?: number): Promise<EventData>;
+    waitForEvent(eventType: string, timeout?: number): Promise<EventData>;
 }
 export declare const eventBus: EventBus;
 export {};

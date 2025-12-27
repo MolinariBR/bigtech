@@ -2,6 +2,7 @@ import * as React from "react"
 import { cn } from "../lib/utils"
 import { Button } from "./Button"
 import { FieldType } from "../lib/validation"
+import ServiceDisplay from "./ServiceDisplay"
 
 interface ModalProps {
   isOpen: boolean
@@ -91,9 +92,10 @@ export function ModalInput({
 interface ModalResultProps {
   result: any
   inputValue: string
+  pluginId?: string
 }
 
-export function ModalResult({ result, inputValue }: ModalResultProps) {
+export function ModalResult({ result, inputValue, pluginId }: ModalResultProps) {
   if (!result) return null
 
   const formatValue = (key: string, value: any): string => {
@@ -189,10 +191,19 @@ export function ModalResult({ result, inputValue }: ModalResultProps) {
 
           {result.data && (
             <div className="space-y-4">
-              <div className="bg-background/50 rounded-md p-3">
-                <h4 className="font-medium text-foreground mb-3">Dados da Consulta:</h4>
-                {renderDataObject(result.data)}
-              </div>
+              {/* Renderizar dados específicos do BigTech se for o plugin */}
+              {pluginId === 'bigtech' ? (
+                result.data ? <ServiceDisplay data={result.data} /> : (
+                  <div className="bg-background/50 rounded-md p-3">
+                    <p className="text-muted-foreground">Dados da consulta não disponíveis.</p>
+                  </div>
+                )
+              ) : (
+                <div className="bg-background/50 rounded-md p-3">
+                  <h4 className="font-medium text-foreground mb-3">Dados da Consulta:</h4>
+                  {renderDataObject(result.data)}
+                </div>
+              )}
 
               {inputValue && (
                 <div className="text-sm text-muted-foreground">

@@ -130,7 +130,7 @@ export class Validator {
   }
 }
 
-class BigTechDataValidator {
+export class BigTechDataValidator {
   /**
    * Valida e normaliza CPF
    */
@@ -693,6 +693,57 @@ class BigTechDataValidator {
               errors.push(`CPF inválido: ${cpfValidation.error}`);
             } else {
               sanitizedInput.cpfCnpj = cpfValidation.normalized;
+            }
+          }
+          break;
+
+        case '1539-bvs-basica-pf':
+          if (!input.cpf) {
+            errors.push('CPF é obrigatório');
+          } else {
+            const cpfValidation = BigTechDataValidator.validateAndNormalizeCPF(input.cpf);
+            if (!cpfValidation.isValid) {
+              errors.push(`CPF inválido: ${cpfValidation.error}`);
+            } else {
+              sanitizedInput.cpf = cpfValidation.normalized;
+            }
+          }
+          break;
+
+        case '11-bvs-basica-pj':
+          if (!input.cpfCnpj) {
+            errors.push('CNPJ é obrigatório');
+          } else {
+            const cnpjValidation = BigTechDataValidator.validateAndNormalizeCNPJ(input.cpfCnpj);
+            if (!cnpjValidation.isValid) {
+              errors.push(`CNPJ inválido: ${cnpjValidation.error}`);
+            } else {
+              sanitizedInput.cpfCnpj = cnpjValidation.normalized;
+            }
+          }
+          break;
+
+        case '1003-scr-premium-integracoes':
+          if (!input.cpfCnpj) {
+            errors.push('CPF/CNPJ é obrigatório');
+          } else {
+            const documento = input.cpfCnpj.replace(/\D/g, '');
+            if (documento.length === 11) {
+              const cpfValidation = BigTechDataValidator.validateAndNormalizeCPF(input.cpfCnpj);
+              if (!cpfValidation.isValid) {
+                errors.push(`CPF inválido: ${cpfValidation.error}`);
+              } else {
+                sanitizedInput.cpfCnpj = cpfValidation.normalized;
+              }
+            } else if (documento.length === 14) {
+              const cnpjValidation = BigTechDataValidator.validateAndNormalizeCNPJ(input.cpfCnpj);
+              if (!cnpjValidation.isValid) {
+                errors.push(`CNPJ inválido: ${cnpjValidation.error}`);
+              } else {
+                sanitizedInput.cpfCnpj = cnpjValidation.normalized;
+              }
+            } else {
+              errors.push('CPF/CNPJ deve ter 11 ou 14 dígitos');
             }
           }
           break;

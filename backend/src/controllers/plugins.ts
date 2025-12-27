@@ -59,7 +59,6 @@ router.post('/:pluginId/execute', authenticateMiddleware, validateExecutionConte
 
     // Criar contexto de execução global
     const context: PluginContext = {
-      tenantId: 'default', // Sempre usar 'default' para single-tenant
       userId: userId!,
       input,
       config: effectiveConfig
@@ -99,7 +98,7 @@ router.post('/:pluginId/execute', authenticateMiddleware, validateExecutionConte
 router.get('/active', authenticateMiddleware, validateExecutionContext, async (req: Request, res: Response) => {
   try {
     // Obter plugins ativos globalmente
-    const activePlugins = pluginLoader.getActivePluginsForTenant('default');
+    const activePlugins = pluginLoader.getActivePluginsForTenant();
 
     res.json({
       activePlugins: Array.from(activePlugins),
@@ -128,7 +127,7 @@ router.get('/:pluginId/services', authenticateMiddleware, pluginAccessMiddleware
     }
 
     // Verificar se plugin está ativo globalmente
-    const activePlugins = pluginLoader.getActivePluginsForTenant('default');
+    const activePlugins = pluginLoader.getActivePluginsForTenant();
     const isActive = activePlugins.has(pluginId);
     if (!isActive) {
       return res.status(403).json({

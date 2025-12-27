@@ -53,18 +53,18 @@ export class BigTechPlugin implements Plugin {
   }
 
   /**
-   * Habilita o plugin para um tenant
+   * Habilita o plugin
    */
-  async enable(tenantId: string): Promise<void> {
-    console.log(`🔧 Habilitando plugin BigTech para tenant ${tenantId}`);
+  async enable(): Promise<void> {
+    console.log(`🔧 Habilitando plugin BigTech`);
     // Implementar lógica específica se necessário
   }
 
   /**
-   * Desabilita o plugin para um tenant
+   * Desabilita o plugin
    */
-  async disable(tenantId: string): Promise<void> {
-    console.log(`🔧 Desabilitando plugin BigTech para tenant ${tenantId}`);
+  async disable(): Promise<void> {
+    console.log(`🔧 Desabilitando plugin BigTech`);
     // Implementar lógica específica se necessário
   }
 
@@ -86,7 +86,7 @@ export class BigTechPlugin implements Plugin {
       this.validator.validateInput(serviceCode, input);
 
       // Aplicar rate limiting avançado
-      await this.enforceAdvancedRateLimit(context.tenantId || 'default', serviceCode);
+      await this.enforceAdvancedRateLimit(serviceCode);
 
       // Tentar executar com fallbacks
       const result = await this.executeWithFallbacks(context, serviceCode);
@@ -175,6 +175,9 @@ export class BigTechPlugin implements Plugin {
         return this.preparePositivoAcertaEssencialPfPayload(input);
 
       case '1539-bvs-basica-pf':
+        return this.prepareBvsBasicaPfPayload(input);
+
+      case 'BVSBasicaPF':
         return this.prepareBvsBasicaPfPayload(input);
 
       case '11-bvs-basica-pj':
@@ -785,6 +788,9 @@ export class BigTechPlugin implements Plugin {
       case '1539-bvs-basica-pf':
         return this.normalizeBvsBasicaPfResponse(response);
 
+      case 'BVSBasicaPF':
+        return this.normalizeBvsBasicaPfResponse(response);
+
       case '11-bvs-basica-pj':
         return this.normalizeBvsBasicaPjResponse(response);
 
@@ -1321,15 +1327,14 @@ export class BigTechPlugin implements Plugin {
   /**
    * Aplica rate limiting avançado com controle por tenant/serviço
    */
-  private async enforceAdvancedRateLimit(tenantId: string, serviceCode: string): Promise<void> {
+  private async enforceAdvancedRateLimit(serviceCode: string): Promise<void> {
     const now = Date.now();
-    const key = `${tenantId}:${serviceCode}`;
+    const key = serviceCode;
 
     // Obter ou criar entrada de rate limiting
     let entry = this.rateLimitMap.get(key);
     if (!entry) {
       entry = {
-        tenantId,
         serviceCode,
         requests: 0,
         windowStart: now,
@@ -1523,6 +1528,7 @@ export class BigTechPlugin implements Plugin {
         '304-positivo-define-risco-cnpj': 'Positivo Define Risco CNPJ',
         'positivo-acerta-essencial-pf': 'Positivo Acerta Essencial PF',
         '1539-bvs-basica-pf': 'BVS Básica PF',
+        'BVSBasicaPF': 'BVS Básica PF',
         '11-bvs-basica-pj': 'BVS Básica PJ',
         '1003-scr-premium-integracoes': 'SCR Premium + Integrações',
         '411-crlv-ro': 'CRLV RO',
@@ -1542,6 +1548,7 @@ export class BigTechPlugin implements Plugin {
         '304-positivo-define-risco-cnpj': 'Análise de risco para pessoa jurídica',
         'positivo-acerta-essencial-pf': 'Relatório essencial de crédito pessoa física',
         '1539-bvs-basica-pf': 'Relatório básico BVS para pessoa física',
+        'BVSBasicaPF': 'Relatório básico BVS para pessoa física',
         '11-bvs-basica-pj': 'Relatório básico BVS para pessoa jurídica',
         '1003-scr-premium-integracoes': 'Relatório premium SCR com integrações completas',
         '411-crlv-ro': 'Consulta de CRLV para Rondônia',

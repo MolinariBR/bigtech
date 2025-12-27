@@ -43,6 +43,6 @@ export declare const PAYMENT_STATUSES: {
     readonly DUNNING_RECEIVED: "DUNNING_RECEIVED";
     readonly AWAITING_RISK_ANALYSIS: "AWAITING_RISK_ANALYSIS";
 };
-export declare function getTenantConfig(tenantId: string): Promise<AsaasPluginConfig>;
+export declare function getTenantConfig(): Promise<AsaasPluginConfig>;
 export declare function mergeConfig(base: AsaasPluginConfig, override: Partial<AsaasPluginConfig>): AsaasPluginConfig;
 //# sourceMappingURL=config.d.ts.map

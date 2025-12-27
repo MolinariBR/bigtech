@@ -99,7 +99,7 @@ router.post('/:id/refund', async (req, res) => {
     const { id } = req.params;
     const { amount, reason } = req.body || {};
     const auditId = req.header('X-Audit-Id') || req.body?.auditId;
-    const result = await billingEngine_1.billingEngine.refundTransaction(id, amount, reason, { tenantId: req.tenantId, userId: req.userId, auditId });
+    const result = await billingEngine_1.billingEngine.refundTransaction(id, amount, reason, { userId: req.userId, auditId });
     if (result.success)
         return res.json({ refundId: result.refundId });
     return res.status(400).json({ error: result.error || 'refund_failed' });

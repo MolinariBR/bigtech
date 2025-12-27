@@ -5,7 +5,6 @@
 import { EventEmitter } from 'events';
 
 interface EventData {
-  tenantId: string;
   userId?: string;
   type: string;
   payload: any;
@@ -48,7 +47,7 @@ export class EventBus {
       timestamp: new Date()
     };
 
-    console.log(`📡 Event published: ${event.type} for tenant ${event.tenantId}`);
+    console.log(`📡 Event published: ${event.type}`);
 
     // Emitir para todos os listeners registrados
     this.emitter.emit(event.type, fullEvent);
@@ -88,7 +87,6 @@ export class EventBus {
   // Aguardar por um evento específico (útil para testes)
   async waitForEvent(
     eventType: string,
-    tenantId?: string,
     timeout = 5000
   ): Promise<EventData> {
     return new Promise((resolve, reject) => {
@@ -97,11 +95,9 @@ export class EventBus {
       }, timeout);
 
       const handler = (event: EventData) => {
-        if (!tenantId || event.tenantId === tenantId) {
-          clearTimeout(timeoutId);
-          this.emitter.off(eventType, handler);
-          resolve(event);
-        }
+        clearTimeout(timeoutId);
+        this.emitter.off(eventType, handler);
+        resolve(event);
       };
 
       this.emitter.on(eventType, handler);

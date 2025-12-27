@@ -32,7 +32,7 @@ const pluginAccessMiddleware = async (req, res, next) => {
     return middleware(req, res, next);
 };
 // POST /api/plugins/:pluginId/execute - Executar plugin específico
-router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddleware, async (req, res) => {
+router.post('/:pluginId/execute', auth_1.authenticateMiddleware, validateExecutionContext, pluginAccessMiddleware, async (req, res) => {
     try {
         const { pluginId } = req.params;
         const { input = {}, config = {} } = req.body;
@@ -50,7 +50,6 @@ router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddlewa
         const effectiveConfig = { ...savedConfig, ...config };
         // Criar contexto de execução global
         const context = {
-            tenantId: 'default', // Sempre usar 'default' para single-tenant
             userId: userId,
             input,
             config: effectiveConfig
@@ -83,10 +82,10 @@ router.post('/:pluginId/execute', validateExecutionContext, pluginAccessMiddlewa
     }
 });
 // GET /api/plugins/active - Listar plugins ativos
-router.get('/active', validateExecutionContext, async (req, res) => {
+router.get('/active', auth_1.authenticateMiddleware, validateExecutionContext, async (req, res) => {
     try {
         // Obter plugins ativos globalmente
-        const activePlugins = pluginLoader_1.pluginLoader.getActivePluginsForTenant('default');
+        const activePlugins = pluginLoader_1.pluginLoader.getActivePluginsForTenant();
         res.json({
             activePlugins: Array.from(activePlugins),
             count: activePlugins.size
@@ -111,7 +110,7 @@ router.get('/:pluginId/services', auth_1.authenticateMiddleware, pluginAccessMid
             });
         }
         // Verificar se plugin está ativo globalmente
-        const activePlugins = pluginLoader_1.pluginLoader.getActivePluginsForTenant('default');
+        const activePlugins = pluginLoader_1.pluginLoader.getActivePluginsForTenant();
         const isActive = activePlugins.has(pluginId);
         if (!isActive) {
             return res.status(403).json({

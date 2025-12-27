@@ -34,14 +34,14 @@ export class InfosimplesPlugin implements Plugin {
     // Poderia validar conectividade, etc.
   }
 
-  async enable(tenantId: string): Promise<void> {
-    // Ativar para tenant específico
-    console.log(`Plugin Infosimples habilitado para tenant ${tenantId}`);
+  async enable(): Promise<void> {
+    // Ativar plugin
+    console.log(`Plugin Infosimples habilitado`);
   }
 
-  async disable(tenantId: string): Promise<void> {
-    // Desativar para tenant
-    console.log(`Plugin Infosimples desabilitado para tenant ${tenantId}`);
+  async disable(): Promise<void> {
+    // Desativar plugin
+    console.log(`Plugin Infosimples desabilitado`);
   }
 
   private getSchemas(): ConsultaSchema[] {
@@ -69,7 +69,7 @@ export class InfosimplesPlugin implements Plugin {
   }
 
   async execute(context: PluginContext): Promise<PluginResult> {
-    const { tenantId, userId, input: contextInput, config: contextConfig } = context;
+    const { userId, input: contextInput, config: contextConfig } = context;
     const { type, input } = contextInput as { type: string; input: ConsultaInputType };
 
     // Usar config do context se disponível, senão this.config
