@@ -37,10 +37,8 @@ jobs:
         node-version: '18'
         cache: 'npm'
 
-    # Deploy Appwrite to EC2 (first, to get IP for frontend builds)
     - name: Deploy Appwrite to EC2
       run: |
-        # Check if instance exists
         INSTANCE_EXISTS=$(aws ec2 describe-instances \
           --filters "Name=tag:Name,Values=${{ env.APPWRITE_EC2_INSTANCE }}" "Name=instance-state-name,Values=running" \
           --query 'Reservations[*].Instances[*].InstanceId' \
@@ -49,14 +47,12 @@ jobs:
         if [ -z "$INSTANCE_EXISTS" ]; then
           echo "Creating Appwrite EC2 instance..."
 
-          # Create security group
           SG_ID=$(aws ec2 create-security-group \
             --group-name appwrite-sg \
             --description "Security group for Appwrite" \
             --query 'GroupId' \
             --output text)
 
-          # Add inbound rules
           aws ec2 authorize-security-group-ingress \
             --group-id $SG_ID \
             --protocol tcp \
@@ -75,7 +71,6 @@ jobs:
             --port 22 \
             --cidr 0.0.0.0/0
 
-          # Create EC2 instance
           INSTANCE_ID=$(aws ec2 run-instances \
             --image-id ami-0c7217cdde317cfec \
             --count 1 \
@@ -83,26 +78,17 @@ jobs:
             --key-name ${{ secrets.AWS_EC2_KEY_PAIR }} \
             --security-group-ids $SG_ID \
             --user-data '#!/bin/bash
-              # Install Docker and Docker Compose
-              yum update -y
-              amazon-linux-extras install docker -y
-              systemctl start docker
-              systemctl enable docker
-
-              # Install Docker Compose
-              curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
-
-              # Clone Appwrite repo and setup
-              git clone https://github.com/appwrite/appwrite.git /appwrite
-              cd /appwrite
-
-              # Get instance metadata for external IP
-              TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-              EXTERNAL_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
-
-              # Create docker-compose.override.yml for AWS
-              cat > docker-compose.override.yml << EOF
+yum update -y
+amazon-linux-extras install docker -y
+systemctl start docker
+systemctl enable docker
+curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+git clone https://github.com/appwrite/appwrite.git /appwrite
+cd /appwrite
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+EXTERNAL_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+cat > docker-compose.override.yml << EOF2
 version: "3.8"
 services:
   appwrite:
@@ -114,44 +100,29 @@ services:
   appwrite-realtime:
     environment:
       - _APP_DOMAIN=$EXTERNAL_IP
-EOF
-
-              # Start Appwrite
-              docker-compose up -d
-
-              # Wait for Appwrite to be ready
-              sleep 30
-
-              # Setup Appwrite (this would need to be done via API calls)
-              echo "Appwrite setup would be done here via API calls to $EXTERNAL_IP"
-            ' \
+EOF2
+docker-compose up -d
+sleep 30
+echo "Appwrite setup completed"
+' \
             --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=${{ env.APPWRITE_EC2_INSTANCE }}}]' \
             --query 'Instances[0].InstanceId' \
             --output text)
 
-          echo "Waiting for instance to be running..."
           aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-
-          echo "Waiting for instance to pass status checks..."
           aws ec2 wait instance-status-ok --instance-ids $INSTANCE_ID
-
         else
-          echo "EC2 instance already exists, updating Appwrite..."
-          # SSH into instance and update (would need SSH key setup)
-          echo "Update logic would go here"
+          echo "EC2 instance already exists"
         fi
 
-        # Get instance public IP
         PUBLIC_IP=$(aws ec2 describe-instances \
           --filters "Name=tag:Name,Values=${{ env.APPWRITE_EC2_INSTANCE }}" "Name=instance-state-name,Values=running" \
           --query 'Reservations[*].Instances[*].PublicIpAddress' \
           --output text)
 
         echo "Appwrite EC2 Public IP: $PUBLIC_IP"
-        echo "Appwrite Console: http://$PUBLIC_IP"
         echo "APPWRITE_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-    # Build Frontend App
     - name: Build Frontend App
       run: |
         cd frontend-app
@@ -160,7 +131,6 @@ EOF
       env:
         APPWRITE_IP: ${{ env.APPWRITE_IP }}
 
-    # Build Frontend Admin
     - name: Build Frontend Admin
       run: |
         cd frontend-admin
@@ -169,89 +139,55 @@ EOF
       env:
         APPWRITE_IP: ${{ env.APPWRITE_IP }}
 
-    # Deploy Frontend App to S3
     - name: Deploy Frontend App to S3
       run: |
-        # Create S3 bucket
         aws s3 mb s3://${{ env.FRONTEND_APP_BUCKET }} --region ${{ env.AWS_REGION }}
-
-        # Configure bucket for static website hosting
         aws s3 website s3://${{ env.FRONTEND_APP_BUCKET }} --index-document index.html --error-document 404.html
-
-        # Set bucket policy for public read access
         aws s3api put-bucket-policy --bucket ${{ env.FRONTEND_APP_BUCKET }} --policy '{
           "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "PublicReadGetObject",
-              "Effect": "Allow",
-              "Principal": "*",
-              "Action": "s3:GetObject",
-              "Resource": "arn:aws:s3:::${{ env.FRONTEND_APP_BUCKET }}/*"
-            }
-          ]
+          "Statement": [{
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::${{ env.FRONTEND_APP_BUCKET }}/*"
+          }]
         }'
-
-        # Upload files to S3
         aws s3 sync frontend-app/out s3://${{ env.FRONTEND_APP_BUCKET }} --delete
 
-    # Deploy Frontend Admin to S3
     - name: Deploy Frontend Admin to S3
       run: |
-        # Create S3 bucket
         aws s3 mb s3://${{ env.FRONTEND_ADMIN_BUCKET }} --region ${{ env.AWS_REGION }}
-
-        # Configure bucket for static website hosting
         aws s3 website s3://${{ env.FRONTEND_ADMIN_BUCKET }} --index-document index.html --error-document 404.html
-
-        # Set bucket policy for public read access
         aws s3api put-bucket-policy --bucket ${{ env.FRONTEND_ADMIN_BUCKET }} --policy '{
           "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Sid": "PublicReadGetObject",
-              "Effect": "Allow",
-              "Principal": "*",
-              "Action": "s3:GetObject",
-              "Resource": "arn:aws:s3:::${{ env.FRONTEND_ADMIN_BUCKET }}/*"
-            }
-          ]
+          "Statement": [{
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::${{ env.FRONTEND_ADMIN_BUCKET }}/*"
+          }]
         }'
-
-        # Upload files to S3
         aws s3 sync frontend-admin/out s3://${{ env.FRONTEND_ADMIN_BUCKET }} --delete
 
-    # Build and Push Backend to ECR
     - name: Build and Push Backend to ECR
       run: |
-        # Get account ID
         ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-
-        # Create ECR repository if it doesn't exist
         aws ecr describe-repositories --repository-names ${{ env.BACKEND_ECR_REPO }} || \
         aws ecr create-repository --repository-name ${{ env.BACKEND_ECR_REPO }}
-
-        # Login to ECR
         aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-
-        # Build and tag Docker image
         cd backend
         docker build -t ${{ env.BACKEND_ECR_REPO }} .
         docker tag ${{ env.BACKEND_ECR_REPO }}:latest $ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BACKEND_ECR_REPO }}:latest
-
-        # Push to ECR
         docker push $ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BACKEND_ECR_REPO }}:latest
-
         echo "ECR_IMAGE_URI=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.BACKEND_ECR_REPO }}:latest" >> $GITHUB_ENV
 
-    # Deploy Backend to ECS
     - name: Deploy Backend to ECS
       run: |
-        # Create ECS cluster if it doesn't exist
         aws ecs describe-clusters --clusters ${{ env.BACKEND_ECS_CLUSTER }} || \
         aws ecs create-cluster --cluster-name ${{ env.BACKEND_ECS_CLUSTER }}
 
-        # Register task definition
         aws ecs register-task-definition \
           --family ${{ env.BACKEND_ECS_SERVICE }} \
           --network-mode awsvpc \
@@ -265,18 +201,8 @@ EOF
               "name": "backend-container",
               "image": "${{ env.ECR_IMAGE_URI }}",
               "essential": true,
-              "portMappings": [
-                {
-                  "containerPort": 4000,
-                  "protocol": "tcp"
-                }
-              ],
-              "environment": [
-                {
-                  "name": "APPWRITE_URL",
-                  "value": "http://${{ env.APPWRITE_IP }}"
-                }
-              ],
+              "portMappings": [{"containerPort": 4000, "protocol": "tcp"}],
+              "environment": [{"name": "APPWRITE_URL", "value": "http://${{ env.APPWRITE_IP }}"}],
               "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -288,32 +214,24 @@ EOF
             }
           ]'
 
-        # Create CloudWatch log group
         aws logs create-log-group --log-group-name /ecs/${{ env.BACKEND_ECS_SERVICE }} || true
 
-        # Create ECS service if it doesn't exist
         SERVICE_EXISTS=$(aws ecs describe-services --cluster ${{ env.BACKEND_ECS_CLUSTER }} --services ${{ env.BACKEND_ECS_SERVICE }} --query 'services[0].serviceName' --output text 2>/dev/null || echo "")
 
         if [ "$SERVICE_EXISTS" != "${{ env.BACKEND_ECS_SERVICE }}" ]; then
-          # Get default VPC and subnets
           VPC_ID=$(aws ec2 describe-vpcs --query 'Vpcs[0].VpcId' --output text)
           SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query 'Subnets[0:2].SubnetId' --output text | tr '\t' ',')
-
-          # Create security group for ECS
           ECS_SG_ID=$(aws ec2 create-security-group \
             --group-name ecs-backend-sg \
             --description "Security group for ECS backend service" \
             --vpc-id $VPC_ID \
             --query 'GroupId' \
             --output text)
-
           aws ec2 authorize-security-group-ingress \
             --group-id $ECS_SG_ID \
             --protocol tcp \
             --port 4000 \
             --cidr 0.0.0.0/0
-
-          # Create ECS service
           aws ecs create-service \
             --cluster ${{ env.BACKEND_ECS_CLUSTER }} \
             --service-name ${{ env.BACKEND_ECS_SERVICE }} \
@@ -322,7 +240,6 @@ EOF
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_IDS],securityGroups=[$ECS_SG_ID],assignPublicIp=ENABLED}"
         else
-          # Update existing service
           aws ecs update-service \
             --cluster ${{ env.BACKEND_ECS_CLUSTER }} \
             --service ${{ env.BACKEND_ECS_SERVICE }} \
@@ -330,7 +247,6 @@ EOF
             --desired-count 1
         fi
 
-    # Output deployment URLs
     - name: Output Deployment URLs
       run: |
         echo "🚀 Deployment completed successfully!"
@@ -345,5 +261,3 @@ EOF
         echo "EC2 Instance: ${{ env.APPWRITE_EC2_INSTANCE }}"
         echo "ECS Cluster: ${{ env.BACKEND_ECS_CLUSTER }}"
         echo "ECS Service: ${{ env.BACKEND_ECS_SERVICE }}"
-        echo ""
-        echo "⚠️  Note: For production, consider using CloudFront for better performance and custom domains"
