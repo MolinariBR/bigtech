@@ -1,0 +1,79 @@
+name: Deploy Frontends to S3 (Simple)
+on:
+  push:
+    branches:
+      - master
+jobs:
+  deploy-frontends:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+
+      - name: Build and deploy frontends
+        run: |
+          set -euo pipefail
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          REPO=$(echo "$GITHUB_REPOSITORY" | sed 's/\//-/g')
+          APP_BUCKET="$ACCOUNT_ID-$REPO-frontend-app"
+          ADMIN_BUCKET="$ACCOUNT_ID-$REPO-frontend-admin"
+
+          # Build frontend-app
+          if [ -d frontend-app ]; then
+            cd frontend-app
+            npm ci
+            npm run build || true
+            # try next export if available
+            if [ -f package.json ] && grep -q "next" package.json; then
+              npx next build || true
+              npx next export -o out || true
+            fi
+            cd -
+          fi
+
+          # Build frontend-admin
+          if [ -d frontend-admin ]; then
+            cd frontend-admin
+            npm ci
+            npm run build || true
+            if [ -f package.json ] && grep -q "next" package.json; then
+              npx next build || true
+              npx next export -o out || true
+            fi
+            cd -
+          fi
+
+          for BUCKET in "$APP_BUCKET" "$ADMIN_BUCKET"; do
+            if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+              echo "Bucket $BUCKET exists"
+            else
+              aws s3 mb s3://$BUCKET --region $AWS_REGION
+              aws s3 website s3://$BUCKET --index-document index.html --error-document 404.html || true
+            fi
+          done
+
+          if [ -d frontend-app/out ]; then
+            aws s3 sync frontend-app/out s3://$APP_BUCKET --delete
+          elif [ -d frontend-app/out ]; then
+            aws s3 sync frontend-app/out s3://$APP_BUCKET --delete
+          fi
+
+          if [ -d frontend-admin/out ]; then
+            aws s3 sync frontend-admin/out s3://$ADMIN_BUCKET --delete
+          fi
+
+          echo "Frontend deployed: http://$APP_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
+          echo "Frontend admin deployed: http://$ADMIN_BUCKET.s3-website-$AWS_REGION.amazonaws.com"
