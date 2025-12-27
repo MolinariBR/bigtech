@@ -9,8 +9,7 @@ import {
   User,
   Menu,
   Search,
-  Settings as SettingsIcon,
-  ChevronDown
+  Settings as SettingsIcon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,11 +24,9 @@ import ThemeToggle from './ThemeToggle';
 import { Separator } from '@/components/ui/separator';
 
 interface HeaderProps {
-  userRole?: string;
   onMenuClick?: () => void;
 }
-
-export default function Header({ userRole = 'admin', onMenuClick }: HeaderProps) {
+export default function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 header-shadow smooth-transition">
       <div className="container flex h-16 max-w-screen-2xl items-center px-4 lg:px-6">

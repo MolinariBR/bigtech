@@ -415,3 +415,107 @@ AuditLogger: created audit document {
   '$collectionId': 'audits'
 }
 📡 Event published: plugin.executed
+[auth.me.plugins] User authenticated: user-bigtech
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
+[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] Searching for plugin bigtech in database
+[auth.me.plugins] Found 0 documents for plugin bigtech
+[auth.me.plugins] No documents found for plugin bigtech, returning mock data
+[auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
+  {
+    id: 'bigtech',
+    name: 'BigTech Consultas',
+    type: 'consulta',
+    config: {}
+  }
+]
+[auth.me.plugins] User authenticated: user-bigtech
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: infosimples
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
+[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] Searching for plugin bigtech in database
+[auth.me.plugins] Found 0 documents for plugin bigtech
+[auth.me.plugins] No documents found for plugin bigtech, returning mock data
+[auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
+  {
+    id: 'bigtech',
+    name: 'BigTech Consultas',
+    type: 'consulta',
+    config: {}
+  }
+]
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: infosimples
+[pluginAccess.middleware] MODO DESENVOLVIMENTO: Permitindo acesso ao plugin: bigtech
+[auth.me.plugins] User authenticated: user-bigtech
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
+[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] Searching for plugin bigtech in database
+[auth.me.plugins] Found 0 documents for plugin bigtech
+[auth.me.plugins] No documents found for plugin bigtech, returning mock data
+[auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
+  {
+    id: 'bigtech',
+    name: 'BigTech Consultas',
+    type: 'consulta',
+    config: {}
+  }
+]
+[auth.me.plugins] User authenticated: user-bigtech
+[auth.me.plugins] User data: { id: 'user-bigtech', allowedPlugins: '["bigtech","infosimples"]' }
+[auth.me.plugins] activeTenantPluginIds from pluginLoader: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] userAllowedPlugins: [ 'bigtech', 'infosimples' ]
+[auth.me.plugins] allowedPlugins: [ 'infosimples', 'bigtech' ]
+[auth.me.plugins] Searching for plugin infosimples in database
+[auth.me.plugins] Found 0 documents for plugin infosimples
+[auth.me.plugins] No documents found for plugin infosimples, returning mock data
+[auth.me.plugins] Searching for plugin bigtech in database
+[auth.me.plugins] Found 0 documents for plugin bigtech
+[auth.me.plugins] No documents found for plugin bigtech, returning mock data
+[auth.me.plugins] pluginsDetails: [
+  {
+    id: 'infosimples',
+    name: 'infosimples',
+    type: 'consulta',
+    config: {}
+  },
+  {
+    id: 'bigtech',
+    name: 'BigTech Consultas',
+    type: 'consulta',
+    config: {}
+  }
+]

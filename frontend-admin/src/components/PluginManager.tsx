@@ -1,5 +1,5 @@
 // Componente para gestão de plugins globais (TASK-PLUGIN-001)
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,8 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Settings, MoreHorizontal, CheckCircle, Loader2, Puzzle, Zap, Package, Play, Pause } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Settings, MoreHorizontal, CheckCircle, Loader2, Puzzle, Zap, Play } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Plugin {
@@ -17,7 +17,7 @@ interface Plugin {
   name: string;
   type: string;
   version: string;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export default function PluginManager() {
@@ -29,7 +29,7 @@ export default function PluginManager() {
 
   const loadPlugins = async () => {
     setLoading(true);
-    try {
+      try {
       const token = localStorage.getItem('accessToken');
       const res = await fetch('http://localhost:8080/api/admin/plugin-access/plugins/available', {
         headers: {
@@ -38,9 +38,9 @@ export default function PluginManager() {
         }
       });
       if (!res.ok) throw new Error('Failed to load available plugins');
-      const data = await res.json();
+      const data: { plugins?: Plugin[] } = await res.json();
       setPlugins(data.plugins || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao carregar plugins:', err);
       toast.error('Erro ao carregar plugins disponíveis');
     } finally {
@@ -66,7 +66,7 @@ export default function PluginManager() {
       toast.success('Configuração salva com sucesso!');
       setIsDialogOpen(false);
       setEditingPlugin(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao salvar configuração:', err);
       toast.error('Erro ao salvar configuração');
     } finally {
@@ -197,7 +197,7 @@ export default function PluginManager() {
               Configurar Plugin
             </DialogTitle>
             <DialogDescription>
-              Configure as opções do plugin "{editingPlugin?.name}".
+              Configure as opções do plugin &quot;{editingPlugin?.name}&quot;.
             </DialogDescription>
           </DialogHeader>
           {editingPlugin && (
@@ -210,8 +210,8 @@ export default function PluginManager() {
                     <Input
                       id="baseUrl"
                       placeholder="https://api.consultasbigtech.com.br/json/service.aspx"
-                      value={editingPlugin.config?.baseUrl || ''}
-                      onChange={(e) => setEditingPlugin({
+                      value={(editingPlugin.config?.baseUrl as string) || ''}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingPlugin({
                         ...editingPlugin,
                         config: {
                           ...(editingPlugin.config || {}),
@@ -229,8 +229,8 @@ export default function PluginManager() {
                     <Input
                       id="homologationUrl"
                       placeholder="https://api.consultasbigtech.com.br/json/homologa.aspx"
-                      value={editingPlugin.config?.homologationUrl || ''}
-                      onChange={(e) => setEditingPlugin({
+                      value={(editingPlugin.config?.homologationUrl as string) || ''}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingPlugin({
                         ...editingPlugin,
                         config: {
                           ...(editingPlugin.config || {}),
@@ -270,8 +270,8 @@ export default function PluginManager() {
                 <Input
                   id="apiKey"
                   placeholder="Digite a chave da API"
-                  value={editingPlugin.config?.apiKey || ''}
-                  onChange={(e) => setEditingPlugin({
+                  value={(editingPlugin.config?.apiKey as string) || ''}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingPlugin({
                     ...editingPlugin,
                     config: {
                       ...(editingPlugin.config || {}),
